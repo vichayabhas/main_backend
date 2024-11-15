@@ -141,7 +141,6 @@ export async function kickNong(req: express.Request, res: express.Response) {
         camp.nongPassIds.delete(members[i].toString())
         camp.outRoundIds.push(members[i])
         nongPaidIds = swop(members[i++], null, nongPaidIds)
-
     }
     await camp.updateOne({
         nongPendingIds: camp.nongPendingIds,
