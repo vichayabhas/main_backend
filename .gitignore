@@ -1,0 +1,9 @@
+*.cpp
+*.h
+*.pdf
+*.exe
+
+*.zip
+*.sql
+node_modules/*
+config/config.env
