@@ -2239,7 +2239,7 @@ export async function planUpdateCamp(req: express.Request, res: express.Response
     let i = 0
     while (i < update.baanDatas.length) {
         const updateBaan = update.baanDatas[i++]
-        const baan = await Baan.findById(update._id)
+        const baan = await Baan.findById(updateBaan._id)
         if (!baan) {
             continue
         }

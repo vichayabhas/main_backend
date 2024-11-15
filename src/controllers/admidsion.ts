@@ -11,7 +11,6 @@ export async function interview(req: express.Request, res: express.Response) {
         sendRes(res, false)
         return
     }
-   // const o=5
     res.status(200).json({ count: i })
 }
 async function interviewRaw(members: Id[], campId: Id) {
