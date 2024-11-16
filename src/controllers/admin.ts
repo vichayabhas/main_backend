@@ -69,7 +69,8 @@ export async function addBaan(req: express.Request, res: express.Response) {
         return
     }
     if (!user || (user.role != 'admin' && !user.authPartIds.includes(camp.partBoardId))) {
-        return res.status(403).json({ success: false })
+        res.status(403).json({ success: false })
+        return
     }
     const baan = await addBaanRaw(camp, name, 'null')
     res.status(201).json(baan)
@@ -107,7 +108,8 @@ export async function addPart(req: express.Request, res: express.Response) {
     }
     const part = await Part.findById(camp?.partBoardId)
     if (user.role != 'admin' && !part?.peeIds.includes(user._id) && !part?.petoIds.includes(user._id)) {
-        return res.status(403).json({ success: false })
+        res.status(403).json({ success: false })
+        return
     }
     const newPart = await addPartRaw(camp._id, nameId, false)
     if (!newPart) {
@@ -155,7 +157,7 @@ async function addPartRaw(campId: Id, nameId: Id, isAuth: boolean): Promise<Inte
         mapPeeCampIdByBaanId: part.mapPeeCampIdByBaanId,
         peeModelIds: part.peeModelIds,
     })
-    const part2:InterPartBack|null=await Part.findById(part._id)
+    const part2: InterPartBack | null = await Part.findById(part._id)
     return part2
 
 }
@@ -169,7 +171,8 @@ export async function updateBaan(req: express.Request, res: express.Response) {
     const camp: InterCampBack | null = await Camp.findById(baan.campId)
     const user = await getUser(req)
     if (!user || !camp || (user.role != 'admin' && !user.authPartIds.includes(camp.partBoardId) && !user.authPartIds.includes(camp.partCoopId))) {
-        return res.status(401).json({ success: false })
+        res.status(401).json({ success: false })
+        return
     }
     const s = await updateBaanRaw(update)
     sendRes(res, s)
@@ -255,7 +258,8 @@ export async function updatePart(req: express.Request, res: express.Response) {
         const camp: InterCampBack | null = await Camp.findById(part.campId)
         const user = await getUser(req)
         if (!user || !camp || (user.role != 'admin' && !user.authPartIds.includes(camp.partBoardId) && !user.authPartIds.includes(camp.partCoopId))) {
-            return res.status(401).json({ success: false })
+            res.status(401).json({ success: false })
+            return
         }
         const newPlace = await Place.findById(placeId)
         if (newPlace) {
@@ -275,7 +279,7 @@ export async function updatePart(req: express.Request, res: express.Response) {
             }
         }
         await part.updateOne({ placeId })
-        sendRes(res,true)
+        sendRes(res, true)
     } catch {
         res.status(400).json({ success: false })
     }
@@ -787,13 +791,15 @@ export async function saveDeleteCamp(req: express.Request, res: express.Response
     const campId: string = req.params.id
     const camp: InterCampBack | null = await Camp.findById(campId)
     if (!camp) {
-        return res.status(400).json({
+        res.status(400).json({
             success: false,
             message: 'no camp'
         })
+        return
     }
     if (camp.nongPaidIds.length || camp.nongPassIds.size || camp.nongInterviewIds.size || (camp.peeIds.length + camp.petoIds.length > camp.boardIds.length) || camp.partIds.length > 7 || camp.baanIds.length > 19 || camp.peePassIds.size) {
-        return res.status(400).json({ success: false, message: 'this camp is not save to delete' })
+        res.status(400).json({ success: false, message: 'this camp is not save to delete' })
+        return
     }
     forceDeleteCampRaw(camp._id, res)
 }
@@ -1601,7 +1607,8 @@ export async function updateCamp(req: express.Request, res: express.Response) {
         return
     }
     if (!user || (user.role != 'admin' && !user.authPartIds.includes(camp.partBoardId as Id))) {
-        return res.status(403).json({ success: false })
+        res.status(403).json({ success: false })
+        return
     }
     const update: UpdateCamp = req.body
     if (camp.dataLock != update.dataLock) {

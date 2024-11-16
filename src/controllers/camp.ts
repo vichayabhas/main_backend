@@ -12,7 +12,7 @@ import PartNameContainer from "../models/PartNameContainer";
 import NameContainer from "../models/NameContainer";
 import express from "express";
 import { getUser } from "../middleware/auth";
-import { InterBaanBack, InterBaanFront, InterCampBack, InterCampFront, InterPartBack, InterUser, InterActionPlan, ShowMember, CreateActionPlan, showActionPlan, CreateWorkingItem, InterWorkingItem, ShowRegister, MyMap, WelfarePack, HeathIssuePack, CampWelfarePack, GetBaansForPlan, GetPartsForPlan, GetAllPlanData, UpdateAllPlanData, CampNumberData, CampSleepDataContainer, Id, AnswerPack, EditQuestionPack, GetAllQuestion, GetChoiceQuestion, GetTextQuestion, RoleCamp } from "../models/interface";
+import { InterBaanBack, InterBaanFront, InterCampBack, InterCampFront, InterPartBack, InterUser, InterActionPlan, ShowMember, CreateActionPlan, showActionPlan, CreateWorkingItem, InterWorkingItem, ShowRegister, MyMap, WelfarePack, HeathIssuePack, CampWelfarePack, GetBaansForPlan, GetPartsForPlan, GetAllPlanData, UpdateAllPlanData, CampNumberData, CampSleepDataContainer, Id, AnswerPack, EditQuestionPack, GetAllQuestion, GetChoiceQuestion, GetTextQuestion, RoleCamp, InterChoiceQuestion, InterTextQuestion, UserAndAllQuestionPack, GetAllAnswerAndQuestion, ScoreTextQuestions } from "../models/interface";
 import Song from "../models/Song";
 import HeathIssue from "../models/HeathIssue";
 import Place from "../models/Place";
@@ -75,14 +75,16 @@ import TextQuestion from "../models/TextQuestion";
 //*export async function answerAllQuestion
 //*export async function deleteChoiceQuestion
 //*export async function deleteTextQuestion
+//*export async function peeAnswerQuestion
 //*export async function plusActionPlan
+//*export async function getAllAnswerAndQuestion
+//*export async function scoreTextQuestions
 export async function getBaan(req: express.Request, res: express.Response) {
     try {
         const data: InterBaanBack | null = await Baan.findById(req.params.id);
         if (!data) {
-            return res.status(400).json({
-                success: false
-            });
+            sendRes(res, false)
+            return
         }
         res.status(200).json(conBaanBackToFront(data));
     } catch {
@@ -96,9 +98,8 @@ export async function getCamp(req: express.Request, res: express.Response) {
         //console.log(req.params.id)
         const data: InterCampBack | null = await Camp.findById(req.params.id);
         if (!data) {
-            return res.status(400).json({
-                success: false
-            });
+            sendRes(res, false)
+            return
         }
         //console.log(data.toObject())
         res.status(200).json(conCampBackToFront(data));
@@ -114,9 +115,8 @@ export async function getBaans(req: express.Request, res: express.Response) {
     try {
         const camp = await Camp.findById(req.params.id);
         if (!camp) {
-            return res.status(400).json({
-                success: false
-            });
+            sendRes(res, false)
+            return
         }
         const baans: InterBaanFront[] = []
         let i = 0
@@ -127,7 +127,6 @@ export async function getBaans(req: express.Request, res: express.Response) {
             }
         }
         res.status(200).json(baans);
-        //console.log(baans.length)
     } catch {
         res.status(400).json(resError);
     }
@@ -136,7 +135,8 @@ export async function getCamps(req: express.Request, res: express.Response) {
     try {
         const data: InterCampBack[] = await Camp.find();
         if (!data) {
-            return res.status(400).json(resError);
+            sendRes(res, false)
+            return
         }
         const out: InterCampFront[] = data.map((input: InterCampBack) => {
             return conCampBackToFront(input)
@@ -153,7 +153,8 @@ export async function getNongCamp(req: express.Request, res: express.Response) {
     try {
         const data = await NongCamp.findById(req.params.id);
         if (!data) {
-            return res.status(400).json(resError);
+            sendRes(res, false)
+            return
         }
         res.status(200).json(data);
     } catch {
@@ -164,9 +165,8 @@ export async function getPeeCamp(req: express.Request, res: express.Response) {
     try {
         const data = await PeeCamp.findById(req.params.id);
         if (!data) {
-            return res.status(400).json({
-                success: false
-            });
+            sendRes(res, false)
+            return
         }
         res.status(200).json(data);
     } catch {
@@ -179,9 +179,8 @@ export async function getPetoCamp(req: express.Request, res: express.Response) {
     try {
         const data = await PetoCamp.findById(req.params.id);
         if (!data) {
-            return res.status(400).json({
-                success: false
-            });
+            sendRes(res, false)
+            return
         }
         res.status(200).json(data);
     } catch {
@@ -194,9 +193,8 @@ export async function getPart(req: express.Request, res: express.Response) {
     try {
         const data: InterPartBack | null = await Part.findById(req.params.id);
         if (!data) {
-            return res.status(400).json({
-                success: false
-            });
+            sendRes(res, false)
+            return
         }
         res.status(200).json(conPartBackToFront(data));
     } catch {
@@ -221,9 +219,8 @@ export async function addNong(req: express.Request, res: express.Response) {
         }
         const camp = await Camp.findById(baan.campId);
         if (!camp) {
-            return res.status(400).json({
-                success: false
-            });
+            sendRes(res, false)
+            return
         }
         const nongCamp = await NongCamp.findById(baan.nongModelId)
         if (!nongCamp) {
@@ -335,9 +332,7 @@ export async function addNong(req: express.Request, res: express.Response) {
             count
         });
     } catch {
-        return res.status(400).json({
-            success: false
-        });
+        sendRes(res, false)
     }
 }
 export async function addPee(req: express.Request, res: express.Response) {
@@ -356,7 +351,7 @@ export async function addPee(req: express.Request, res: express.Response) {
     const camp = await Camp.findById(baan.campId);
     if (!camp) {
         sendRes(res, false)
-        return false
+        return
     }
     let i = 0
     while (i < members.length) {
@@ -772,9 +767,8 @@ export async function updateActionPlan(req: express.Request, res: express.Respon
             await building?.updateOne({ actionPlanIds: swop(null, hospital._id, building.actionPlanIds) })
         }
         if (!hospital) {
-            return res.status(400).json({
-                success: false
-            });
+            sendRes(res, false)
+            return
         }
         res.status(200).json(hospital);
     } catch {
@@ -955,7 +949,8 @@ export async function nongRegister(req: express.Request, res: express.Response) 
         const camp = await Camp.findById(campId)
         await answerAllQuestion(answer, nong._id, 'nong')
         if (!camp?.open) {
-            return res.status(400).json({ success: false, message: 'This camp is close' })
+            res.status(400).json({ success: false, message: 'This camp is close' })
+            return
         }
         camp.nongMapIdGtoL.set(nong._id.toString(), camp.currentNong + 1)
         camp.nongMapIdLtoG.set((camp.currentNong + 1).toString(), nong._id)
@@ -1723,9 +1718,8 @@ export async function updateWorkingItem(req: express.Request, res: express.Respo
         }
         await hospital.updateOne({ status, link, name })
         if (!hospital) {
-            return res.status(400).json({
-                success: false
-            });
+            sendRes(res, false)
+            return
         }
         res.status(200).json(hospital);
     } catch {
@@ -2295,7 +2289,8 @@ export async function editQuestion(req: express.Request, res: express.Response) 
         return
     }
     if (!user || (user.role != 'admin' && !user.authPartIds.includes(camp.partBoardId as Id))) {
-        return res.status(403).json({ success: false })
+        res.status(403).json({ success: false })
+        return
     }
     let {
         choiceQuestionIds,
@@ -2365,11 +2360,23 @@ export async function editQuestion(req: express.Request, res: express.Response) 
     sendRes(res, true)
 }
 export async function getAllQuestion(req: express.Request, res: express.Response) {
-    const camp = await Camp.findById(req.params.id)
     const user = await getUser(req)
-    if (!camp || !user) {
+    if (!user) {
         sendRes(res, false)
         return
+    }
+    const questions = await getAllQuestionRaw(stringToId(req.params.id), user._id)
+    if (!questions) {
+        sendRes(res, false)
+        return
+    }
+    res.status(200).json(questions)
+}
+async function getAllQuestionRaw(campId: Id, userId: Id): Promise<GetAllQuestion | null> {
+    const user = await User.findById(userId)
+    const camp = await Camp.findById(campId)
+    if (!camp || !user) {
+        return null
     }
     const texts: GetTextQuestion[] = []
     const choices: GetChoiceQuestion[] = []
@@ -2404,6 +2411,7 @@ export async function getAllQuestion(req: express.Request, res: express.Response
                     score,
                     order,
                     answerId: textAnswer._id,
+                    answerScore:textAnswer.score,
                 })
             }
             const textRemain = removeDuplicate(camp.textQuestionIds, textQuestionIds)
@@ -2429,6 +2437,7 @@ export async function getAllQuestion(req: express.Request, res: express.Response
                     score,
                     order,
                     answerId: null,
+                    answerScore:0,
                 })
             }
             const choiceQuestionIds: Id[] = []
@@ -2590,6 +2599,7 @@ export async function getAllQuestion(req: express.Request, res: express.Response
                 score,
                 order,
                 answerId: null,
+                answerScore:0
             })
         }
         for (const choiceId of camp.choiceQuestionIds) {
@@ -2661,7 +2671,7 @@ export async function getAllQuestion(req: express.Request, res: express.Response
         choices,
         texts,
     }
-    res.status(200).json(buffer)
+    return buffer
 }
 export async function answerAllQuestion(answer: AnswerPack, userId: Id, role: RoleCamp) {
     const camp = await Camp.findById(answer.campId)
@@ -2893,14 +2903,14 @@ export async function deleteTextQuestion(req: express.Request, res: express.Resp
         if (!answerContainer) {
             continue
         }
-        await answerContainer.updateOne({ choiceAnswerIds: swop(answer._id, null, answerContainer.choiceAnswerIds) })
+        await answerContainer.updateOne({ textAnswerIds: swop(answer._id, null, answerContainer.textAnswerIds) })
         await answer.deleteOne()
     }
     await question.deleteOne()
     sendRes(res, true)
 }
 export async function peeAnswerQuestion(req: express.Request, res: express.Response) {
-    const { answer }: { answer: AnswerPack } = req.body
+    const answer: AnswerPack = req.body
     const camp = await Camp.findById(answer.campId)
     const user = await getUser(req)
     if (!camp || !user) {
@@ -2924,5 +2934,170 @@ export async function plusActionPlan(req: express.Request, res: express.Response
         return
     }
     await camp.updateOne({ actionPlanOffset: camp.actionPlanOffset + input.plus })
+    sendRes(res, true)
+}
+export async function getAllAnswerAndQuestion(req: express.Request, res: express.Response) {
+    const camp = await Camp.findById(req.params.id)
+    if (!camp) {
+        sendRes(res, false)
+        return
+    }
+    const nongsAnswers: UserAndAllQuestionPack[] = []
+    const peeAnswers: UserAndAllQuestionPack[] = []
+    const mainChoices: InterChoiceQuestion[] = []
+    const mainTexts: InterTextQuestion[] = []
+    const nongPendingAnswers: UserAndAllQuestionPack[] = []
+    const nongPassAnswers: UserAndAllQuestionPack[] = []
+    const nongSureAnswers: UserAndAllQuestionPack[] = []
+    const nongPaidAnswers: UserAndAllQuestionPack[] = []
+    const nongInterviewAnswers: UserAndAllQuestionPack[] = []
+    for (const userId of camp.nongIds) {
+        const user: InterUser | null = await User.findById(userId)
+        if (!user) {
+            continue
+        }
+        const questions = await getAllQuestionRaw(camp._id, user._id)
+        if (questions) {
+            nongsAnswers.push({
+                user,
+                questions
+            })
+        }
+    }
+    for (const userId of camp.peeAnswerIds) {
+        const user: InterUser | null = await User.findById(userId)
+        if (!user) {
+            continue
+        }
+        const questions = await getAllQuestionRaw(camp._id, user._id)
+        if (questions) {
+            peeAnswers.push({
+                user,
+                questions
+            })
+        }
+    }
+    const nongPendingIds: Id[] = []
+    camp.nongPendingIds.forEach((v, k) => {
+        nongPendingIds.push(stringToId(k))
+    })
+    for (const userId of nongPendingIds) {
+        const user: InterUser | null = await User.findById(userId)
+        if (!user) {
+            continue
+        }
+        const questions = await getAllQuestionRaw(camp._id, user._id)
+        if (questions) {
+            nongPendingAnswers.push({
+                user,
+                questions
+            })
+        }
+    }
+    const nongInterviewIds: Id[] = []
+    camp.nongInterviewIds.forEach((v, k) => {
+        nongInterviewIds.push(stringToId(k))
+    })
+    for (const userId of nongInterviewIds) {
+        const user: InterUser | null = await User.findById(userId)
+        if (!user) {
+            continue
+        }
+        const questions = await getAllQuestionRaw(camp._id, user._id)
+        if (questions) {
+            nongInterviewAnswers.push({
+                user,
+                questions
+            })
+        }
+    }
+    const nongPassIds: Id[] = []
+    camp.nongPassIds.forEach((v, k) => {
+        nongPassIds.push(stringToId(k))
+    })
+    for (const userId of removeDuplicate(nongPassIds, camp.nongPaidIds)) {
+        const user: InterUser | null = await User.findById(userId)
+        if (!user) {
+            continue
+        }
+        const questions = await getAllQuestionRaw(camp._id, user._id)
+        if (questions) {
+            nongPassAnswers.push({
+                user,
+                questions
+            })
+        }
+    }
+    for (const userId of camp.nongPaidIds) {
+        const user: InterUser | null = await User.findById(userId)
+        if (!user) {
+            continue
+        }
+        const questions = await getAllQuestionRaw(camp._id, user._id)
+        if (questions) {
+            nongPaidAnswers.push({
+                user,
+                questions
+            })
+        }
+    }
+    for (const userId of camp.nongSureIds) {
+        const user: InterUser | null = await User.findById(userId)
+        if (!user) {
+            continue
+        }
+        const questions = await getAllQuestionRaw(camp._id, user._id)
+        if (questions) {
+            nongSureAnswers.push({
+                user,
+                questions
+            })
+        }
+    }
+    for (const id of camp.choiceQuestionIds) {
+        const question = await ChoiceQuestion.findById(id)
+        if (question) {
+            mainChoices.push(question)
+        }
+    }
+    for (const id of camp.textQuestionIds) {
+        const question = await TextQuestion.findById(id)
+        if (question) {
+            mainTexts.push(question)
+        }
+    }
+    const buffer: GetAllAnswerAndQuestion = {
+        nongInterviewAnswers,
+        nongPaidAnswers,
+        nongPassAnswers,
+        nongPendingAnswers,
+        nongsAnswers,
+        nongSureAnswers,
+        mainChoices,
+        mainTexts,
+        peeAnswers,
+    }
+    res.status(200).json(buffer)
+}
+export async function scoreTextQuestions(req: express.Request, res: express.Response) {
+    const input: ScoreTextQuestions = req.body
+    console.log(input.scores[0])
+    const camp = await Camp.findById(input.campId)
+    const user = await getUser(req)
+    if (!camp || !user) {
+        sendRes(res, false)
+        return
+    }
+    const campMemberCard = await CampMemberCard.findById(camp.mapCampMemberCardIdByUserId.get(user._id.toString()))
+    if (!campMemberCard || campMemberCard.role == 'nong') {
+        sendRes(res, false)
+        return
+    }
+    for (const i1 of input.scores) {
+        for (const { id, score } of i1) {
+            console.log({id,score})
+            await TextAnswer.findByIdAndUpdate(id, { score })
+        }
+    }
     sendRes(res, true)
 }

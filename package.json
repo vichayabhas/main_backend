@@ -18,6 +18,7 @@
   "homepage": "https://github.com/vichayabhas/main_backend#readme",
   "description": "",
   "dependencies": {
+    "@types/express": "^5.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "express": "^4.21.1",

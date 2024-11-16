@@ -58,27 +58,31 @@ export async function login(req: express.Request, res: express.Response) {
 		password
 	} = req.body;
 	if (!email || !password) {
-		return res.status(400).json({
+
+		res.status(400).json({
 			success: false,
 			msg: "Please provide an email and password"
 		});
+		return
 	}
 	const user = await User.findOne({
 		email
 	}).select("+password");
 	if (!user) {
-		return res.status(400).json({
+		res.status(400).json({
 			success: false,
 			msg: "Invalid credentials"
 		});
+		return
 	}
 	const isMatch = await bcrypt.compare(password, user.password);
 
 	if (!isMatch) {
-		return res.status(401).json({
+		res.status(401).json({
 			success: false,
 			msg: "Invalid credentials"
 		});
+		return
 	}
 	sendTokenResponse(user._id, 200, res);
 }
@@ -242,9 +246,10 @@ export async function getHeathIssue(req: express.Request, res: express.Response)
 	try {
 		const data = await HeathIssue.findById(req.params.id);
 		if (!data) {
-			return res.status(400).json({
+			res.status(400).json({
 				success: false
 			});
+			return
 		}
 		res.status(200).json(data);
 	} catch {

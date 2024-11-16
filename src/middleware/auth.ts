@@ -11,19 +11,22 @@ export async function protect(req: express.Request, res: express.Response, next:
     token = req.headers.authorization.split(' ')[1]
   }
   if (!token) {
-    return res.status(401).json({ success: false, massage: 'Not authorize to access this route' });
+    res.status(401).json({ success: false, massage: 'Not authorize to access this route' });
+    return
   }
   try {
     const decoded = jwt.verify(token, testJwt)
     const { id } = decoded as { id: string }
     const user = await User.findById(id)
     if (!user) {
-      return res.status(401).json({ success: false, massage: 'Not authorize to access this route' });
+      res.status(401).json({ success: false, massage: 'Not authorize to access this route' });
+      return
     }
     next();
   } catch (error) {
     console.log(error.stack)
-    return res.status(401).json({ success: false, massage: 'Not authorize to access this route' });
+    res.status(401).json({ success: false, massage: 'Not authorize to access this route' });
+    return
   }
 }
 export function authorize(...roles: string[]) {
@@ -64,7 +67,8 @@ export async function getUser(req: express.Request) {
 export async function modePee(req: express.Request, res: express.Response, next: NextFunction) {
   const user = await getUser(req)
   if (user?.mode != 'pee') {
-    return res.status(403).json({ success: false, message: `User role ${user?.mode} is not authorize to access this route` });
+    res.status(403).json({ success: false, message: `User role ${user?.mode} is not authorize to access this route` });
+    return
   }
   next();
 }
@@ -72,7 +76,8 @@ export async function admin(req: express.Request, res: express.Response, next: N
   const user = await getUser(req)
 
   if (user?.role != 'admin') {
-    return res.status(403).json({ success: false, message: `User role ${user?.role} is not authorize to access this route` });
+    res.status(403).json({ success: false, message: `User role ${user?.role} is not authorize to access this route` });
+    return
   }
   next();
 }
@@ -82,7 +87,8 @@ export async function pee(req: express.Request, res: express.Response, next: Nex
     return
   }
   if (!['pee', 'peto', 'admin'].includes(user.role)) {
-    return res.status(403).json({ success: false, message: `User role ${user.role} is not authorize to access this route` });
+    res.status(403).json({ success: false, message: `User role ${user.role} is not authorize to access this route` });
+    return
   }
   next();
 }
