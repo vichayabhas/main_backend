@@ -181,6 +181,10 @@ const campSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
+    canAnswerTheQuestion:{
+        type:Boolean,
+        default:true,
+    }
 })
 export default mongoose.model('Camp', campSchema)
 

@@ -248,6 +248,7 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
         mapAnswerPackIdByUserId,
         peeAnswerIds,
         showCorrectAnswerAndScore,
+        canAnswerTheQuestion,
 
     } = input
     return ({
@@ -338,6 +339,7 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
         mapAnswerPackIdByUserId: mapObjectIdToMyMap(mapAnswerPackIdByUserId),
         peeAnswerIds,
         showCorrectAnswerAndScore,
+        canAnswerTheQuestion,
 
     })
 }

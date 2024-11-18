@@ -2670,6 +2670,7 @@ async function getAllQuestionRaw(campId: Id, userId: Id): Promise<GetAllQuestion
     const buffer: GetAllQuestion = {
         choices,
         texts,
+        canAnswerTheQuestion:camp.canAnswerTheQuestion
     }
     return buffer
 }
