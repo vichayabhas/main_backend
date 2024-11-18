@@ -181,10 +181,12 @@ const campSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
-    canAnswerTheQuestion:{
-        type:Boolean,
-        default:true,
-    }
+    canAnswerTheQuestion: {
+        type: Boolean,
+        default: true,
+    },
+    mealIds: arrayObjectId,
+    foodIds: arrayObjectId,
 })
 export default mongoose.model('Camp', campSchema)
 

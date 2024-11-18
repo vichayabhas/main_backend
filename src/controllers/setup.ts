@@ -249,6 +249,8 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
         peeAnswerIds,
         showCorrectAnswerAndScore,
         canAnswerTheQuestion,
+        mealIds,
+        foodIds,
 
     } = input
     return ({
@@ -340,6 +342,8 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
         peeAnswerIds,
         showCorrectAnswerAndScore,
         canAnswerTheQuestion,
+        mealIds,
+        foodIds,
 
     })
 }
@@ -449,7 +453,7 @@ export const backendUrl = 'http://localhost:5000'
 export const userPath = 'api/v1/auth'
 export function removeDuplicate(input: Id[], compare: Id[]): Id[] {
     return input.filter((e) => {
-        return !compare.map((v)=>v.toString()).includes(e.toString())
+        return !compare.map((v) => v.toString()).includes(e.toString())
     })
 }
 export function notEmpty<TValue>(value: TValue | null | undefined): value is TValue {

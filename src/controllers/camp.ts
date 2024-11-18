@@ -1899,34 +1899,38 @@ export async function getAllWelfare(req: express.Request, res: express.Response)
             petoSize: startJsonSize()
         }
         let j = 0
-        while (j < baan.nongHeathIssueIds.length) {
-            const heathIssue = await HeathIssue.findById(baan.nongHeathIssueIds[j++])
-            if (!heathIssue) {
+        while (j < baan.nongCampMemberCardHaveHeathIssueIds.length) {
+            const campMemberCard = await CampMemberCard.findById(baan.nongCampMemberCardHaveHeathIssueIds[j++])
+            if (!campMemberCard) {
                 continue
             }
-            const user: InterUser | null = await User.findById(heathIssue.userId)
-            if (!user) {
+            const heathIssue = await HeathIssue.findById(campMemberCard.healthIssueId)
+            const user: InterUser | null = await User.findById(campMemberCard.userId)
+            if (!heathIssue || !user) {
                 continue
             }
             const buffer: HeathIssuePack = {
                 user,
                 heathIssue,
+                campMemberCardId:campMemberCard._id,
             }
             welfareBaan.nongHealths = ifIsTrue(isWelfareValid(buffer), buffer, welfareBaan.nongHealths, nongHealths)
         }
         j = 0
-        while (j < baan.peeHeathIssueIds.length) {
-            const heathIssue = await HeathIssue.findById(baan.peeHeathIssueIds[j++])
-            if (!heathIssue) {
+        while (j < baan.peeCampMemberCardHaveHeathIssueIds.length) {
+            const campMemberCard = await CampMemberCard.findById(baan.peeCampMemberCardHaveHeathIssueIds[j++])
+            if (!campMemberCard) {
                 continue
             }
-            const user: InterUser | null = await User.findById(heathIssue.userId)
-            if (!user) {
+            const heathIssue = await HeathIssue.findById(campMemberCard.healthIssueId)
+            const user: InterUser | null = await User.findById(campMemberCard.userId)
+            if (!heathIssue || !user) {
                 continue
             }
             const buffer: HeathIssuePack = {
                 user,
                 heathIssue,
+                campMemberCardId:campMemberCard._id,
             }
             welfareBaan.peeHealths = ifIsTrue(isWelfareValid(buffer), buffer, welfareBaan.peeHealths, peeHealths)
         }
@@ -1954,34 +1958,38 @@ export async function getAllWelfare(req: express.Request, res: express.Response)
             petoSize: sizeMapToJson(part.petoShirtSize),
         }
         let j = 0
-        while (j < part.petoHeathIssueIds.length) {
-            const heathIssue = await HeathIssue.findById(part.petoHeathIssueIds[j++])
-            if (!heathIssue) {
+        while (j < part.petoCampMemberCardHaveHeathIssueIds.length) {
+            const campMemberCard = await CampMemberCard.findById(part.petoCampMemberCardHaveHeathIssueIds[j++])
+            if (!campMemberCard) {
                 continue
             }
-            const user: InterUser | null = await User.findById(heathIssue.userId)
-            if (!user) {
+            const heathIssue = await HeathIssue.findById(campMemberCard.healthIssueId)
+            const user: InterUser | null = await User.findById(campMemberCard.userId)
+            if (!heathIssue || !user) {
                 continue
             }
             const buffer: HeathIssuePack = {
                 user,
                 heathIssue,
+                campMemberCardId:campMemberCard._id,
             }
             welfarePart.petoHealths = ifIsTrue(isWelfareValid(buffer), buffer, welfarePart.petoHealths, petoHealths)
         }
         j = 0
         while (j < part.peeHeathIssueIds.length) {
-            const heathIssue = await HeathIssue.findById(part.peeHeathIssueIds[j++])
-            if (!heathIssue) {
+            const campMemberCard = await CampMemberCard.findById(part.peeCampMemberCardHaveHeathIssueIds[j++])
+            if (!campMemberCard) {
                 continue
             }
-            const user: InterUser | null = await User.findById(heathIssue.userId)
-            if (!user) {
+            const heathIssue = await HeathIssue.findById(campMemberCard.healthIssueId)
+            const user: InterUser | null = await User.findById(campMemberCard.userId)
+            if (!user || !heathIssue) {
                 continue
             }
             const buffer: HeathIssuePack = {
                 user,
                 heathIssue,
+                campMemberCardId:campMemberCard._id,
             }
             welfarePart.peeHealths = ifIsTrue(isWelfareValid(buffer), buffer, welfarePart.peeHealths,)
         }
@@ -2411,7 +2419,7 @@ async function getAllQuestionRaw(campId: Id, userId: Id): Promise<GetAllQuestion
                     score,
                     order,
                     answerId: textAnswer._id,
-                    answerScore:textAnswer.score,
+                    answerScore: textAnswer.score,
                 })
             }
             const textRemain = removeDuplicate(camp.textQuestionIds, textQuestionIds)
@@ -2437,7 +2445,7 @@ async function getAllQuestionRaw(campId: Id, userId: Id): Promise<GetAllQuestion
                     score,
                     order,
                     answerId: null,
-                    answerScore:0,
+                    answerScore: 0,
                 })
             }
             const choiceQuestionIds: Id[] = []
@@ -2599,7 +2607,7 @@ async function getAllQuestionRaw(campId: Id, userId: Id): Promise<GetAllQuestion
                 score,
                 order,
                 answerId: null,
-                answerScore:0
+                answerScore: 0
             })
         }
         for (const choiceId of camp.choiceQuestionIds) {
@@ -2670,7 +2678,7 @@ async function getAllQuestionRaw(campId: Id, userId: Id): Promise<GetAllQuestion
     const buffer: GetAllQuestion = {
         choices,
         texts,
-        canAnswerTheQuestion:camp.canAnswerTheQuestion
+        canAnswerTheQuestion: camp.canAnswerTheQuestion
     }
     return buffer
 }
@@ -3096,7 +3104,7 @@ export async function scoreTextQuestions(req: express.Request, res: express.Resp
     }
     for (const i1 of input.scores) {
         for (const { id, score } of i1) {
-            console.log({id,score})
+            console.log({ id, score })
             await TextAnswer.findByIdAndUpdate(id, { score })
         }
     }

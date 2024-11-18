@@ -4,18 +4,22 @@ import Camp from "../models/Camp"
 import Song from "../models/Song"
 import User from "../models/User"
 import express from "express";
-import { getEndEmail, getSystemMode, resError, resOk, sendRes, stringToId, swop } from "./setup";
+import { getEndEmail, getSystemMode, ifIsTrue, resError, resOk, sendRes, stringToId, swop } from "./setup";
 import LostAndFound from "../models/LostAndFound";
 import Building from "../models/Building";
 import Place from "../models/Place";
 import NongCamp from "../models/NongCamp";
-import { ChatReady, CreateBaanChat, CreateNongChat, CreatePeeChat, EditChat, Id, InterLostAndFound, InterPlace, Mode, RoleCamp, ShowChat, ShowLostAndFound, ShowPlace, TypeChat } from "../models/interface";
+import { ChatReady, CreateBaanChat, CreateFood, CreateMeal, CreateNongChat, CreatePeeChat, EditChat, GetFoodForUpdate, HeathIssuePack, Id, InterLostAndFound, InterPlace, InterUser, Mode, RoleCamp, ShowChat, ShowLostAndFound, ShowPlace, TypeChat } from "../models/interface";
 import PeeCamp from "../models/PeeCamp";
 import PetoCamp from "../models/PetoCamp";
 import Part from "../models/Part";
 import CampMemberCard from "../models/CampMemberCard";
 import Chat from "../models/Chat";
 import TimeOffset from "../models/TimeOffset";
+import Meal from "../models/Meal";
+import Food from "../models/Food";
+import HeathIssue from "../models/HeathIssue";
+import { isWelfareValid } from "./user";
 // export async function addLikeSong
 // export async function getNongLikeSong
 // export async function getPeeLikeSong
@@ -1142,4 +1146,137 @@ export async function getPartPeebaanChat(req: express.Request, res: express.Resp
         roomName: user.mode == 'pee' ? `ห้องพี่${camp.groupName}คุยกัน ! อย่าหลุดสิ่งที่ไม่อยากให้น้องรู้ในแชตนี้` : `ห้องพี่${camp.groupName}คุยกัน`,
     }
     res.status(200).json(output)
+}
+export async function createMeal(req: express.Request, res: express.Response) {
+    const input: CreateMeal = req.body
+    const user = await getUser(req)
+    const camp = await Camp.findById(input.campId)
+    if (!user || !camp) {
+        sendRes(res, false)
+        return
+    }
+    const welfare = await Part.findById(camp.partWelfareId)
+    const board = await Part.findById(camp.partBoardId)
+    if (!board || !welfare || (!board.peeIds.includes(user._id) && !board.petoIds.includes(user._id) && !welfare.peeIds.includes(user._id) && !welfare.petoIds.includes(user._id))) {
+        sendRes(res, false)
+        return
+    }
+    const meal = await Meal.create(input)
+    await camp.updateOne({ mealIds: swop(null, meal._id, camp.mealIds) })
+    res.status(201).json(resOk)
+}
+export async function createFood(req: express.Request, res: express.Response) {
+    const input: CreateFood = req.body
+    const user = await getUser(req)
+    const camp = await Camp.findById(input.campId)
+    const meal = await Meal.findById(input.mealId)
+    if (!user || !camp || !meal) {
+        sendRes(res, false)
+        return
+    }
+    const welfare = await Part.findById(camp.partWelfareId)
+    const board = await Part.findById(camp.partBoardId)
+    if (!board || !welfare || (!board.peeIds.includes(user._id) && !board.petoIds.includes(user._id) && !welfare.peeIds.includes(user._id) && !welfare.petoIds.includes(user._id))) {
+        sendRes(res, false)
+        return
+    }
+    const food = await Food.create(input)
+    await camp.updateOne({ foodIds: swop(null, food._id, camp.foodIds) })
+    await meal.updateOne({ foodIds: swop(null, food._id, meal.foodIds) })
+    res.status(201).json(resOk)
+}
+export async function getFoodForUpdate(req: express.Request, res: express.Response) {
+    const food = await Food.findById(req.params.id)
+    if (!food) {
+        sendRes(res, false)
+        return
+    }
+    const camp = await Camp.findById(food.campId)
+    if (!camp) {
+        sendRes(res, false)
+        return
+    }
+    const nongHealths: HeathIssuePack[] = []
+    const peeHealths: HeathIssuePack[] = []
+    const petoHealths: HeathIssuePack[] = []
+    let i = 0
+    while (i < camp.nongCampMemberCardHaveHeathIssueIds.length) {
+        const campMemberCard = await CampMemberCard.findById(camp.nongCampMemberCardHaveHeathIssueIds[i++])
+        if (!campMemberCard) {
+            continue
+        }
+        const heathIssue = await HeathIssue.findById(campMemberCard.healthIssueId)
+        const user: InterUser | null = await User.findById(campMemberCard.userId)
+        if (!heathIssue || !user) {
+            continue
+        }
+        const buffer: HeathIssuePack = {
+            user,
+            heathIssue,
+            campMemberCardId: campMemberCard._id,
+        }
+        ifIsTrue(isWelfareValid(buffer), buffer, nongHealths)
+    }
+    i = 0
+    while (i < camp.peeCampMemberCardHaveHeathIssueIds.length) {
+        const campMemberCard = await CampMemberCard.findById(camp.peeCampMemberCardHaveHeathIssueIds[i++])
+        if (!campMemberCard) {
+            continue
+        }
+        const heathIssue = await HeathIssue.findById(campMemberCard.healthIssueId)
+        const user: InterUser | null = await User.findById(campMemberCard.userId)
+        if (!heathIssue || !user) {
+            continue
+        }
+        const buffer: HeathIssuePack = {
+            user,
+            heathIssue,
+            campMemberCardId: campMemberCard._id,
+        }
+        ifIsTrue(isWelfareValid(buffer), buffer, peeHealths)
+    }
+    i = 0
+    while (i < camp.petoCampMemberCardHaveHeathIssueIds.length) {
+        const campMemberCard = await CampMemberCard.findById(camp.petoCampMemberCardHaveHeathIssueIds[i++])
+        if (!campMemberCard) {
+            continue
+        }
+        const heathIssue = await HeathIssue.findById(campMemberCard.healthIssueId)
+        const user: InterUser | null = await User.findById(campMemberCard.userId)
+        if (!heathIssue || !user) {
+            continue
+        }
+        const buffer: HeathIssuePack = {
+            user,
+            heathIssue,
+            campMemberCardId: campMemberCard._id,
+        }
+        ifIsTrue(isWelfareValid(buffer), buffer, petoHealths)
+    }
+    const {
+        campId,
+        isWhiteList,
+        nongCampMemberCardIds,
+        peeCampMemberCardIds,
+        petoCampMemberCardIds,
+        name,
+        lists,
+        _id,
+        isSpicy,
+    } = food
+    const buffer: GetFoodForUpdate = {
+        name,
+        nongCampMemberCardIds,
+        nongHealths,
+        peeCampMemberCardIds,
+        peeHealths,
+        petoCampMemberCardIds,
+        petoHealths,
+        lists,
+        _id,
+        isSpicy,
+        campId,
+        isWhiteList
+    }
+    res.status(200).json(buffer)
 }

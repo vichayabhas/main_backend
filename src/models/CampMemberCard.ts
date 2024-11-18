@@ -7,7 +7,7 @@ const PeeCampSchema = new mongoose.Schema({
         enum: ['S', 'M', 'L', 'XL', 'XXL', '3XL'],
         required: true
     },
-    campModelId:dataId,
+    campModelId: dataId,
     role: {
         type: String,
         enum: ['nong', 'pee', 'peto'],
@@ -15,7 +15,8 @@ const PeeCampSchema = new mongoose.Schema({
     },
     receive: {
         type: String,
-        enum: ['baan', 'part']
+        enum: ['baan', 'part'],
+        default:'baan',
     },
     received: dataNumber,
     haveBottle: {
@@ -33,5 +34,7 @@ const PeeCampSchema = new mongoose.Schema({
         type: mongoose.Schema.ObjectId,
         default: null,
     },
+    blackListFoodIds: arrayObjectId,
+    whiteListFoodIds: arrayObjectId,
 })
 export default mongoose.model('CampMemberCard', PeeCampSchema)
