@@ -2275,6 +2275,7 @@ async function deleteFoodRaw(foodId: Id): Promise<boolean> {
       });
     }
   }
+  await food.deleteOne();
   return true;
 }
 export async function deleteFood(req: express.Request, res: express.Response) {
@@ -2336,6 +2337,7 @@ export async function deleteMeal(req: express.Request, res: express.Response) {
   while (i < foodIds.length) {
     await deleteFoodRaw(foodIds[i++]);
   }
+  await meal.deleteOne();
   sendRes(res, true);
 }
 export async function getFoods(req: express.Request, res: express.Response) {
