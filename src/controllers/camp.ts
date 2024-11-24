@@ -12,6 +12,7 @@ import {
   conBaanBackToFront,
   conCampBackToFront,
   conPartBackToFront,
+  ifIsPlus,
   ifIsTrue,
   mapObjectIdToMyMap,
   removeDuplicate,
@@ -1140,7 +1141,7 @@ export async function getActionPlans(
       }
     }
     data.sort((a, b) => a.start.getTime() - b.start.getTime());
-    const buffer:SuccessBase<showActionPlan[]>={data,success:true}
+    const buffer: SuccessBase<showActionPlan[]> = { data, success: true };
     res.status(200).json(buffer);
   } catch {
     res.status(400).json({
@@ -2328,12 +2329,12 @@ export async function getWorkingItem(
     const workItem: InterWorkingItem | null = await WorkItem.findById(
       req.params.id
     );
-    const user=await getUser(req)
-    if (!workItem||!user) {
+    const user = await getUser(req);
+    if (!workItem || !user) {
       sendRes(res, false);
       return;
     }
-    let data:InterWorkingItem
+    let data: InterWorkingItem;
     const {
       name,
       link,
@@ -2348,7 +2349,7 @@ export async function getWorkingItem(
     } = workItem;
     const isMatch = await bcrypt.compare(user.linkHash, password);
     if (isMatch) {
-      data=({
+      data = {
         link,
         status,
         partId,
@@ -2359,9 +2360,9 @@ export async function getWorkingItem(
         partName,
         password,
         name,
-      });
+      };
     } else {
-      data=({
+      data = {
         link: null,
         status,
         partId,
@@ -2372,7 +2373,7 @@ export async function getWorkingItem(
         partName,
         password,
         name,
-      });
+      };
     }
     res.status(200).json(data);
   } catch (err) {
@@ -2473,6 +2474,26 @@ export async function getAllWelfare(
   const partWelfares: WelfarePack[] = [];
   const baanHaveBottles: CampNumberData[] = [];
   const partHaveBottles: CampNumberData[] = [];
+  const baanSpicyS: CampNumberData[] = [];
+  const partSpicyS: CampNumberData[] = [];
+  const baanHalalS: CampNumberData[] = [];
+  const partHalalS: CampNumberData[] = [];
+  const baanVegetarians: CampNumberData[] = [];
+  const partVegetarians: CampNumberData[] = [];
+  const baanVegans: CampNumberData[] = [];
+  const partVegans: CampNumberData[] = [];
+  let campNongSpicyS = 0;
+  let campPeeSpicyS = 0;
+  let campPetoSpicyS = 0;
+  let campNongHalalS = 0;
+  let campPeeHalalS = 0;
+  let campPetoHalalS = 0;
+  let campNongVegetarians = 0;
+  let campPeeVegetarians = 0;
+  let campPetoVegetarians = 0;
+  let campNongVegans = 0;
+  let campPeeVegans = 0;
+  let campPetoVegans = 0;
   let i = 0;
   while (i < camp.baanIds.length) {
     const baan: InterBaanBack | null = await Baan.findById(camp.baanIds[i++]);
@@ -2488,6 +2509,14 @@ export async function getAllWelfare(
       peeSize: sizeMapToJson(baan.peeShirtSize),
       petoSize: startJsonSize(),
     };
+    let baanNongSpicyS = 0;
+    let baanPeeSpicyS = 0;
+    let baanNongHalalS = 0;
+    let baanPeeHalalS = 0;
+    let baanNongVegetarians = 0;
+    let baanPeeVegetarians = 0;
+    let baanNongVegans = 0;
+    let baanPeeVegans = 0;
     let j = 0;
     while (j < baan.nongCampMemberCardHaveHeathIssueIds.length) {
       const campMemberCard = await CampMemberCard.findById(
@@ -2514,6 +2543,26 @@ export async function getAllWelfare(
         welfareBaan.nongHealths,
         nongHealths
       );
+      campNongSpicyS = ifIsPlus(heathIssue.spicy, campNongSpicyS);
+      baanNongSpicyS = ifIsPlus(heathIssue.spicy, baanNongSpicyS);
+      campNongHalalS = ifIsPlus(
+        heathIssue.foodLimit == "อิสลาม",
+        campNongHalalS
+      );
+      baanNongHalalS = ifIsPlus(
+        heathIssue.foodLimit == "อิสลาม",
+        baanNongHalalS
+      );
+      campNongVegetarians = ifIsPlus(
+        heathIssue.foodLimit == "มังสวิรัติ",
+        campNongVegetarians
+      );
+      baanNongVegetarians = ifIsPlus(
+        heathIssue.foodLimit == "มังสวิรัติ",
+        baanNongVegetarians
+      );
+      campNongVegans = ifIsPlus(heathIssue.foodLimit == "เจ", campNongVegans);
+      baanNongVegans = ifIsPlus(heathIssue.foodLimit == "เจ", baanNongVegans);
     }
     j = 0;
     while (j < baan.peeCampMemberCardHaveHeathIssueIds.length) {
@@ -2541,12 +2590,50 @@ export async function getAllWelfare(
         welfareBaan.peeHealths,
         peeHealths
       );
+      campPeeSpicyS = ifIsPlus(heathIssue.spicy, campPeeSpicyS);
+      baanPeeSpicyS = ifIsPlus(heathIssue.spicy, baanPeeSpicyS);
+      campPeeHalalS = ifIsPlus(heathIssue.foodLimit == "อิสลาม", campPeeHalalS);
+      baanPeeHalalS = ifIsPlus(heathIssue.foodLimit == "อิสลาม", baanPeeHalalS);
+      campPeeVegetarians = ifIsPlus(
+        heathIssue.foodLimit == "มังสวิรัติ",
+        campPeeVegetarians
+      );
+      baanPeeVegetarians = ifIsPlus(
+        heathIssue.foodLimit == "มังสวิรัติ",
+        baanPeeVegetarians
+      );
+      campPeeVegans = ifIsPlus(heathIssue.foodLimit == "เจ", campPeeVegans);
+      baanPeeVegans = ifIsPlus(heathIssue.foodLimit == "เจ", baanPeeVegans);
     }
     baanWelfares.push(welfareBaan);
     baanHaveBottles.push({
       name: baan.name,
       nongNumber: baan.nongHaveBottleIds.length,
       peeNumber: baan.peeHaveBottleIds.length,
+      petoNumber: 0,
+    });
+    baanSpicyS.push({
+      name: baan.name,
+      nongNumber: baanNongSpicyS,
+      peeNumber: baanPeeSpicyS,
+      petoNumber: 0,
+    });
+    baanHalalS.push({
+      name: baan.name,
+      nongNumber: baanNongHalalS,
+      peeNumber: baanPeeHalalS,
+      petoNumber: 0,
+    });
+    baanVegetarians.push({
+      name: baan.name,
+      nongNumber: baanNongVegetarians,
+      peeNumber: baanPeeVegetarians,
+      petoNumber: 0,
+    });
+    baanVegans.push({
+      name: baan.name,
+      nongNumber: baanNongVegans,
+      peeNumber: baanPeeVegans,
       petoNumber: 0,
     });
   }
@@ -2565,6 +2652,14 @@ export async function getAllWelfare(
       peeSize: sizeMapToJson(part.peeShirtSize),
       petoSize: sizeMapToJson(part.petoShirtSize),
     };
+    let partPeeSpicyS = 0;
+    let partPetoSpicyS = 0;
+    let partPeeHalalS = 0;
+    let partPetoHalalS = 0;
+    let partPeeVegetarians = 0;
+    let partPetoVegetarians = 0;
+    let partPeeVegans = 0;
+    let partPetoVegans = 0;
     let j = 0;
     while (j < part.petoCampMemberCardHaveHeathIssueIds.length) {
       const campMemberCard = await CampMemberCard.findById(
@@ -2591,6 +2686,26 @@ export async function getAllWelfare(
         welfarePart.petoHealths,
         petoHealths
       );
+      campPetoSpicyS = ifIsPlus(heathIssue.spicy, campPetoSpicyS);
+      partPetoSpicyS = ifIsPlus(heathIssue.spicy, partPetoSpicyS);
+      campPetoHalalS = ifIsPlus(
+        heathIssue.foodLimit == "อิสลาม",
+        campPetoHalalS
+      );
+      partPetoHalalS = ifIsPlus(
+        heathIssue.foodLimit == "อิสลาม",
+        partPetoHalalS
+      );
+      campPetoVegetarians = ifIsPlus(
+        heathIssue.foodLimit == "มังสวิรัติ",
+        campPetoVegetarians
+      );
+      partPetoVegetarians = ifIsPlus(
+        heathIssue.foodLimit == "มังสวิรัติ",
+        partPetoVegetarians
+      );
+      campPetoVegans = ifIsPlus(heathIssue.foodLimit == "เจ", campPetoVegans);
+      partPetoVegans = ifIsPlus(heathIssue.foodLimit == "เจ", partPetoVegans);
     }
     j = 0;
     while (j < part.peeHeathIssueIds.length) {
@@ -2617,6 +2732,13 @@ export async function getAllWelfare(
         buffer,
         welfarePart.peeHealths
       );
+      partPeeSpicyS = ifIsPlus(heathIssue.spicy, partPeeSpicyS);
+      partPeeHalalS = ifIsPlus(heathIssue.foodLimit == "อิสลาม", partPeeHalalS);
+      partPeeVegetarians = ifIsPlus(
+        heathIssue.foodLimit == "มังสวิรัติ",
+        partPeeVegetarians
+      );
+      partPeeVegans = ifIsPlus(heathIssue.foodLimit == "เจ", partPeeVegans);
     }
     partWelfares.push(welfarePart);
     partHaveBottles.push({
@@ -2624,6 +2746,30 @@ export async function getAllWelfare(
       nongNumber: 0,
       peeNumber: part.peeHaveBottleIds.length,
       petoNumber: part.petoHaveBottleIds.length,
+    });
+    partSpicyS.push({
+      name: part.partName,
+      nongNumber: 0,
+      peeNumber: partPeeSpicyS,
+      petoNumber: partPetoSpicyS,
+    });
+    partHalalS.push({
+      name: part.partName,
+      nongNumber: 0,
+      peeNumber: partPeeHalalS,
+      petoNumber: partPetoHalalS,
+    });
+    partVegetarians.push({
+      name: part.partName,
+      nongNumber: 0,
+      peeNumber: partPeeVegetarians,
+      petoNumber: partPetoVegetarians,
+    });
+    partVegans.push({
+      name: part.partName,
+      nongNumber: 0,
+      peeNumber: partPeeVegans,
+      petoNumber: partPetoVegans,
     });
   }
   const meals: InterMeal[] = [];
@@ -2657,6 +2803,38 @@ export async function getAllWelfare(
       peeNumber: camp.peeHaveBottleIds.length,
       petoNumber: camp.petoHaveBottleIds.length,
       name: camp.campName,
+    },
+    baanHalalS,
+    baanSpicyS,
+    baanVegans,
+    baanVegetarians,
+    partHalalS,
+    partSpicyS,
+    partVegans,
+    partVegetarians,
+    campSpicyNumber: {
+      name: camp.campName,
+      nongNumber: campNongSpicyS,
+      peeNumber: campPeeSpicyS,
+      petoNumber: campPetoSpicyS,
+    },
+    campHalalNumber: {
+      name: camp.campName,
+      nongNumber: campNongHalalS,
+      peeNumber: campPeeHalalS,
+      petoNumber: campPetoHalalS,
+    },
+    campVegetarianNumber: {
+      name: camp.campName,
+      nongNumber: campNongVegetarians,
+      peeNumber: campPeeVegetarians,
+      petoNumber: campPetoVegetarians,
+    },
+    campVeganNumber: {
+      name: camp.campName,
+      nongNumber: campNongVegans,
+      peeNumber: campPeeVegans,
+      petoNumber: campPetoVegans,
     },
     meals,
     _id: camp._id,
