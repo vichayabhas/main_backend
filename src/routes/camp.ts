@@ -51,6 +51,9 @@ import {
   scoreTextQuestions,
   getCoopData,
   getAllNongRegister,
+  getParts,
+  getActionPlanByCampId,
+  getWorkingItemByCampId,
 } from "../controllers/camp";
 import {
   interview,
@@ -92,7 +95,6 @@ router.get("/getWorkingItems/", protect, pee, getWorkingItems); //
 router.get(
   "/getWorkingItemByPartId/params/:id",
   protect,
-  pee,
   getWorkingItemByPartId
 ); //
 router.get("/getWorkingItem/params/:id", protect, pee, getWorkingItem); //
@@ -123,8 +125,19 @@ router.delete(
 router.delete("/deleteTextQuestion/params/:id", protect, deleteTextQuestion); //
 router.post("/plusActionPlan/", protect, plusActionPlan); //
 router.post("/peeAnswerQuestion/", protect, peeAnswerQuestion); //
-router.get("/getAllAnswerAndQuestion/params/:id", getAllAnswerAndQuestion); //
+router.get(
+  "/getAllAnswerAndQuestion/params/:id",
+  protect,
+  getAllAnswerAndQuestion
+); //
 router.post("/scoreTextQuestions/", protect, scoreTextQuestions); //
 router.get("/getCoopData/params/:id", getCoopData); //
-router.get("/getAllNongRegister/params/:id", protect, pee, getAllNongRegister);
+router.get("/getAllNongRegister/params/:id", protect, pee, getAllNongRegister); //
+router.get("/getActionPlanByCampId/params/:id", protect, getActionPlanByCampId);//
+router.get(
+  "/getWorkingItemByCampId/params/:id",
+  protect,
+  getWorkingItemByCampId
+);//
+router.get("/getParts/params/:id", protect, getParts);
 export default router;

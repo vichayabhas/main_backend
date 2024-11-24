@@ -68,6 +68,8 @@ import {
   GetCoopData,
   AllNongRegister,
   InterMeal,
+  InterPartFront,
+  SuccessBase,
 } from "../models/interface";
 import Song from "../models/Song";
 import HeathIssue from "../models/HeathIssue";
@@ -83,6 +85,7 @@ import TextAnswer from "../models/TextAnswer";
 import TextQuestion from "../models/TextQuestion";
 import { getHealthIssuePack } from "./randomThing";
 import Meal from "../models/Meal";
+import bcrypt from "bcrypt";
 
 //*export async function getBaan
 //*export async function getCamp
@@ -141,6 +144,9 @@ import Meal from "../models/Meal";
 // export async function getMedicalHealthIssue
 //*export async function getCoopData
 //*export async function getAllNongRegister
+//*export async function getActionPlanByCampId
+//*export async function getWorkingItemByCampId
+//*export async function getParts
 export async function getBaan(req: express.Request, res: express.Response) {
   try {
     const data: InterBaanBack | null = await Baan.findById(req.params.id);
@@ -825,7 +831,21 @@ export async function getActionPlanByPartId(
   try {
     const part = await Part.findById(req.params.id);
     const data: showActionPlan[] = [];
+    const user = await getUser(req);
     if (!part) {
+      sendRes(res, false);
+      return;
+    }
+    const camp = await Camp.findById(part.campId);
+    if (
+      !camp ||
+      !user ||
+      (camp.nongIds.includes(user._id) &&
+        !(
+          camp.canNongSeeAllActionPlan &&
+          (user.role != "nong" || camp.canNongAccessDataWithRoleNong)
+        ))
+    ) {
       sendRes(res, false);
       return;
     }
@@ -875,7 +895,11 @@ export async function getActionPlanByPartId(
       });
     }
     data.sort((a, b) => a.start.getTime() - b.start.getTime());
-    res.status(200).json(data);
+    const buffer: SuccessBase<showActionPlan[]> = {
+      data,
+      success: true,
+    };
+    res.status(200).json(buffer);
   } catch (err) {
     console.log(err);
   }
@@ -1116,7 +1140,8 @@ export async function getActionPlans(
       }
     }
     data.sort((a, b) => a.start.getTime() - b.start.getTime());
-    res.status(200).json(data);
+    const buffer:SuccessBase<showActionPlan[]>={data,success:true}
+    res.status(200).json(buffer);
   } catch {
     res.status(400).json({
       success: false,
@@ -2060,6 +2085,20 @@ export async function getWorkingItemByPartId(
       sendRes(res, false);
       return;
     }
+    const user = await getUser(req);
+    const camp = await Camp.findById(part.campId);
+    if (
+      !camp ||
+      !user ||
+      (camp.nongIds.includes(user._id) &&
+        !(
+          camp.canNongSeeAllTrackingSheet &&
+          (user.role != "nong" || camp.canNongAccessDataWithRoleNong)
+        ))
+    ) {
+      sendRes(res, false);
+      return;
+    }
     let j = 0;
     while (j < part.workItemIds.length) {
       const workItem: InterWorkingItem | null = await WorkItem.findById(
@@ -2068,9 +2107,52 @@ export async function getWorkingItemByPartId(
       if (!workItem) {
         continue;
       }
-      data.push(workItem);
+      const {
+        name,
+        link,
+        status,
+        partId,
+        linkOutIds,
+        fromId,
+        createBy,
+        _id,
+        password,
+        partName,
+      } = workItem;
+      const isMatch = await bcrypt.compare(user.linkHash, password);
+      if (isMatch) {
+        data.push({
+          link,
+          status,
+          partId,
+          linkOutIds,
+          fromId,
+          createBy,
+          _id,
+          partName,
+          password,
+          name,
+        });
+      } else {
+        data.push({
+          link: null,
+          status,
+          partId,
+          linkOutIds,
+          fromId,
+          createBy,
+          _id,
+          partName,
+          password,
+          name,
+        });
+      }
     }
-    res.status(200).json(data);
+    const buffer: SuccessBase<InterWorkingItem[]> = {
+      data,
+      success: true,
+    };
+    res.status(200).json(buffer);
   } catch (err) {
     console.log(err);
   }
@@ -2184,11 +2266,54 @@ export async function getWorkingItems(
           if (!workItem) {
             continue;
           }
-          data.push(workItem);
+          const {
+            name,
+            link,
+            status,
+            partId,
+            linkOutIds,
+            fromId,
+            createBy,
+            _id,
+            password,
+            partName,
+          } = workItem;
+          const isMatch = await bcrypt.compare(user.linkHash, password);
+          if (isMatch) {
+            data.push({
+              link,
+              status,
+              partId,
+              linkOutIds,
+              fromId,
+              createBy,
+              _id,
+              partName,
+              password,
+              name,
+            });
+          } else {
+            data.push({
+              link: null,
+              status,
+              partId,
+              linkOutIds,
+              fromId,
+              createBy,
+              _id,
+              partName,
+              password,
+              name,
+            });
+          }
         }
       }
     }
-    res.status(200).json(data);
+    const buffer: SuccessBase<InterWorkingItem[]> = {
+      data,
+      success: true,
+    };
+    res.status(200).json(buffer);
   } catch {
     res.status(400).json({
       success: false,
@@ -2203,11 +2328,53 @@ export async function getWorkingItem(
     const workItem: InterWorkingItem | null = await WorkItem.findById(
       req.params.id
     );
-    if (!workItem) {
+    const user=await getUser(req)
+    if (!workItem||!user) {
       sendRes(res, false);
       return;
     }
-    res.status(200).json(workItem);
+    let data:InterWorkingItem
+    const {
+      name,
+      link,
+      status,
+      partId,
+      linkOutIds,
+      fromId,
+      createBy,
+      _id,
+      password,
+      partName,
+    } = workItem;
+    const isMatch = await bcrypt.compare(user.linkHash, password);
+    if (isMatch) {
+      data=({
+        link,
+        status,
+        partId,
+        linkOutIds,
+        fromId,
+        createBy,
+        _id,
+        partName,
+        password,
+        name,
+      });
+    } else {
+      data=({
+        link: null,
+        status,
+        partId,
+        linkOutIds,
+        fromId,
+        createBy,
+        _id,
+        partName,
+        password,
+        name,
+      });
+    }
+    res.status(200).json(data);
   } catch (err) {
     console.log(err);
   }
@@ -3544,7 +3711,16 @@ export async function getAllAnswerAndQuestion(
   res: express.Response
 ) {
   const camp = await Camp.findById(req.params.id);
-  if (!camp) {
+  const user = await getUser(req);
+  if (
+    !camp ||
+    !user ||
+    (camp.nongIds.includes(user._id) &&
+      !(
+        camp.canNongSeeAllAnswer &&
+        (user.role != "nong" || camp.canNongAccessDataWithRoleNong)
+      ))
+  ) {
     sendRes(res, false);
     return;
   }
@@ -3682,6 +3858,7 @@ export async function getAllAnswerAndQuestion(
     mainChoices,
     mainTexts,
     peeAnswers,
+    success: true,
   };
   res.status(200).json(buffer);
 }
@@ -3991,4 +4168,180 @@ export async function getAllNongRegister(
   }
   const out: AllNongRegister = { interviews, pendings, passs, paids, sures };
   res.status(200).json(out);
+}
+export async function getActionPlanByCampId(
+  req: express.Request,
+  res: express.Response
+) {
+  try {
+    const camp = await Camp.findById(req.params.id);
+    const data: showActionPlan[] = [];
+    const user = await getUser(req);
+    if (
+      !camp ||
+      !user ||
+      (camp.nongIds.includes(user._id) &&
+        !(
+          camp.canNongSeeAllActionPlan &&
+          (user.role != "nong" || camp.canNongAccessDataWithRoleNong)
+        ))
+    ) {
+      sendRes(res, false);
+      return;
+    }
+    let j = 0;
+    while (j <= camp.actionPlanIds.length) {
+      const actionPlan: InterActionPlan | null = await ActionPlan.findById(
+        camp.actionPlanIds[j++]
+      );
+      if (!actionPlan) {
+        continue;
+      }
+      const {
+        action,
+        partId,
+        placeIds,
+        start,
+        end,
+        headId,
+        body,
+        partName,
+        _id,
+      } = actionPlan;
+      const user = await User.findById(headId);
+      if (!user) {
+        continue;
+      }
+      let k = 0;
+      const placeName: string[] = [];
+      while (k < placeIds.length) {
+        const place = await Place.findById(placeIds[k++]);
+        const building = await Building.findById(place?.buildingId);
+        placeName.push(`${building?.name} ${place?.floor} ${place?.room}`);
+      }
+      data.push({
+        action,
+        partId,
+        placeIds,
+        start,
+        end,
+        headId,
+        body,
+        headName: user.nickname,
+        headTel: user.tel,
+        partName,
+        placeName,
+        _id,
+      });
+    }
+    data.sort((a, b) => a.start.getTime() - b.start.getTime());
+    const buffer: SuccessBase<showActionPlan[]> = {
+      data,
+      success: true,
+    };
+    res.status(200).json(buffer);
+  } catch (err) {
+    console.log(err);
+  }
+}
+export async function getWorkingItemByCampId(
+  req: express.Request,
+  res: express.Response
+) {
+  try {
+    const camp = await Camp.findById(req.params.id);
+    const data: InterWorkingItem[] = [];
+    const user = await getUser(req);
+    if (
+      !camp ||
+      !user ||
+      (camp.nongIds.includes(user._id) &&
+        !(
+          camp.canNongSeeAllTrackingSheet &&
+          (user.role != "nong" || camp.canNongAccessDataWithRoleNong)
+        ))
+    ) {
+      sendRes(res, false);
+      return;
+    }
+    let j = 0;
+    while (j < camp.workItemIds.length) {
+      const workItem: InterWorkingItem | null = await WorkItem.findById(
+        camp.workItemIds[j++]
+      );
+      if (!workItem) {
+        continue;
+      }
+      const {
+        name,
+        link,
+        status,
+        partId,
+        linkOutIds,
+        fromId,
+        createBy,
+        _id,
+        password,
+        partName,
+      } = workItem;
+      const isMatch = await bcrypt.compare(user.linkHash, password);
+      if (isMatch) {
+        data.push({
+          link,
+          status,
+          partId,
+          linkOutIds,
+          fromId,
+          createBy,
+          _id,
+          partName,
+          password,
+          name,
+        });
+      } else {
+        data.push({
+          link: null,
+          status,
+          partId,
+          linkOutIds,
+          fromId,
+          createBy,
+          _id,
+          partName,
+          password,
+          name,
+        });
+      }
+    }
+    const buffer: SuccessBase<InterWorkingItem[]> = {
+      data,
+      success: true,
+    };
+    res.status(200).json(buffer);
+  } catch (err) {
+    console.log(err);
+  }
+}
+export async function getParts(req: express.Request, res: express.Response) {
+  const camp = await Camp.findById(req.params.id);
+  const user = await getUser(req);
+  if (
+    !camp ||
+    !user ||
+    (camp.nongIds.includes(user._id) &&
+      !(user.role != "nong" || camp.canNongAccessDataWithRoleNong))
+  ) {
+    sendRes(res, false);
+    return;
+  }
+  const parts: InterPartFront[] = [];
+  let i = 0;
+  while (i < camp.partIds.length) {
+    const part: InterPartBack | null = await Part.findById(camp.partIds[i++]);
+    if (!part) {
+      continue;
+    }
+    parts.push(conPartBackToFront(part));
+  }
+  res.status(200).json(parts);
 }

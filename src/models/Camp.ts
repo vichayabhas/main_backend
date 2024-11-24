@@ -222,5 +222,21 @@ const campSchema = new mongoose.Schema({
   },
   mealIds: arrayObjectId,
   foodIds: arrayObjectId,
+  canNongSeeAllAnswer: {
+    type: Boolean,
+    default: false,
+  },
+  canNongSeeAllActionPlan: {
+    type: Boolean,
+    default: false,
+  },
+  canNongSeeAllTrackingSheet: {
+    type: Boolean,
+    default: false,
+  },
+  canNongAccessDataWithRoleNong: {
+    type: Boolean,
+    default: false,
+  },
 });
 export default mongoose.model("Camp", campSchema);

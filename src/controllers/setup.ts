@@ -285,6 +285,10 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
     canAnswerTheQuestion,
     mealIds,
     foodIds,
+    canNongSeeAllAnswer,
+    canNongSeeAllActionPlan,
+    canNongSeeAllTrackingSheet,
+    canNongAccessDataWithRoleNong,
   } = input;
   return {
     partIds,
@@ -379,6 +383,10 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
     canAnswerTheQuestion,
     mealIds,
     foodIds,
+    canNongSeeAllActionPlan,
+    canNongSeeAllAnswer,
+    canNongSeeAllTrackingSheet,
+    canNongAccessDataWithRoleNong,
   };
 }
 export function conPartBackToFront(input: InterPartBack): InterPartFront {
