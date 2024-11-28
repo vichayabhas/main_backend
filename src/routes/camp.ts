@@ -54,6 +54,9 @@ import {
   getParts,
   getActionPlanByCampId,
   getWorkingItemByCampId,
+  getNongCampData,
+  getPeeCampData,
+  getPetoCampData,
 } from "../controllers/camp";
 import {
   interview,
@@ -133,11 +136,14 @@ router.get(
 router.post("/scoreTextQuestions/", protect, scoreTextQuestions); //
 router.get("/getCoopData/params/:id", getCoopData); //
 router.get("/getAllNongRegister/params/:id", protect, pee, getAllNongRegister); //
-router.get("/getActionPlanByCampId/params/:id", protect, getActionPlanByCampId);//
+router.get("/getActionPlanByCampId/params/:id", protect, getActionPlanByCampId); //
 router.get(
   "/getWorkingItemByCampId/params/:id",
   protect,
   getWorkingItemByCampId
-);//
-router.get("/getParts/params/:id", protect, getParts);
+); //
+router.get("/getParts/params/:id", protect, getParts); //
+router.get("/getNongCampData/params/:id", protect, getNongCampData); //
+router.get("/getPeeCampData/params/:id", protect, getPeeCampData);
+router.get("/getPetoCampData/params/:id", protect, getPetoCampData);
 export default router;

@@ -582,7 +582,6 @@ export async function createCamp(req: express.Request, res: express.Response) {
       }
       await user.updateOne({
         authorizeIds: swop(null, camp._id, user.authorizeIds),
-        authPartIds: swop(null, part._id, user.authPartIds),
       });
     }
     const coop = await addPartRaw(camp._id, partNameContainerCoop._id, true);
@@ -1129,7 +1128,7 @@ export async function saveDeleteCamp(
     camp.nongPassIds.size ||
     camp.nongInterviewIds.size ||
     camp.peeIds.length + camp.petoIds.length > camp.boardIds.length ||
-    camp.partIds.length > 7 ||
+    camp.partIds.length > 8 ||
     camp.baanIds.length > 19 ||
     camp.peePassIds.size
   ) {

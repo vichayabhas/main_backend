@@ -204,7 +204,7 @@ const campSchema = new mongoose.Schema({
   peeHaveBottleIds: arrayObjectId,
   petoHaveBottleIds: arrayObjectId,
   partPrStudioId: {
-    type: mongoose.Types.ObjectId,
+    type: mongoose.Schema.ObjectId,
   },
   choiceQuestionIds: arrayObjectId,
   textQuestionIds: arrayObjectId,

@@ -1,6 +1,9 @@
 import express from "express";
 import { modePee, pee, protect } from "../middleware/auth";
 import {
+  addBaanSong,
+  addCampSong,
+  addLikeSong,
   addLostAndFound,
   createBuilding,
   createFood,
@@ -10,6 +13,7 @@ import {
   createPartChat,
   createPeeBaanChat,
   createPlace,
+  createSong,
   deleteFood,
   deleteMeal,
   getAllBuilding,
@@ -20,7 +24,7 @@ import {
   getLostAndFounds,
   getMeal,
   getMealByUser,
-  getMealsByUser,
+  getMenuSongs,
   getNongBaanChat,
   getNongChat,
   getPartChat,
@@ -29,9 +33,11 @@ import {
   getPlace,
   getPlaces,
   getShowPlace,
+  getShowSong,
   getSystemInfo,
   updateFood,
   updateMeal,
+  updateSongPage,
 } from "../controllers/randomThing";
 
 const router = express.Router();
@@ -65,5 +71,11 @@ router.delete("/deleteMeal/params/:id", protect, deleteMeal); //
 router.get("/getFoods/params/:id", getFoods); //
 router.get("/getMeal/params/:id", getMeal); //
 router.put("/updateMeal/", protect, updateMeal); //
-router.get("/getMealsByUser/params/:id", protect, getMealsByUser); //
+router.get("/getMenuSongs/", getMenuSongs); //
+router.post("/createSong/", protect, createSong); //
+router.get("/getShowSong/params/:id", getShowSong); //
+router.post("/addCampSong/params/:id", protect, addCampSong); //
+router.post("/updateSongPage/", protect, updateSongPage); //
+router.post("/addLikeSong/", protect, addLikeSong); //
+router.post("/addBaanSong/params/:id", protect, addBaanSong); //
 export default router;

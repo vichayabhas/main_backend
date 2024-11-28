@@ -1273,7 +1273,6 @@ export function checkValidStudentEmail(input: string) {
     input.split("@")[1] == endEmail &&
     id[8] == lastTwoDigit[0] &&
     id[9] == lastTwoDigit[1] &&
-    Number.isInteger(id) &&
     id.length == idLength
   );
 }

@@ -7,7 +7,7 @@ const PartSchema = new mongoose.Schema({
   author: dataString,
   time: {
     type: Number,
-    require: true,
+    required: true,
   },
   link: dataString,
   userLikeIds: arrayObjectId,

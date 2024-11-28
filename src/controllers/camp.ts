@@ -71,6 +71,16 @@ import {
   InterMeal,
   InterPartFront,
   SuccessBase,
+  UpdateActionPlan,
+  InterFood,
+  GetMeals,
+  HeathIssueBody,
+  InterCampMemberCard,
+  ShowPlace,
+  GetNongData,
+  UpdateTimeOffsetRaw,
+  GetPeeData,
+  GetPetoData,
 } from "../models/interface";
 import Song from "../models/Song";
 import HeathIssue from "../models/HeathIssue";
@@ -87,6 +97,8 @@ import TextQuestion from "../models/TextQuestion";
 import { getHealthIssuePack } from "./randomThing";
 import Meal from "../models/Meal";
 import bcrypt from "bcrypt";
+import Food from "../models/Food";
+import TimeOffset from "../models/TimeOffset";
 
 //*export async function getBaan
 //*export async function getCamp
@@ -148,6 +160,9 @@ import bcrypt from "bcrypt";
 //*export async function getActionPlanByCampId
 //*export async function getWorkingItemByCampId
 //*export async function getParts
+//*export async function getNongCampData
+//*export async function getPeeCampData
+//*export async function getPetoCampData
 export async function getBaan(req: express.Request, res: express.Response) {
   try {
     const data: InterBaanBack | null = await Baan.findById(req.params.id);
@@ -803,7 +818,6 @@ export async function staffRegister(
     sendRes(res, false);
     return;
   }
-  const importantParts = await getImpotentPartIdBCRP(camp._id);
   if (
     user.role === "pee" ||
     camp.memberStructure != "nong->highSchool,pee->1year,peto->2upYear"
@@ -814,14 +828,6 @@ export async function staffRegister(
       success: true,
     });
   } else {
-    if (
-      importantParts.includes(part._id) &&
-      !part._id.equals(importantParts[3])
-    ) {
-      await user.updateOne({
-        authPartIds: swop(null, part._id, user.authPartIds),
-      });
-    }
     await addPetoRaw([user._id], part._id, res);
   }
 }
@@ -938,38 +944,49 @@ export async function updateActionPlan(
   res: express.Response
 ) {
   try {
-    const hospital = await ActionPlan.findById(req.params.id);
-    if (!hospital) {
+    const actionPlan = await ActionPlan.findById(req.params.id);
+    if (!actionPlan) {
       sendRes(res, false);
       return;
     }
     let i = 0;
-    while (i < hospital.placeIds.length) {
-      const place = await Place.findById(hospital.placeIds[i++]);
-      const building = await Building.findById(place?.buildingId);
-      await place?.updateOne({
-        actionPlanIds: swop(hospital._id, null, place.actionPlanIds),
+    const update: UpdateActionPlan = req.body;
+    const removes = removeDuplicate(actionPlan.placeIds, update.placeIds);
+    const adds = removeDuplicate(update.placeIds, actionPlan.placeIds);
+    while (i < removes.length) {
+      const place = await Place.findById(removes[i++]);
+      if (!place) {
+        continue;
+      }
+      const building = await Building.findById(place.buildingId);
+      if (!building) {
+        continue;
+      }
+      await place.updateOne({
+        actionPlanIds: swop(actionPlan._id, null, place.actionPlanIds),
       });
       await building?.updateOne({
-        actionPlanIds: swop(hospital._id, null, building.actionPlanIds),
+        actionPlanIds: swop(actionPlan._id, null, building.actionPlanIds),
       });
     }
-    await hospital?.updateOne(req.body);
-    while (i < hospital.placeIds.length) {
-      const place = await Place.findById(hospital.placeIds[i++]);
-      const building = await Building.findById(place?.buildingId);
-      await place?.updateOne({
-        actionPlanIds: swop(null, hospital._id, place.actionPlanIds),
+    while (i < adds.length) {
+      const place = await Place.findById(adds[i++]);
+      if (!place) {
+        continue;
+      }
+      const building = await Building.findById(place.buildingId);
+      if (!building) {
+        continue;
+      }
+      await place.updateOne({
+        actionPlanIds: swop(null, actionPlan._id, place.actionPlanIds),
       });
-      await building?.updateOne({
-        actionPlanIds: swop(null, hospital._id, building.actionPlanIds),
+      await building.updateOne({
+        actionPlanIds: swop(null, actionPlan._id, building.actionPlanIds),
       });
     }
-    if (!hospital) {
-      sendRes(res, false);
-      return;
-    }
-    res.status(200).json(hospital);
+    await actionPlan.updateOne(update);
+    sendRes(res, true);
   } catch {
     res.status(400).json({
       success: false,
@@ -1689,16 +1706,18 @@ export async function getNongsFromBaanId(
   req: express.Request,
   res: express.Response
 ) {
+  const out = await getNongsFromBaanIdRaw(stringToId(req.params.id));
+  res.status(200).json(out);
+}
+async function getNongsFromBaanIdRaw(baanId: Id) {
   const out: ShowMember[] = [];
-  const baan = await Baan.findById(req.params.id);
+  const baan = await Baan.findById(baanId);
   if (!baan) {
-    sendRes(res, false);
-    return;
+    return [];
   }
   const camp = await Camp.findById(baan.campId);
   if (!camp) {
-    sendRes(res, false);
-    return;
+    return [];
   }
   let i = 0;
   while (i < baan.nongCampMemberCardIds.length) {
@@ -1761,22 +1780,24 @@ export async function getNongsFromBaanId(
       campMemberCardId: campMemberCard._id,
     });
   }
-  res.status(200).json(out);
+  return out;
 }
 export async function getPeesFromBaanId(
   req: express.Request,
   res: express.Response
 ) {
+  const out = await getPeesFromBaanIdRaw(stringToId(req.params.id));
+  res.status(200).json(out);
+}
+async function getPeesFromBaanIdRaw(baanId: Id) {
   const out: ShowMember[] = [];
-  const baan = await Baan.findById(req.params.id);
+  const baan = await Baan.findById(baanId);
   if (!baan) {
-    sendRes(res, false);
-    return;
+    return [];
   }
   const camp = await Camp.findById(baan.campId);
   if (!camp) {
-    sendRes(res, false);
-    return;
+    return [];
   }
   let i = 0;
   while (i < baan.peeCampMemberCardIds.length) {
@@ -1839,22 +1860,24 @@ export async function getPeesFromBaanId(
       campMemberCardId: campMemberCard._id,
     });
   }
-  res.status(200).json(out);
+  return out;
 }
 export async function getPeesFromPartId(
   req: express.Request,
   res: express.Response
 ) {
+  const out = await getPeesFromPartIdRaw(stringToId(req.params.id));
+  res.status(200).json(out);
+}
+async function getPeesFromPartIdRaw(partId: Id) {
   const out: ShowMember[] = [];
-  const part = await Part.findById(req.params.id);
+  const part = await Part.findById(partId);
   if (!part) {
-    sendRes(res, false);
-    return;
+    return [];
   }
   const camp = await Camp.findById(part.campId);
   if (!camp) {
-    sendRes(res, false);
-    return;
+    return [];
   }
   let i = 0;
   while (i < part.peeCampMemberCardIds.length) {
@@ -1917,22 +1940,24 @@ export async function getPeesFromPartId(
       campMemberCardId: campMemberCard._id,
     });
   }
-  res.status(200).json(out);
+  return out;
 }
 export async function getPetosFromPartId(
   req: express.Request,
   res: express.Response
 ) {
+  const out = await getPetosFromPartIdRaw(stringToId(req.params.id));
+  res.status(200).json(out);
+}
+async function getPetosFromPartIdRaw(partId: Id) {
   const out: ShowMember[] = [];
-  const part = await Part.findById(req.params.id);
+  const part = await Part.findById(partId);
   if (!part) {
-    sendRes(res, false);
-    return;
+    return [];
   }
   const camp = await Camp.findById(part.campId);
   if (!camp) {
-    sendRes(res, false);
-    return;
+    return [];
   }
   let i = 0;
   while (i < part.petoCampMemberCardIds.length) {
@@ -1995,7 +2020,7 @@ export async function getPetosFromPartId(
       campMemberCardId: campMemberCard._id,
     });
   }
-  res.status(200).json(out);
+  return out;
 }
 export async function getLinkRegister(
   req: express.Request,
@@ -2482,6 +2507,8 @@ export async function getAllWelfare(
   const partVegetarians: CampNumberData[] = [];
   const baanVegans: CampNumberData[] = [];
   const partVegans: CampNumberData[] = [];
+  const baanIsWearings: CampNumberData[] = [];
+  const partIsWearings: CampNumberData[] = [];
   let campNongSpicyS = 0;
   let campPeeSpicyS = 0;
   let campPetoSpicyS = 0;
@@ -2494,6 +2521,9 @@ export async function getAllWelfare(
   let campNongVegans = 0;
   let campPeeVegans = 0;
   let campPetoVegans = 0;
+  let campNongIsWearings = 0;
+  let campPeeIsWearings = 0;
+  let campPetoIsWearings = 0;
   let i = 0;
   while (i < camp.baanIds.length) {
     const baan: InterBaanBack | null = await Baan.findById(camp.baanIds[i++]);
@@ -2517,6 +2547,8 @@ export async function getAllWelfare(
     let baanPeeVegetarians = 0;
     let baanNongVegans = 0;
     let baanPeeVegans = 0;
+    let baanNongIsWearings = 0;
+    let baanPeeIsWearings = 0;
     let j = 0;
     while (j < baan.nongCampMemberCardHaveHeathIssueIds.length) {
       const campMemberCard = await CampMemberCard.findById(
@@ -2563,6 +2595,8 @@ export async function getAllWelfare(
       );
       campNongVegans = ifIsPlus(heathIssue.foodLimit == "เจ", campNongVegans);
       baanNongVegans = ifIsPlus(heathIssue.foodLimit == "เจ", baanNongVegans);
+      campNongIsWearings = ifIsPlus(heathIssue.isWearing, campNongIsWearings);
+      baanNongIsWearings = ifIsPlus(heathIssue.isWearing, baanNongIsWearings);
     }
     j = 0;
     while (j < baan.peeCampMemberCardHaveHeathIssueIds.length) {
@@ -2604,6 +2638,8 @@ export async function getAllWelfare(
       );
       campPeeVegans = ifIsPlus(heathIssue.foodLimit == "เจ", campPeeVegans);
       baanPeeVegans = ifIsPlus(heathIssue.foodLimit == "เจ", baanPeeVegans);
+      campPeeIsWearings = ifIsPlus(heathIssue.isWearing, campPeeIsWearings);
+      baanPeeIsWearings = ifIsPlus(heathIssue.isWearing, baanPeeIsWearings);
     }
     baanWelfares.push(welfareBaan);
     baanHaveBottles.push({
@@ -2636,6 +2672,12 @@ export async function getAllWelfare(
       peeNumber: baanPeeVegans,
       petoNumber: 0,
     });
+    baanIsWearings.push({
+      name: baan.name,
+      nongNumber: baanNongIsWearings,
+      peeNumber: baanPeeIsWearings,
+      petoNumber: 0,
+    });
   }
   i = 0;
   while (i < camp.partIds.length) {
@@ -2660,6 +2702,8 @@ export async function getAllWelfare(
     let partPetoVegetarians = 0;
     let partPeeVegans = 0;
     let partPetoVegans = 0;
+    let partPeeIsWearings = 0;
+    let partPetoIsWearings = 0;
     let j = 0;
     while (j < part.petoCampMemberCardHaveHeathIssueIds.length) {
       const campMemberCard = await CampMemberCard.findById(
@@ -2706,6 +2750,8 @@ export async function getAllWelfare(
       );
       campPetoVegans = ifIsPlus(heathIssue.foodLimit == "เจ", campPetoVegans);
       partPetoVegans = ifIsPlus(heathIssue.foodLimit == "เจ", partPetoVegans);
+      campPetoIsWearings = ifIsPlus(heathIssue.isWearing, campPetoIsWearings);
+      partPetoIsWearings = ifIsPlus(heathIssue.isWearing, partPetoIsWearings);
     }
     j = 0;
     while (j < part.peeHeathIssueIds.length) {
@@ -2739,6 +2785,7 @@ export async function getAllWelfare(
         partPeeVegetarians
       );
       partPeeVegans = ifIsPlus(heathIssue.foodLimit == "เจ", partPeeVegans);
+      partPeeIsWearings = ifIsPlus(heathIssue.isWearing, partPeeIsWearings);
     }
     partWelfares.push(welfarePart);
     partHaveBottles.push({
@@ -2770,6 +2817,12 @@ export async function getAllWelfare(
       nongNumber: 0,
       peeNumber: partPeeVegans,
       petoNumber: partPetoVegans,
+    });
+    partIsWearings.push({
+      name: part.partName,
+      nongNumber: 0,
+      peeNumber: partPeeIsWearings,
+      petoNumber: partPetoIsWearings,
     });
   }
   const meals: InterMeal[] = [];
@@ -2835,6 +2888,14 @@ export async function getAllWelfare(
       nongNumber: campNongVegans,
       peeNumber: campPeeVegans,
       petoNumber: campPetoVegans,
+    },
+    partIsWearings,
+    baanIsWearings,
+    campWearingNumber: {
+      name: camp.campName,
+      nongNumber: campNongIsWearings,
+      peeNumber: campPeeIsWearings,
+      petoNumber: campPetoIsWearings,
     },
     meals,
     _id: camp._id,
@@ -4037,6 +4098,7 @@ export async function getAllAnswerAndQuestion(
     mainTexts,
     peeAnswers,
     success: true,
+    groupName: camp.groupName,
   };
   res.status(200).json(buffer);
 }
@@ -4069,7 +4131,7 @@ export async function scoreTextQuestions(
 }
 
 function isHaveExtra(input: HeathIssuePack): boolean {
-  return input.heathIssue.extra != "";
+  return input.heathIssue.chronicDisease != "" || input.heathIssue.extra != "";
 }
 export async function getHealthIssueForAct(
   req: express.Request,
@@ -4147,11 +4209,16 @@ function isMedicalValid(input: HeathIssuePack): boolean {
   return (
     input.heathIssue.medicine != "" ||
     input.heathIssue.extra != "" ||
+    input.heathIssue.chronicDisease != "" ||
     input.heathIssue.isWearing
   );
 }
 function isCoopValid(input: HeathIssuePack): boolean {
-  return input.heathIssue.extra != "" || input.heathIssue.isWearing;
+  return (
+    input.heathIssue.extra != "" ||
+    input.heathIssue.chronicDisease != "" ||
+    input.heathIssue.isWearing
+  );
 }
 export async function getMedicalHealthIssue(
   req: express.Request,
@@ -4522,4 +4589,436 @@ export async function getParts(req: express.Request, res: express.Response) {
     parts.push(conPartBackToFront(part));
   }
   res.status(200).json(parts);
+}
+async function getMealsByHealthIssue(
+  healthIssue: HeathIssueBody | null,
+  mealIds: Id[],
+  campMemberCard: InterCampMemberCard
+) {
+  const output: GetMeals[] = [];
+  let i = 0;
+  while (i < mealIds.length) {
+    let j = 0;
+    const meal = await Meal.findById(mealIds[i++]);
+    const whiteLists: InterFood[] = [];
+    const blackLists: InterFood[] = [];
+    if (!meal) {
+      continue;
+    }
+    if (!healthIssue) {
+      while (j < meal.foodIds.length) {
+        const food = await Food.findById(meal.foodIds[j++]);
+        if (!food) {
+          continue;
+        }
+        if (food.isWhiteList) {
+          blackLists.push(food);
+        } else {
+          whiteLists.push(food);
+        }
+      }
+    } else {
+      while (j < meal.foodIds.length) {
+        const food = await Food.findById(meal.foodIds[j++]);
+        if (!food) {
+          continue;
+        }
+        if (campMemberCard.whiteListFoodIds.includes(food._id)) {
+          whiteLists.push(food);
+        } else if (
+          campMemberCard.blackListFoodIds.includes(food._id) ||
+          food.listPriority
+        ) {
+          blackLists.push(food);
+        } else {
+          switch (healthIssue.foodLimit) {
+            case "อิสลาม": {
+              if (healthIssue.spicy) {
+                if (!food.isSpicy && food.lists.includes("อิสลาม")) {
+                  whiteLists.push(food);
+                } else {
+                  blackLists.push(food);
+                }
+              } else {
+                if (food.lists.includes("อิสลาม")) {
+                  whiteLists.push(food);
+                } else {
+                  blackLists.push(food);
+                }
+              }
+              break;
+            }
+            case "มังสวิรัติ": {
+              if (healthIssue.spicy) {
+                if (!food.isSpicy && food.lists.includes("มังสวิรัติ")) {
+                  whiteLists.push(food);
+                } else {
+                  blackLists.push(food);
+                }
+              } else {
+                if (food.lists.includes("มังสวิรัติ")) {
+                  whiteLists.push(food);
+                } else {
+                  blackLists.push(food);
+                }
+              }
+              break;
+            }
+            case "เจ": {
+              if (healthIssue.spicy) {
+                if (!food.isSpicy && food.lists.includes("เจ")) {
+                  whiteLists.push(food);
+                } else {
+                  blackLists.push(food);
+                }
+              } else {
+                if (food.lists.includes("เจ")) {
+                  whiteLists.push(food);
+                } else {
+                  blackLists.push(food);
+                }
+              }
+              break;
+            }
+            case "ไม่มีข้อจำกัดด้านความเชื่อ": {
+              if (healthIssue.spicy) {
+                if (food.isSpicy) {
+                  blackLists.push(food);
+                } else {
+                  whiteLists.push(food);
+                }
+              } else {
+                if (food.isWhiteList) {
+                  blackLists.push(food);
+                } else {
+                  whiteLists.push(food);
+                }
+              }
+              break;
+            }
+          }
+        }
+      }
+    }
+    output.push({
+      time: meal.time,
+      whiteLists,
+      blackLists,
+    });
+  }
+  return output;
+}
+export async function getNongCampData(
+  req: express.Request,
+  res: express.Response
+) {
+  const camp: InterCampBack | null = await Camp.findById(req.params.id);
+  const user1 = await getUser(req);
+  if (!user1 || !camp) {
+    sendRes(res, false);
+    return;
+  }
+  const campMemberCard = await CampMemberCard.findById(
+    camp.mapCampMemberCardIdByUserId.get(user1._id)
+  );
+  const user: InterUser | null = await User.findById(user1._id);
+  if (!campMemberCard || !user) {
+    sendRes(res, false);
+    return;
+  }
+  const nongCamp = await NongCamp.findById(campMemberCard.campModelId);
+  if (!nongCamp) {
+    sendRes(res, false);
+    return;
+  }
+  const baan: InterBaanBack | null = await Baan.findById(nongCamp.baanId);
+  if (!baan) {
+    sendRes(res, false);
+    return;
+  }
+  async function getShowPlace(placeId: Id | null): Promise<ShowPlace | null> {
+    if (placeId) {
+      const place = await Place.findById(placeId);
+      if (!place) {
+        return null;
+      }
+      const building = await Building.findById(place.buildingId);
+      if (!building) {
+        return null;
+      }
+      return {
+        _id: place._id,
+        buildingName: building.name,
+        floor: place.floor,
+        room: place.room,
+      };
+    } else {
+      return null;
+    }
+  }
+  const boy: ShowPlace | null = await getShowPlace(baan.boySleepPlaceId);
+  const girl: ShowPlace | null = await getShowPlace(baan.girlSleepPlaceId);
+  const normal: ShowPlace | null = await getShowPlace(baan.normalPlaceId);
+  const healthIssue = await HeathIssue.findById(campMemberCard.healthIssueId);
+  const meals = await getMealsByHealthIssue(
+    healthIssue,
+    camp.mealIds,
+    campMemberCard
+  );
+  const nongs = await getNongsFromBaanIdRaw(baan._id);
+  const pees = await getPeesFromBaanIdRaw(baan._id);
+  let displayOffset: UpdateTimeOffsetRaw | null = await TimeOffset.findById(
+    user.displayOffsetId
+  );
+  if (!displayOffset) {
+    displayOffset = {
+      day: 0,
+      hour: 0,
+      minute: 0,
+    };
+  }
+  const buffer: GetNongData = {
+    baan: conBaanBackToFront(baan),
+    camp: conCampBackToFront(camp),
+    boy,
+    girl,
+    normal,
+    nongs,
+    pees,
+    meals,
+    campMemberCard,
+    healthIssue: healthIssue
+      ? healthIssue
+      : {
+          food: "",
+          medicine: "",
+          chronicDisease: "",
+          isWearing: false,
+          spicy: false,
+          foodConcern: "",
+          foodLimit: "ไม่มีข้อจำกัดด้านความเชื่อ",
+          extra: "",
+        },
+    user,
+    displayOffset,
+  };
+  res.status(200).json(buffer);
+}
+export async function getPeeCampData(
+  req: express.Request,
+  res: express.Response
+) {
+  const camp: InterCampBack | null = await Camp.findById(req.params.id);
+  const user1 = await getUser(req);
+  if (!user1 || !camp) {
+    sendRes(res, false);
+    return;
+  }
+  const campMemberCard = await CampMemberCard.findById(
+    camp.mapCampMemberCardIdByUserId.get(user1._id)
+  );
+  const user: InterUser | null = await User.findById(user1._id);
+  if (!campMemberCard || !user) {
+    sendRes(res, false);
+    return;
+  }
+  const peeCamp = await PeeCamp.findById(campMemberCard.campModelId);
+  if (!peeCamp) {
+    sendRes(res, false);
+    return;
+  }
+  const baan: InterBaanBack | null = await Baan.findById(peeCamp.baanId);
+  const part: InterPartBack | null = await Part.findById(peeCamp.partId);
+  if (!baan || !part) {
+    sendRes(res, false);
+    return;
+  }
+  async function getShowPlace(placeId: Id | null): Promise<ShowPlace | null> {
+    if (placeId) {
+      const place = await Place.findById(placeId);
+      if (!place) {
+        return null;
+      }
+      const building = await Building.findById(place.buildingId);
+      if (!building) {
+        return null;
+      }
+      return {
+        _id: place._id,
+        buildingName: building.name,
+        floor: place.floor,
+        room: place.room,
+      };
+    } else {
+      return null;
+    }
+  }
+  const boy: ShowPlace | null = await getShowPlace(baan.boySleepPlaceId);
+  const girl: ShowPlace | null = await getShowPlace(baan.girlSleepPlaceId);
+  const normal: ShowPlace | null = await getShowPlace(baan.normalPlaceId);
+  const partPlace = await getShowPlace(part.placeId);
+  const healthIssue = await HeathIssue.findById(campMemberCard.healthIssueId);
+  const meals = await getMealsByHealthIssue(
+    healthIssue,
+    camp.mealIds,
+    campMemberCard
+  );
+  const nongBaans = await getNongsFromBaanIdRaw(baan._id);
+  const peeBaans = await getPeesFromBaanIdRaw(baan._id);
+  const peeParts = await getPeesFromPartIdRaw(part._id);
+  const petoParts = await getPetosFromPartIdRaw(part._id);
+  let displayOffset: UpdateTimeOffsetRaw | null = await TimeOffset.findById(
+    user.displayOffsetId
+  );
+  if (!displayOffset) {
+    displayOffset = {
+      day: 0,
+      hour: 0,
+      minute: 0,
+    };
+  }
+  let selectOffset: UpdateTimeOffsetRaw | null = await TimeOffset.findById(
+    user.selectOffsetId
+  );
+  if (!selectOffset) {
+    selectOffset = {
+      day: 0,
+      hour: 0,
+      minute: 0,
+    };
+  }
+  const buffer: GetPeeData = {
+    baan: conBaanBackToFront(baan),
+    camp: conCampBackToFront(camp),
+    part: conPartBackToFront(part),
+    boy,
+    girl,
+    normal,
+    partPlace,
+    nongBaans,
+    peeBaans,
+    meals,
+    campMemberCard,
+    healthIssue: healthIssue
+      ? healthIssue
+      : {
+          food: "",
+          medicine: "",
+          chronicDisease: "",
+          isWearing: false,
+          spicy: false,
+          foodConcern: "",
+          foodLimit: "ไม่มีข้อจำกัดด้านความเชื่อ",
+          extra: "",
+        },
+    user,
+    displayOffset,
+    selectOffset,
+    petoParts,
+    peeParts,
+  };
+  res.status(200).json(buffer);
+}
+export async function getPetoCampData(
+  req: express.Request,
+  res: express.Response
+) {
+  const camp: InterCampBack | null = await Camp.findById(req.params.id);
+  const user1 = await getUser(req);
+  if (!user1 || !camp) {
+    sendRes(res, false);
+    return;
+  }
+  const campMemberCard = await CampMemberCard.findById(
+    camp.mapCampMemberCardIdByUserId.get(user1._id)
+  );
+  const user: InterUser | null = await User.findById(user1._id);
+  if (!campMemberCard || !user) {
+    sendRes(res, false);
+    return;
+  }
+  const petoCamp = await PetoCamp.findById(campMemberCard.campModelId);
+  if (!petoCamp) {
+    sendRes(res, false);
+    return;
+  }
+  const part: InterPartBack | null = await Part.findById(petoCamp.partId);
+  if (!part) {
+    sendRes(res, false);
+    return;
+  }
+  async function getShowPlace(placeId: Id | null): Promise<ShowPlace | null> {
+    if (placeId) {
+      const place = await Place.findById(placeId);
+      if (!place) {
+        return null;
+      }
+      const building = await Building.findById(place.buildingId);
+      if (!building) {
+        return null;
+      }
+      return {
+        _id: place._id,
+        buildingName: building.name,
+        floor: place.floor,
+        room: place.room,
+      };
+    } else {
+      return null;
+    }
+  }
+  const partPlace = await getShowPlace(part.placeId);
+  const healthIssue = await HeathIssue.findById(campMemberCard.healthIssueId);
+  const meals = await getMealsByHealthIssue(
+    healthIssue,
+    camp.mealIds,
+    campMemberCard
+  );
+  const pees = await getPeesFromPartIdRaw(part._id);
+  const petos = await getPetosFromPartIdRaw(part._id);
+  let displayOffset: UpdateTimeOffsetRaw | null = await TimeOffset.findById(
+    user.displayOffsetId
+  );
+  if (!displayOffset) {
+    displayOffset = {
+      day: 0,
+      hour: 0,
+      minute: 0,
+    };
+  }
+  let selectOffset: UpdateTimeOffsetRaw | null = await TimeOffset.findById(
+    user.selectOffsetId
+  );
+  if (!selectOffset) {
+    selectOffset = {
+      day: 0,
+      hour: 0,
+      minute: 0,
+    };
+  }
+  const buffer: GetPetoData = {
+    camp: conCampBackToFront(camp),
+    part: conPartBackToFront(part),
+    partPlace,
+    meals,
+    campMemberCard,
+    healthIssue: healthIssue
+      ? healthIssue
+      : {
+          food: "",
+          medicine: "",
+          chronicDisease: "",
+          isWearing: false,
+          spicy: false,
+          foodConcern: "",
+          foodLimit: "ไม่มีข้อจำกัดด้านความเชื่อ",
+          extra: "",
+        },
+    user,
+    displayOffset,
+    selectOffset,
+    petos,
+    pees,
+  };
+  res.status(200).json(buffer);
 }
