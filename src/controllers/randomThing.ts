@@ -5,11 +5,11 @@ import Song from "../models/Song";
 import User from "../models/User";
 import express from "express";
 import {
-  conBaanBackToFront,
-  conCampBackToFront,
   getEndEmail,
+  getPusherData,
   getSystemMode,
   ifIsTrue,
+  newChatText,
   removeDuplicate,
   resError,
   resOk,
@@ -22,6 +22,9 @@ import Building from "../models/Building";
 import Place from "../models/Place";
 import NongCamp from "../models/NongCamp";
 import {
+  AuthSongsCamp,
+  BasicBaan,
+  BasicCamp,
   ChatReady,
   CreateBaanChat,
   CreateFood,
@@ -34,18 +37,16 @@ import {
   GetMenuSongs,
   HeathIssuePack,
   Id,
-  InterBaanBack,
-  InterBaanFront,
   InterCampBack,
-  InterCampFront,
+  InterChat,
   InterFood,
   InterLostAndFound,
-  InterPartBack,
   InterPlace,
   InterSong,
-  InterUser,
   Mode,
   RoleCamp,
+  ShowCampSong,
+  ShowCampSongReady,
   ShowChat,
   ShowLostAndFound,
   ShowPlace,
@@ -66,11 +67,8 @@ import Meal from "../models/Meal";
 import Food from "../models/Food";
 import HeathIssue from "../models/HeathIssue";
 import { isFoodValid } from "./user";
+import PusherServer from "pusher";
 //*export async function addLikeSong
-// export async function getNongLikeSong
-// export async function getPeeLikeSong
-// export async function getPetoLikeSong
-// export async function getAllCampLikeSong
 //*export async function addBaanSong
 //*export async function addLostAndFound
 // export async function deleteLostAndFound
@@ -116,6 +114,14 @@ import { isFoodValid } from "./user";
 //*export async function getShowSong
 //*export async function addCampSong
 //*export async function updateSongPage
+//*export async function getShowCampSongs
+//*export async function getShowBaanSongs
+//*export async function getAuthSongs
+const pusherServer = new PusherServer(getPusherData());
+function getPusherClient(): [string, { cluster: string }] {
+  const data = getPusherData();
+  return [data.key, data];
+}
 export async function addLikeSong(req: express.Request, res: express.Response) {
   const { songIds }: { songIds: Id[] } = req.body;
   const user = await getUser(req);
@@ -160,130 +166,31 @@ async function addLikeSongRaw(userId: Id, songIds: Id[]) {
 }
 async function getAllSong() {
   const songs = await Song.find();
-  const map: Map<Id, number> = new Map();
+  const map: Map<string, number> = new Map();
   let i = 0;
   while (i < songs.length) {
-    map.set(songs[i++]._id, 0);
+    map.set(songs[i++]._id.toString(), 0);
   }
   return map;
 }
-export async function getNongLikeSong(
-  req: express.Request,
-  res: express.Response
-) {
-  const camp = await Camp.findById(req.params.id);
-  if (!camp) {
-    sendRes(res, false);
-    return;
-  }
-  const songList: Map<Id, number> = await getAllSong();
+async function getUserLikeSong(userIds: Id[]) {
+  const songList: Map<string, number> = await getAllSong();
   let i = 0;
-  while (i < camp.nongIds.length) {
-    const user = await User.findById(camp.nongIds[i++]);
+  while (i < userIds.length) {
+    const user = await User.findById(userIds[i++]);
     if (!user) {
       continue;
     }
     let j = 0;
     while (j < user.likeSongIds.length) {
       const songId = user.likeSongIds[j++];
-      songList.set(songId, (songList.get(songId) as number) + 1);
+      songList.set(
+        songId.toString(),
+        (songList.get(songId.toString()) as number) + 1
+      );
     }
   }
-  res.status(200).json({ songList });
-}
-export async function getPeeLikeSong(
-  req: express.Request,
-  res: express.Response
-) {
-  const camp = await Camp.findById(req.params.id);
-  if (!camp) {
-    sendRes(res, false);
-    return;
-  }
-  const songList: Map<Id, number> = await getAllSong();
-  let i = 0;
-  while (i < camp.peeIds.length) {
-    const user = await User.findById(camp.peeIds[i++]);
-    if (!user) {
-      continue;
-    }
-    let j = 0;
-    while (j < user.likeSongIds.length) {
-      const songId = user.likeSongIds[j++];
-      songList.set(songId, (songList.get(songId) as number) + 1);
-    }
-  }
-  res.status(200).json({ songList });
-}
-export async function getPetoLikeSong(
-  req: express.Request,
-  res: express.Response
-) {
-  const camp = await Camp.findById(req.params.id);
-  if (!camp) {
-    sendRes(res, false);
-    return;
-  }
-  const songList: Map<Id, number> = await getAllSong();
-  let i = 0;
-  while (i < camp.petoIds.length) {
-    const user = await User.findById(camp.petoIds[i++]);
-    if (!user) {
-      continue;
-    }
-    let j = 0;
-    while (j < user.likeSongIds.length) {
-      const songId = user.likeSongIds[j++];
-      songList.set(songId, (songList.get(songId) as number) + 1);
-    }
-  }
-  res.status(200).json({ songList });
-}
-export async function getAllCampLikeSong(
-  req: express.Request,
-  res: express.Response
-) {
-  const camp = await Camp.findById(req.params.id);
-  if (!camp) {
-    sendRes(res, false);
-    return;
-  }
-  const songList: Map<Id, number> = await getAllSong();
-  let i = 0;
-  while (i < camp.nongIds.length) {
-    const user = await User.findById(camp.nongIds[i++]);
-    if (!user) {
-      continue;
-    }
-    let j = 0;
-    while (j < user.likeSongIds.length) {
-      const songId = user.likeSongIds[j++];
-      songList.set(songId, (songList.get(songId) as number) + 1);
-    }
-  }
-  while (i < camp.peeIds.length) {
-    const user = await User.findById(camp.peeIds[i++]);
-    if (!user) {
-      continue;
-    }
-    let j = 0;
-    while (j < user.likeSongIds.length) {
-      const songId = user.likeSongIds[j++];
-      songList.set(songId, (songList.get(songId) as number) + 1);
-    }
-  }
-  while (i < camp.petoIds.length) {
-    const user = await User.findById(camp.petoIds[i++]);
-    if (!user) {
-      continue;
-    }
-    let j = 0;
-    while (j < user.likeSongIds.length) {
-      const songId = user.likeSongIds[j++];
-      songList.set(songId, (songList.get(songId) as number) + 1);
-    }
-  }
-  res.status(200).json({ songList });
+  return songList;
 }
 export async function addBaanSong(req: express.Request, res: express.Response) {
   const { songIds }: { songIds: Id[] } = req.body;
@@ -719,8 +626,23 @@ export async function createPartChat(
     await campMemberCard.updateOne({
       allChatIds: swop(null, chat._id, campMemberCard.allChatIds),
     });
+    const user = await User.findById(campMemberCard.userId);
+    if (!user) {
+      continue;
+    }
+    const showChat = await getShowChatFromChat(chat, user.mode);
+    if (!showChat) {
+      continue;
+    }
+    await pusherServer.trigger(
+      `chat${camp._id}${user._id}`,
+      newChatText,
+      showChat
+    );
   }
   await part.updateOne({ chatIds: swop(null, chat._id, part.chatIds) });
+  const showChat = await getShowChatFromChat(chat, "pee");
+  await pusherServer.trigger(`chat${part._id}`, newChatText, showChat);
   res.status(201).json(chat);
 }
 export async function getShowChatFromChatIds(inputs: Id[], mode: Mode) {
@@ -740,6 +662,7 @@ export async function getShowChatFromChatIds(inputs: Id[], mode: Mode) {
       refId,
       campMemberCardIds,
       date,
+      _id,
     } = chat;
     let baanName: string;
     let partName: string;
@@ -866,6 +789,7 @@ export async function getShowChatFromChatIds(inputs: Id[], mode: Mode) {
       refId,
       campMemberCardIds,
       date,
+      _id,
     });
   }
   return out;
@@ -1059,7 +983,26 @@ export async function createNongChat(
     await campMemberCard.updateOne({
       allChatIds: swop(null, chat._id, campMemberCard.allChatIds),
     });
+    const user = await User.findById(campMemberCard.userId);
+    if (!user) {
+      continue;
+    }
+    const showChat = await getShowChatFromChat(chat, user.mode);
+    if (!showChat) {
+      continue;
+    }
+    await pusherServer.trigger(
+      `chat${camp._id}${user._id}`,
+      newChatText,
+      showChat
+    );
   }
+  const showChat = await getShowChatFromChat(chat, "pee");
+  await pusherServer.trigger(
+    `chat${campMemberCardHost._id}`,
+    newChatText,
+    showChat
+  );
   await campMemberCardHost.updateOne({
     chatIds: swop(null, chat._id, campMemberCardHost.chatIds),
   });
@@ -1118,6 +1061,15 @@ export async function createPeeBaanChat(
     await campMemberCard.updateOne({
       allChatIds: swop(null, chat._id, campMemberCard.allChatIds),
     });
+    const user = await User.findById(campMemberCard.userId);
+    if (!user) {
+      continue;
+    }
+    const showChat = await getShowChatFromChat(chat, user.mode);
+    if (!showChat) {
+      continue;
+    }
+    await pusherServer.trigger(`chatPee${baan._id}`, newChatText, showChat);
   }
   await baan.updateOne({ peeChatIds: swop(null, chat._id, baan.peeChatIds) });
 }
@@ -1165,6 +1117,19 @@ export async function createNongBaanChat(
       allChatIds: swop(null, chat._id, campMemberCard.allChatIds),
     });
     campMemberCardIds.push(campMemberCard._id);
+    const user = await User.findById(campMemberCard.userId);
+    if (!user) {
+      continue;
+    }
+    const showChat = await getShowChatFromChat(chat, user.mode);
+    if (!showChat) {
+      continue;
+    }
+    await pusherServer.trigger(
+      `chat${camp._id}${user._id}`,
+      newChatText,
+      showChat
+    );
   }
   i = 0;
   while (i < baan.nongCampMemberCardIds.length) {
@@ -1178,12 +1143,33 @@ export async function createNongBaanChat(
       allChatIds: swop(null, chat._id, campMemberCard.allChatIds),
     });
     campMemberCardIds.push(campMemberCard._id);
+    const user = await User.findById(campMemberCard.userId);
+    if (!user) {
+      continue;
+    }
+    const showChat = await getShowChatFromChat(chat, user.mode);
+    if (!showChat) {
+      continue;
+    }
+    await pusherServer.trigger(
+      `chat${camp._id}${user._id}`,
+      newChatText,
+      showChat
+    );
   }
   await campMemberCardSender.updateOne({
     ownChatIds: swop(null, chat._id, campMemberCardSender.ownChatIds),
   });
   await chat.updateOne({ campMemberCardIds });
   await baan.updateOne({ nongChatIds: swop(null, chat._id, baan.nongChatIds) });
+
+  const showChat = await getShowChatFromChat(chat, "pee");
+
+  await pusherServer.trigger(
+    `chat${camp._id}${user._id}`,
+    newChatText,
+    showChat
+  );
 }
 export async function getAllChatFromCampId(
   req: express.Request,
@@ -1210,6 +1196,9 @@ export async function getAllChatFromCampId(
       timeOffset,
       success: true,
       roomName: "รวมทุกแชต",
+      userId: user._id,
+      subscribe: `chat${camp._id}${user._id}`,
+      pusher: getPusherClient(),
     };
     res.status(200).json(output);
   } else {
@@ -1232,6 +1221,9 @@ export async function getAllChatFromCampId(
       timeOffset,
       success: true,
       roomName: "รวมทุกแชต",
+      userId: user._id,
+      subscribe: `chat${camp._id}${user._id}`,
+      pusher: getPusherClient(),
     };
     res.status(200).json(output);
   }
@@ -1270,6 +1262,9 @@ export async function getPartChat(req: express.Request, res: express.Response) {
     roomName: part._id.equals(camp.partPeeBaanId)
       ? `ห้องพี่${camp.groupName}คุยกัน ! อย่าหลุดสิ่งที่ไม่อยากให้น้องรู้ในแชตนี้`
       : `ฝ่าย${part.partName}`,
+    userId: user._id,
+    subscribe: `chat${part._id}`,
+    pusher: getPusherClient(),
   };
   res.status(200).json(output);
 }
@@ -1324,6 +1319,9 @@ export async function getNongBaanChat(
         timeOffset,
         success: true,
         roomName: `ห้อง${camp.groupName}${baan.name}`,
+        userId: user._id,
+        subscribe: `chatNong${baan._id}`,
+        pusher: getPusherClient(),
       };
       res.status(200).json(output);
       return;
@@ -1354,6 +1352,9 @@ export async function getNongBaanChat(
           user.mode == "pee"
             ? `ห้อง${camp.groupName}${baan.name}ที่มีน้องด้วย`
             : `ห้อง${camp.groupName}${baan.name}`,
+        userId: user._id,
+        subscribe: `chatNong${baan._id}`,
+        pusher: getPusherClient(),
       };
       res.status(200).json(output);
       return;
@@ -1408,6 +1409,9 @@ export async function getPeeBaanChat(
     timeOffset,
     success: true,
     roomName: `ห้อง${camp.groupName}${baan.name}ที่มีแต่พี่`,
+    userId: user._id,
+    subscribe: `chatPee${baan._id}`,
+    pusher: getPusherClient(),
   };
   res.status(200).json(output);
 }
@@ -1465,6 +1469,9 @@ export async function getNongChat(req: express.Request, res: express.Response) {
     timeOffset,
     success: true,
     roomName: `คุยส่วนตัวกับน้อง${host.nickname} บ้าน${baan.name}`,
+    userId: user._id,
+    subscribe: `chat${campMemberCard._id}`,
+    pusher: getPusherClient(),
   };
   res.status(200).json(output);
 }
@@ -1527,6 +1534,9 @@ export async function getPartPeebaanChat(
       user.mode == "pee"
         ? `ห้องพี่${camp.groupName}คุยกัน ! อย่าหลุดสิ่งที่ไม่อยากให้น้องรู้ในแชตนี้`
         : `ห้องพี่${camp.groupName}คุยกัน`,
+    userId: user._id,
+    subscribe: `chat${part._id}`,
+    pusher: getPusherClient(),
   };
   res.status(200).json(output);
 }
@@ -1592,7 +1602,7 @@ export async function getFoodForUpdate(
     return;
   }
   const meal = await Meal.findById(food.mealId);
-  const camp: InterCampBack | null = await Camp.findById(food.campId);
+  const camp = await Camp.findById(food.campId);
   if (!camp || !meal) {
     sendRes(res, false);
     return;
@@ -1638,7 +1648,7 @@ export async function getFoodForUpdate(
     lists,
     _id,
     isSpicy,
-    camp: conCampBackToFront(camp),
+    camp,
     isWhiteList,
     time: meal.time,
     nongCampMemberCardIds,
@@ -1663,7 +1673,7 @@ export async function getHealthIssuePack(
       continue;
     }
     const heathIssue = await HeathIssue.findById(campMemberCard.healthIssueId);
-    const user: InterUser | null = await User.findById(campMemberCard.userId);
+    const user = await User.findById(campMemberCard.userId);
     if (!heathIssue || !user) {
       continue;
     }
@@ -2620,14 +2630,12 @@ export async function getMenuSongs(
     }
     i = 0;
     const authBaans: {
-      data: InterBaanFront;
+      data: BasicBaan;
       showName: string;
     }[] = [];
-    const authCamps: InterCampFront[] = [];
+    const authCamps: BasicCamp[] = [];
     while (i < user.authPartIds.length) {
-      const part: InterPartBack | null = await Part.findById(
-        user.authPartIds[i++]
-      );
+      const part = await Part.findById(user.authPartIds[i++]);
       if (!part) {
         continue;
       }
@@ -2653,34 +2661,30 @@ export async function getMenuSongs(
               if (!peeCamp) {
                 continue;
               }
-              const baan: InterBaanBack | null = await Baan.findById(
-                peeCamp.baanId
-              );
+              const baan = await Baan.findById(peeCamp.baanId);
               if (!baan) {
                 continue;
               }
               authBaans.push({
-                data: conBaanBackToFront(baan),
+                data: baan,
                 showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
               });
-              authCamps.push(conCampBackToFront(camp));
+              authCamps.push(camp);
               break;
             }
             case "peto": {
               let j = 0;
               while (j < camp.baanIds.length) {
-                const baan: InterBaanBack | null = await Baan.findById(
-                  camp.baanIds[j++]
-                );
+                const baan = await Baan.findById(camp.baanIds[j++]);
                 if (!baan) {
                   continue;
                 }
                 authBaans.push({
-                  data: conBaanBackToFront(baan),
+                  data: baan,
                   showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
                 });
               }
-              authCamps.push(conCampBackToFront(camp));
+              authCamps.push(camp);
               break;
             }
           }
@@ -2703,14 +2707,12 @@ export async function getMenuSongs(
               if (!peeCamp) {
                 continue;
               }
-              const baan: InterBaanBack | null = await Baan.findById(
-                peeCamp.baanId
-              );
+              const baan = await Baan.findById(peeCamp.baanId);
               if (!baan) {
                 continue;
               }
               authBaans.push({
-                data: conBaanBackToFront(baan),
+                data: baan,
                 showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
               });
               break;
@@ -2718,14 +2720,12 @@ export async function getMenuSongs(
             case "peto": {
               let j = 0;
               while (j < camp.baanIds.length) {
-                const baan: InterBaanBack | null = await Baan.findById(
-                  camp.baanIds[j++]
-                );
+                const baan = await Baan.findById(camp.baanIds[j++]);
                 if (!baan) {
                   continue;
                 }
                 authBaans.push({
-                  data: conBaanBackToFront(baan),
+                  data: baan,
                   showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
                 });
               }
@@ -2737,18 +2737,16 @@ export async function getMenuSongs(
         case camp.partBoardId.toString(): {
           let j = 0;
           while (j < camp.baanIds.length) {
-            const baan: InterBaanBack | null = await Baan.findById(
-              camp.baanIds[j++]
-            );
+            const baan = await Baan.findById(camp.baanIds[j++]);
             if (!baan) {
               continue;
             }
             authBaans.push({
-              data: conBaanBackToFront(baan),
+              data: baan,
               showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
             });
           }
-          authCamps.push(conCampBackToFront(camp));
+          authCamps.push(camp);
           break;
         }
       }
@@ -2786,14 +2784,12 @@ export async function getShowSong(req: express.Request, res: express.Response) {
     const out = await getShowSongRaw(song, user._id);
     let i = 0;
     const authBaans: {
-      data: InterBaanFront;
+      data: BasicBaan;
       showName: string;
     }[] = [];
-    const authCamps: InterCampFront[] = [];
+    const authCamps: BasicCamp[] = [];
     while (i < user.authPartIds.length) {
-      const part: InterPartBack | null = await Part.findById(
-        user.authPartIds[i++]
-      );
+      const part = await Part.findById(user.authPartIds[i++]);
       if (!part) {
         continue;
       }
@@ -2819,34 +2815,30 @@ export async function getShowSong(req: express.Request, res: express.Response) {
               if (!peeCamp) {
                 continue;
               }
-              const baan: InterBaanBack | null = await Baan.findById(
-                peeCamp.baanId
-              );
+              const baan = await Baan.findById(peeCamp.baanId);
               if (!baan) {
                 continue;
               }
               authBaans.push({
-                data: conBaanBackToFront(baan),
+                data: baan,
                 showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
               });
-              authCamps.push(conCampBackToFront(camp));
+              authCamps.push(camp);
               break;
             }
             case "peto": {
               let j = 0;
               while (j < camp.baanIds.length) {
-                const baan: InterBaanBack | null = await Baan.findById(
-                  camp.baanIds[j++]
-                );
+                const baan = await Baan.findById(camp.baanIds[j++]);
                 if (!baan) {
                   continue;
                 }
                 authBaans.push({
-                  data: conBaanBackToFront(baan),
+                  data: baan,
                   showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
                 });
               }
-              authCamps.push(conCampBackToFront(camp));
+              authCamps.push(camp);
               break;
             }
           }
@@ -2869,14 +2861,12 @@ export async function getShowSong(req: express.Request, res: express.Response) {
               if (!peeCamp) {
                 continue;
               }
-              const baan: InterBaanBack | null = await Baan.findById(
-                peeCamp.baanId
-              );
+              const baan = await Baan.findById(peeCamp.baanId);
               if (!baan) {
                 continue;
               }
               authBaans.push({
-                data: conBaanBackToFront(baan),
+                data: baan,
                 showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
               });
               break;
@@ -2884,14 +2874,12 @@ export async function getShowSong(req: express.Request, res: express.Response) {
             case "peto": {
               let j = 0;
               while (j < camp.baanIds.length) {
-                const baan: InterBaanBack | null = await Baan.findById(
-                  camp.baanIds[j++]
-                );
+                const baan = await Baan.findById(camp.baanIds[j++]);
                 if (!baan) {
                   continue;
                 }
                 authBaans.push({
-                  data: conBaanBackToFront(baan),
+                  data: baan,
                   showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
                 });
               }
@@ -2903,18 +2891,16 @@ export async function getShowSong(req: express.Request, res: express.Response) {
         case camp.partBoardId.toString(): {
           let j = 0;
           while (j < camp.baanIds.length) {
-            const baan: InterBaanBack | null = await Baan.findById(
-              camp.baanIds[j++]
-            );
+            const baan = await Baan.findById(camp.baanIds[j++]);
             if (!baan) {
               continue;
             }
             authBaans.push({
-              data: conBaanBackToFront(baan),
+              data: baan,
               showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
             });
           }
-          authCamps.push(conCampBackToFront(camp));
+          authCamps.push(camp);
           break;
         }
       }
@@ -3042,4 +3028,448 @@ export async function updateSongPage(
   }
   await addLikeSongRaw(user._id, input.userLikeSongIds);
   sendRes(res, true);
+}
+export async function getShowCampSongs(
+  req: express.Request,
+  res: express.Response
+) {
+  const user = await getUser(req);
+  const camp = await Camp.findById(req.params.id);
+  if (!camp || !user) {
+    sendRes(res, false);
+    return;
+  }
+  const nongLikeSongs = await getUserLikeSong(camp.nongIds);
+  const peeLikeSongs = await getUserLikeSong(camp.peeIds);
+  const petoLikeSongs = await getUserLikeSong(camp.petoIds);
+  const songs = await Song.find();
+  const outputs: ShowCampSong[] = [];
+  let i = 0;
+  while (i < songs.length) {
+    const { _id, name, userLikeIds, link, author, time, baanIds, campIds } =
+      songs[i++];
+    let j = 0;
+    const campNames: string[] = [];
+    const baanNames: string[] = [];
+    while (j < baanIds.length) {
+      const baan = await Baan.findById(baanIds[j++]);
+      if (!baan) {
+        continue;
+      }
+      const camp = await Camp.findById(baan.campId);
+      if (!camp) {
+        continue;
+      }
+      baanNames.push(`${camp.groupName}${baan.name} จากค่าย ${camp.campName}`);
+    }
+    i = 0;
+    while (i < campIds.length) {
+      const camp = await Camp.findById(campIds[i++]);
+      if (!camp) {
+        continue;
+      }
+      campNames.push(camp.campName);
+    }
+    outputs.push({
+      _id,
+      like: userLikeIds.length,
+      name,
+      link,
+      author,
+      nongLike: nongLikeSongs.get(_id.toString()) || 0,
+      peeLike: peeLikeSongs.get(_id.toString()) || 0,
+      petoLike: petoLikeSongs.get(_id.toString()) || 0,
+      time,
+      campNames,
+      baanNames,
+    });
+  }
+  res.status(200).json(outputs);
+}
+export async function getShowBaanSongs(
+  req: express.Request,
+  res: express.Response
+) {
+  const baan = await Baan.findById(req.params.id);
+  const user = await getUser(req);
+  if (!baan || !user) {
+    sendRes(res, false);
+    return;
+  }
+  const camp = await Camp.findById(baan.campId);
+  if (!camp) {
+    sendRes(res, false);
+    return;
+  }
+  const nongLikeSongs = await getUserLikeSong(baan.nongIds);
+  const peeLikeSongs = await getUserLikeSong(baan.peeIds);
+  const songs = await Song.find();
+  const outputs: ShowCampSong[] = [];
+  let i = 0;
+  while (i < songs.length) {
+    const { _id, name, userLikeIds, link, author, time, baanIds, campIds } =
+      songs[i++];
+    let j = 0;
+    const campNames: string[] = [];
+    const baanNames: string[] = [];
+    while (j < baanIds.length) {
+      const baan = await Baan.findById(baanIds[j++]);
+      if (!baan) {
+        continue;
+      }
+      const camp = await Camp.findById(baan.campId);
+      if (!camp) {
+        continue;
+      }
+      baanNames.push(`${camp.groupName}${baan.name} จากค่าย ${camp.campName}`);
+    }
+    i = 0;
+    while (i < campIds.length) {
+      const camp = await Camp.findById(campIds[i++]);
+      if (!camp) {
+        continue;
+      }
+      campNames.push(camp.campName);
+    }
+    outputs.push({
+      _id,
+      like: userLikeIds.length,
+      name,
+      link,
+      author,
+      nongLike: nongLikeSongs.get(_id.toString()) || 0,
+      peeLike: peeLikeSongs.get(_id.toString()) || 0,
+      petoLike: 0,
+      time,
+      campNames,
+      baanNames,
+    });
+  }
+  const buffer: ShowCampSongReady = {
+    showCampSongs: outputs,
+    groupName: camp.groupName,
+    baanName: baan.name,
+    songIds: baan.songIds,
+    _id: baan._id,
+    userLikeSongIds: user.likeSongIds,
+  };
+  res.status(200).json(buffer);
+}
+export async function getAuthSongs(
+  req: express.Request,
+  res: express.Response
+) {
+  const user = await getUser(req);
+  const camp: InterCampBack | null = await Camp.findById(req.params.id);
+  if (!camp || !user) {
+    sendRes(res, false);
+    return;
+  }
+  const campMemberCard = await CampMemberCard.findById(
+    camp.mapCampMemberCardIdByUserId.get(user._id)
+  );
+  if (!campMemberCard) {
+    sendRes(res, false);
+    return;
+  }
+  let authCamp: boolean;
+  const baans: BasicBaan[] = [];
+  let i = 0;
+  switch (campMemberCard.role) {
+    case "nong":
+      return;
+    case "pee": {
+      const peeCamp = await PeeCamp.findById(campMemberCard.campModelId);
+      if (!peeCamp) {
+        sendRes(res, false);
+        return;
+      }
+      const part = await Part.findById(peeCamp.partId);
+      if (!part) {
+        sendRes(res, false);
+        return;
+      }
+      switch (part._id.toString()) {
+        case camp.partBoardId?.toString(): {
+          while (i < camp.baanIds.length) {
+            const baan = await Baan.findById(camp.baanIds[i++]);
+            if (!baan) {
+              continue;
+            }
+            baans.push(baan);
+          }
+          authCamp = true;
+          break;
+        }
+        case camp.partPrStudioId?.toString(): {
+          authCamp = true;
+          const baan = await Baan.findById(peeCamp.baanId);
+          if (!baan) {
+            break;
+          }
+          baans.push(baan);
+          break;
+        }
+        case camp.partCoopId.toString(): {
+          authCamp = true;
+          const baan = await Baan.findById(peeCamp.baanId);
+          if (!baan) {
+            break;
+          }
+          baans.push(baan);
+          break;
+        }
+        default: {
+          sendRes(res, false);
+          return;
+        }
+      }
+      break;
+    }
+    case "peto": {
+      const peeCamp = await PeeCamp.findById(campMemberCard.campModelId);
+      if (!peeCamp) {
+        return;
+      }
+      const part = await Part.findById(peeCamp.partId);
+      if (!part) {
+        return;
+      }
+      switch (part._id.toString()) {
+        case camp.partBoardId?.toString(): {
+          while (i < camp.baanIds.length) {
+            const baan = await Baan.findById(camp.baanIds[i++]);
+            if (!baan) {
+              continue;
+            }
+            baans.push(baan);
+          }
+          authCamp = true;
+          break;
+        }
+        case camp.partCoopId?.toString(): {
+          while (i < camp.baanIds.length) {
+            const baan = await Baan.findById(camp.baanIds[i++]);
+            if (!baan) {
+              continue;
+            }
+            baans.push(baan);
+          }
+          authCamp = false;
+          break;
+        }
+        case camp.partPrStudioId?.toString(): {
+          while (i < camp.baanIds.length) {
+            const baan = await Baan.findById(camp.baanIds[i++]);
+            if (!baan) {
+              continue;
+            }
+            baans.push(baan);
+          }
+          authCamp = true;
+          break;
+        }
+        default: {
+          sendRes(res, false);
+          return;
+        }
+      }
+      break;
+    }
+  }
+  const songs = await Song.find();
+  const outputs: ShowCampSong[] = [];
+  i = 0;
+  const nongLikeSongs = await getUserLikeSong(camp.nongIds);
+  const peeLikeSongs = await getUserLikeSong(camp.peeIds);
+  const petoLikeSongs = await getUserLikeSong(camp.petoIds);
+  while (i < songs.length) {
+    const { _id, name, userLikeIds, link, author, time, baanIds, campIds } =
+      songs[i++];
+    let j = 0;
+    const campNames: string[] = [];
+    const baanNames: string[] = [];
+    while (j < baanIds.length) {
+      const baan = await Baan.findById(baanIds[j++]);
+      if (!baan) {
+        continue;
+      }
+      const camp = await Camp.findById(baan.campId);
+      if (!camp) {
+        continue;
+      }
+      baanNames.push(`${camp.groupName}${baan.name} จากค่าย ${camp.campName}`);
+    }
+    j = 0;
+    while (j < campIds.length) {
+      const camp = await Camp.findById(campIds[j++]);
+      if (!camp) {
+        continue;
+      }
+      campNames.push(camp.campName);
+    }
+    outputs.push({
+      _id,
+      like: userLikeIds.length,
+      name,
+      link,
+      author,
+      time,
+      campNames,
+      baanNames,
+      nongLike: nongLikeSongs.get(_id.toString()) || 0,
+      peeLike: peeLikeSongs.get(_id.toString()) || 0,
+      petoLike: petoLikeSongs.get(_id.toString()) || 0,
+    });
+  }
+  const buffer: AuthSongsCamp = {
+    authCamp,
+    baans,
+    camp,
+    songs: outputs,
+    userLikeSongIds: user.likeSongIds,
+  };
+  res.status(200).json(buffer);
+}
+export async function getShowChatFromChat(chat: InterChat, mode: Mode) {
+  const {
+    message,
+    userId,
+    role,
+    campModelId,
+    typeChat,
+    refId,
+    campMemberCardIds,
+    date,
+    _id,
+  } = chat;
+  let baanName: string;
+  let partName: string;
+  const user = await User.findById(userId);
+  switch (role) {
+    case "pee": {
+      const peeCamp = await PeeCamp.findById(campModelId);
+      if (!peeCamp || !user) {
+        return null;
+      }
+      const part = await Part.findById(peeCamp.partId);
+      const baan = await Baan.findById(peeCamp.baanId);
+      if (!part || !baan) {
+        return null;
+      }
+      partName = part.partName;
+      baanName = baan.name;
+      break;
+    }
+    case "peto": {
+      const petoCamp = await PetoCamp.findById(campModelId);
+      if (!petoCamp || !user) {
+        return null;
+      }
+      const part = await Part.findById(petoCamp.partId);
+      if (!part) {
+        return null;
+      }
+      partName = part.partName;
+      baanName = "ปีโต";
+      break;
+    }
+    case "nong": {
+      const nongCamp = await NongCamp.findById(chat.campModelId);
+      if (!user || !nongCamp) {
+        return null;
+      }
+      const baan = await Baan.findById(nongCamp.baanId);
+      if (!baan) {
+        return null;
+      }
+      partName = "น้องค่าย";
+      baanName = baan.name;
+    }
+  }
+  let roomName: string;
+  switch (chat.typeChat) {
+    case "คุยกันในบ้าน": {
+      const baan = await Baan.findById(chat.refId);
+      if (!baan) {
+        return null;
+      }
+      const camp = await Camp.findById(baan.campId);
+      if (!camp) {
+        return null;
+      }
+      roomName = `${camp.groupName}${baan.name}`;
+      break;
+    }
+    case "พี่บ้านคุยกัน": {
+      const part = await Part.findById(chat.refId);
+      if (!part) {
+        return null;
+      }
+      const camp = await Camp.findById(part.campId);
+      if (!camp) {
+        return null;
+      }
+      roomName = `พี่${camp.groupName}`;
+      break;
+    }
+    case "น้องคุยส่วนตัวกับพี่": {
+      const campMemberCard = await CampMemberCard.findById(chat.refId);
+      if (!campMemberCard) {
+        return null;
+      }
+      const user = await User.findById(campMemberCard.userId);
+      const nongCamp = await NongCamp.findById(campMemberCard.campModelId);
+      if (!user || !nongCamp) {
+        return null;
+      }
+      const baan = await Baan.findById(nongCamp.baanId);
+      if (!baan) {
+        return null;
+      }
+      roomName = `น้อง${user.nickname} บ้าน${baan.name}`;
+      break;
+    }
+    case "คุยกันในฝ่าย": {
+      const part = await Part.findById(chat.refId);
+      if (!part || mode == "nong") {
+        return null;
+      }
+      const camp = await Camp.findById(part.campId);
+      if (!camp) {
+        return null;
+      }
+      roomName = `ฝ่าย${part.partName}`;
+      break;
+    }
+    case "พี่คุยกันในบ้าน": {
+      const baan = await Baan.findById(chat.refId);
+      if (!baan || mode == "nong") {
+        return null;
+      }
+      const camp = await Camp.findById(baan.campId);
+      if (!camp) {
+        return null;
+      }
+      roomName = `พี่${camp.groupName}${baan.name}`;
+      break;
+    }
+  }
+  const buffer: ShowChat = {
+    nickname: user.nickname,
+    partName,
+    baanName,
+    message,
+    role,
+    userId,
+    campModelId,
+    roomName,
+    typeChat,
+    refId,
+    campMemberCardIds,
+    date,
+    _id,
+  };
+
+  return buffer;
 }

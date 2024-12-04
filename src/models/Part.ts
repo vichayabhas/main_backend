@@ -30,6 +30,7 @@ const PartSchema = new mongoose.Schema({
   workItemIds: arrayObjectId,
   placeId: {
     type: mongoose.Schema.ObjectId,
+    default:null
   },
   mapCampMemberCardIdByUserId: dataMap,
   partName: dataString,

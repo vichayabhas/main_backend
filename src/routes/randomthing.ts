@@ -18,6 +18,7 @@ import {
   deleteMeal,
   getAllBuilding,
   getAllChatFromCampId,
+  getAuthSongs,
   getBuilding,
   getFoodForUpdate,
   getFoods,
@@ -32,6 +33,8 @@ import {
   getPeeBaanChat,
   getPlace,
   getPlaces,
+  getShowBaanSongs,
+  getShowCampSongs,
   getShowPlace,
   getShowSong,
   getSystemInfo,
@@ -78,4 +81,7 @@ router.post("/addCampSong/params/:id", protect, addCampSong); //
 router.post("/updateSongPage/", protect, updateSongPage); //
 router.post("/addLikeSong/", protect, addLikeSong); //
 router.post("/addBaanSong/params/:id", protect, addBaanSong); //
+router.get("/getShowCampSongs/params/:id", protect, getShowCampSongs); //
+router.get("/getShowBaanSongs/params/:id", protect, getShowBaanSongs); //
+router.get("/getAuthSongs/params/:id", protect, getAuthSongs); //
 export default router;

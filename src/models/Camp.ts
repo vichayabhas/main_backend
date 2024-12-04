@@ -51,6 +51,7 @@ const campSchema = new mongoose.Schema({
   petoCampMemberCardIds: arrayObjectId,
   link: {
     type: String,
+    default: null,
   },
   allDone: {
     type: Boolean,
@@ -86,10 +87,11 @@ const campSchema = new mongoose.Schema({
       "nong->highSchool,pee->allYear",
       "allYearMix",
     ],
-    require: true,
+    required: true,
   },
   logoUrl: {
     type: String,
+    default: null,
   },
   mapCampMemberCardIdByUserId: dataMap,
   peeLock: {

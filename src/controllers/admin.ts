@@ -18,13 +18,12 @@ import {
   UpdateBaan,
   Group,
   MyMap,
-  InterPartBack,
   Size,
   Id,
+  BasicPart,
 } from "../models/interface";
 import {
   calculate,
-  conPartBackToFront,
   ifIsTrue,
   jsonToMapSize,
   removeDuplicate,
@@ -194,13 +193,13 @@ export async function addPart(req: express.Request, res: express.Response) {
     sendRes(res, false);
     return;
   }
-  res.status(201).json(conPartBackToFront(newPart));
+  res.status(201).json(newPart);
 }
 async function addPartRaw(
   campId: Id,
   nameId: Id,
   isAuth: boolean
-): Promise<InterPartBack | null> {
+): Promise<BasicPart | null> {
   const camp = await Camp.findById(campId);
   const partNameContainer = await PartNameContainer.findById(nameId);
   if (!camp || !partNameContainer) {
@@ -249,7 +248,7 @@ async function addPartRaw(
     mapPeeCampIdByBaanId: part.mapPeeCampIdByBaanId,
     peeModelIds: part.peeModelIds,
   });
-  const part2: InterPartBack | null = await Part.findById(part._id);
+  const part2 = await Part.findById(part._id);
   return part2;
 }
 export async function updateBaan(req: express.Request, res: express.Response) {

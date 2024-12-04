@@ -9,9 +9,7 @@ import User from "../models/User";
 import CampMemberCard from "../models/CampMemberCard";
 import {
   calculate,
-  conBaanBackToFront,
   conCampBackToFront,
-  conPartBackToFront,
   ifIsPlus,
   ifIsTrue,
   mapObjectIdToMyMap,
@@ -29,12 +27,8 @@ import NameContainer from "../models/NameContainer";
 import express from "express";
 import { getUser } from "../middleware/auth";
 import {
-  InterBaanBack,
-  InterBaanFront,
-  InterCampBack,
   InterCampFront,
-  InterPartBack,
-  InterUser,
+  BasicUser,
   InterActionPlan,
   ShowMember,
   CreateActionPlan,
@@ -47,7 +41,7 @@ import {
   HeathIssuePack,
   CampWelfarePack,
   GetBaansForPlan,
-  GetPartsForPlan,
+  GetPartForPlan,
   GetAllPlanData,
   UpdateAllPlanData,
   CampNumberData,
@@ -69,7 +63,6 @@ import {
   GetCoopData,
   AllNongRegister,
   InterMeal,
-  InterPartFront,
   SuccessBase,
   UpdateActionPlan,
   InterFood,
@@ -81,6 +74,11 @@ import {
   UpdateTimeOffsetRaw,
   GetPeeData,
   GetPetoData,
+  BasicBaan,
+  InterBaanBack,
+  InterCampBack,
+  BasicPart,
+  InterPartBack,
 } from "../models/interface";
 import Song from "../models/Song";
 import HeathIssue from "../models/HeathIssue";
@@ -163,14 +161,15 @@ import TimeOffset from "../models/TimeOffset";
 //*export async function getNongCampData
 //*export async function getPeeCampData
 //*export async function getPetoCampData
+//*export async function getPartForUpdate
 export async function getBaan(req: express.Request, res: express.Response) {
   try {
-    const data: InterBaanBack | null = await Baan.findById(req.params.id);
+    const data = await Baan.findById(req.params.id);
     if (!data) {
       sendRes(res, false);
       return;
     }
-    res.status(200).json(conBaanBackToFront(data));
+    res.status(200).json(data);
   } catch {
     res.status(400).json({
       success: false,
@@ -202,12 +201,12 @@ export async function getBaans(req: express.Request, res: express.Response) {
       sendRes(res, false);
       return;
     }
-    const baans: InterBaanFront[] = [];
+    const baans: BasicBaan[] = [];
     let i = 0;
     while (i < camp.baanIds.length) {
-      const baan: InterBaanBack | null = await Baan.findById(camp.baanIds[i++]);
+      const baan = await Baan.findById(camp.baanIds[i++]);
       if (baan) {
-        baans.push(conBaanBackToFront(baan));
+        baans.push(baan);
       }
     }
     res.status(200).json(baans);
@@ -275,12 +274,12 @@ export async function getPetoCamp(req: express.Request, res: express.Response) {
 }
 export async function getPart(req: express.Request, res: express.Response) {
   try {
-    const data: InterPartBack | null = await Part.findById(req.params.id);
+    const data = await Part.findById(req.params.id);
     if (!data) {
       sendRes(res, false);
       return;
     }
-    res.status(200).json(conPartBackToFront(data));
+    res.status(200).json(data);
   } catch {
     res.status(400).json({
       success: false,
@@ -2560,7 +2559,7 @@ export async function getAllWelfare(
       const heathIssue = await HeathIssue.findById(
         campMemberCard.healthIssueId
       );
-      const user: InterUser | null = await User.findById(campMemberCard.userId);
+      const user = await User.findById(campMemberCard.userId);
       if (!heathIssue || !user) {
         continue;
       }
@@ -2609,7 +2608,7 @@ export async function getAllWelfare(
       const heathIssue = await HeathIssue.findById(
         campMemberCard.healthIssueId
       );
-      const user: InterUser | null = await User.findById(campMemberCard.userId);
+      const user = await User.findById(campMemberCard.userId);
       if (!heathIssue || !user) {
         continue;
       }
@@ -2715,7 +2714,7 @@ export async function getAllWelfare(
       const heathIssue = await HeathIssue.findById(
         campMemberCard.healthIssueId
       );
-      const user: InterUser | null = await User.findById(campMemberCard.userId);
+      const user = await User.findById(campMemberCard.userId);
       if (!heathIssue || !user) {
         continue;
       }
@@ -2764,7 +2763,7 @@ export async function getAllWelfare(
       const heathIssue = await HeathIssue.findById(
         campMemberCard.healthIssueId
       );
-      const user: InterUser | null = await User.findById(campMemberCard.userId);
+      const user = await User.findById(campMemberCard.userId);
       if (!user || !heathIssue) {
         continue;
       }
@@ -2913,7 +2912,7 @@ export async function getAllPlanData(
   }
   let i = 0;
   const baanDatas: GetBaansForPlan[] = [];
-  const partDatas: GetPartsForPlan[] = [];
+  const partDatas: GetPartForPlan[] = [];
   const baanBoySleeps: CampNumberData[] = [];
   const baanGirlSleeps: CampNumberData[] = [];
   const partBoySleeps: CampNumberData[] = [];
@@ -2934,15 +2933,13 @@ export async function getAllPlanData(
     const boy = await Place.findById(baan.boySleepPlaceId);
     const girl = await Place.findById(baan.girlSleepPlaceId);
     const normal = await Place.findById(baan.normalPlaceId);
-    const nongBoys: InterUser[] = [];
-    const nongGirls: InterUser[] = [];
-    const peeBoys: InterUser[] = [];
-    const peeGirls: InterUser[] = [];
+    const nongBoys: BasicUser[] = [];
+    const nongGirls: BasicUser[] = [];
+    const peeBoys: BasicUser[] = [];
+    const peeGirls: BasicUser[] = [];
     let j = 0;
     while (j < baan.nongSleepIds.length) {
-      const user: InterUser | null = await User.findById(
-        baan.nongSleepIds[j++]
-      );
+      const user = await User.findById(baan.nongSleepIds[j++]);
       if (!user) {
         continue;
       }
@@ -2951,7 +2948,7 @@ export async function getAllPlanData(
     }
     j = 0;
     while (j < baan.peeSleepIds.length) {
-      const user: InterUser | null = await User.findById(baan.peeSleepIds[j++]);
+      const user = await User.findById(baan.peeSleepIds[j++]);
       if (!user) {
         continue;
       }
@@ -2998,15 +2995,13 @@ export async function getAllPlanData(
     if (!part) {
       continue;
     }
-    const petoBoys: InterUser[] = [];
-    const petoGirls: InterUser[] = [];
-    const peeBoys: InterUser[] = [];
-    const peeGirls: InterUser[] = [];
+    const petoBoys: BasicUser[] = [];
+    const petoGirls: BasicUser[] = [];
+    const peeBoys: BasicUser[] = [];
+    const peeGirls: BasicUser[] = [];
     let j = 0;
     while (j < part.petoSleepIds.length) {
-      const user: InterUser | null = await User.findById(
-        part.petoSleepIds[j++]
-      );
+      const user = await User.findById(part.petoSleepIds[j++]);
       if (!user) {
         continue;
       }
@@ -3015,7 +3010,7 @@ export async function getAllPlanData(
     }
     j = 0;
     while (j < part.peeSleepIds.length) {
-      const user: InterUser | null = await User.findById(part.peeSleepIds[j++]);
+      const user = await User.findById(part.peeSleepIds[j++]);
       if (!user) {
         continue;
       }
@@ -3973,7 +3968,7 @@ export async function getAllAnswerAndQuestion(
   const nongPaidAnswers: UserAndAllQuestionPack[] = [];
   const nongInterviewAnswers: UserAndAllQuestionPack[] = [];
   for (const userId of camp.nongIds) {
-    const user: InterUser | null = await User.findById(userId);
+    const user = await User.findById(userId);
     if (!user) {
       continue;
     }
@@ -3986,7 +3981,7 @@ export async function getAllAnswerAndQuestion(
     }
   }
   for (const userId of camp.peeAnswerIds) {
-    const user: InterUser | null = await User.findById(userId);
+    const user = await User.findById(userId);
     if (!user) {
       continue;
     }
@@ -4003,7 +3998,7 @@ export async function getAllAnswerAndQuestion(
     nongPendingIds.push(stringToId(k));
   });
   for (const userId of nongPendingIds) {
-    const user: InterUser | null = await User.findById(userId);
+    const user = await User.findById(userId);
     if (!user) {
       continue;
     }
@@ -4020,7 +4015,7 @@ export async function getAllAnswerAndQuestion(
     nongInterviewIds.push(stringToId(k));
   });
   for (const userId of nongInterviewIds) {
-    const user: InterUser | null = await User.findById(userId);
+    const user = await User.findById(userId);
     if (!user) {
       continue;
     }
@@ -4037,7 +4032,7 @@ export async function getAllAnswerAndQuestion(
     nongPassIds.push(stringToId(k));
   });
   for (const userId of removeDuplicate(nongPassIds, camp.nongPaidIds)) {
-    const user: InterUser | null = await User.findById(userId);
+    const user = await User.findById(userId);
     if (!user) {
       continue;
     }
@@ -4050,7 +4045,7 @@ export async function getAllAnswerAndQuestion(
     }
   }
   for (const userId of camp.nongPaidIds) {
-    const user: InterUser | null = await User.findById(userId);
+    const user = await User.findById(userId);
     if (!user) {
       continue;
     }
@@ -4063,7 +4058,7 @@ export async function getAllAnswerAndQuestion(
     }
   }
   for (const userId of camp.nongSureIds) {
-    const user: InterUser | null = await User.findById(userId);
+    const user = await User.findById(userId);
     if (!user) {
       continue;
     }
@@ -4293,12 +4288,12 @@ export async function getMedicalHealthIssue(
   res.status(200).json(buffer);
 }
 export async function getCoopData(req: express.Request, res: express.Response) {
-  const baan: InterBaanBack | null = await Baan.findById(req.params.id);
+  const baan = await Baan.findById(req.params.id);
   if (!baan) {
     sendRes(res, false);
     return;
   }
-  const camp: InterCampBack | null = await Camp.findById(baan.campId);
+  const camp = await Camp.findById(baan.campId);
   if (!camp) {
     sendRes(res, false);
     return;
@@ -4315,8 +4310,8 @@ export async function getCoopData(req: express.Request, res: express.Response) {
     isCoopValid
   );
   const buffer: GetCoopData = {
-    baan: conBaanBackToFront(baan),
-    camp: conCampBackToFront(camp),
+    baan,
+    camp,
     boy,
     girl,
     normal,
@@ -4369,7 +4364,7 @@ export async function getAllNongRegister(
   while (i < pendingBuffers.length) {
     const { userId, link } = pendingBuffers[i++];
     const localId = camp.nongMapIdGtoL.get(userId)?.toString() as string;
-    const user: InterUser | null = await User.findById(userId);
+    const user = await User.findById(userId);
     if (!user) {
       continue;
     }
@@ -4378,7 +4373,7 @@ export async function getAllNongRegister(
   while (i < interviewBuffers.length) {
     const { userId, link } = interviewBuffers[i++];
     const localId = camp.nongMapIdGtoL.get(userId)?.toString() as string;
-    const user: InterUser | null = await User.findById(userId);
+    const user = await User.findById(userId);
     if (!user) {
       continue;
     }
@@ -4387,7 +4382,7 @@ export async function getAllNongRegister(
   while (i < passBuffers.length) {
     const { userId, link } = passBuffers[i++];
     const localId = camp.nongMapIdGtoL.get(userId)?.toString() as string;
-    const user: InterUser | null = await User.findById(userId);
+    const user = await User.findById(userId);
     if (!user) {
       continue;
     }
@@ -4396,7 +4391,7 @@ export async function getAllNongRegister(
   while (i < paidBuffers.length) {
     const { userId, link } = paidBuffers[i++];
     const localId = camp.nongMapIdGtoL.get(userId)?.toString() as string;
-    const user: InterUser | null = await User.findById(userId);
+    const user = await User.findById(userId);
     if (!user) {
       continue;
     }
@@ -4405,7 +4400,7 @@ export async function getAllNongRegister(
   while (i < sureBuffers.length) {
     const { userId, link } = sureBuffers[i++];
     const localId = camp.nongMapIdGtoL.get(userId)?.toString() as string;
-    const user: InterUser | null = await User.findById(userId);
+    const user = await User.findById(userId);
     if (!user) {
       continue;
     }
@@ -4579,14 +4574,14 @@ export async function getParts(req: express.Request, res: express.Response) {
     sendRes(res, false);
     return;
   }
-  const parts: InterPartFront[] = [];
+  const parts: BasicPart[] = [];
   let i = 0;
   while (i < camp.partIds.length) {
-    const part: InterPartBack | null = await Part.findById(camp.partIds[i++]);
+    const part = await Part.findById(camp.partIds[i++]);
     if (!part) {
       continue;
     }
-    parts.push(conPartBackToFront(part));
+    parts.push(part);
   }
   res.status(200).json(parts);
 }
@@ -4712,17 +4707,16 @@ export async function getNongCampData(
   req: express.Request,
   res: express.Response
 ) {
-  const camp: InterCampBack | null = await Camp.findById(req.params.id);
-  const user1 = await getUser(req);
-  if (!user1 || !camp) {
+  const camp = await Camp.findById(req.params.id);
+  const user = await getUser(req);
+  if (!user || !camp) {
     sendRes(res, false);
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user1._id)
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
   );
-  const user: InterUser | null = await User.findById(user1._id);
-  if (!campMemberCard || !user) {
+  if (!campMemberCard) {
     sendRes(res, false);
     return;
   }
@@ -4731,7 +4725,7 @@ export async function getNongCampData(
     sendRes(res, false);
     return;
   }
-  const baan: InterBaanBack | null = await Baan.findById(nongCamp.baanId);
+  const baan = await Baan.findById(nongCamp.baanId);
   if (!baan) {
     sendRes(res, false);
     return;
@@ -4778,8 +4772,8 @@ export async function getNongCampData(
     };
   }
   const buffer: GetNongData = {
-    baan: conBaanBackToFront(baan),
-    camp: conCampBackToFront(camp),
+    baan,
+    camp,
     boy,
     girl,
     normal,
@@ -4808,17 +4802,16 @@ export async function getPeeCampData(
   req: express.Request,
   res: express.Response
 ) {
-  const camp: InterCampBack | null = await Camp.findById(req.params.id);
-  const user1 = await getUser(req);
-  if (!user1 || !camp) {
+  const camp = await Camp.findById(req.params.id);
+  const user = await getUser(req);
+  if (!user || !camp) {
     sendRes(res, false);
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user1._id)
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
   );
-  const user: InterUser | null = await User.findById(user1._id);
-  if (!campMemberCard || !user) {
+  if (!campMemberCard) {
     sendRes(res, false);
     return;
   }
@@ -4827,8 +4820,8 @@ export async function getPeeCampData(
     sendRes(res, false);
     return;
   }
-  const baan: InterBaanBack | null = await Baan.findById(peeCamp.baanId);
-  const part: InterPartBack | null = await Part.findById(peeCamp.partId);
+  const baan = await Baan.findById(peeCamp.baanId);
+  const part = await Part.findById(peeCamp.partId);
   if (!baan || !part) {
     sendRes(res, false);
     return;
@@ -4888,9 +4881,9 @@ export async function getPeeCampData(
     };
   }
   const buffer: GetPeeData = {
-    baan: conBaanBackToFront(baan),
-    camp: conCampBackToFront(camp),
-    part: conPartBackToFront(part),
+    baan,
+    camp,
+    part,
     boy,
     girl,
     normal,
@@ -4923,17 +4916,16 @@ export async function getPetoCampData(
   req: express.Request,
   res: express.Response
 ) {
-  const camp: InterCampBack | null = await Camp.findById(req.params.id);
-  const user1 = await getUser(req);
-  if (!user1 || !camp) {
+  const camp = await Camp.findById(req.params.id);
+  const user = await getUser(req);
+  if (!user || !camp) {
     sendRes(res, false);
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user1._id)
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
   );
-  const user: InterUser | null = await User.findById(user1._id);
-  if (!campMemberCard || !user) {
+  if (!campMemberCard) {
     sendRes(res, false);
     return;
   }
@@ -4942,7 +4934,7 @@ export async function getPetoCampData(
     sendRes(res, false);
     return;
   }
-  const part: InterPartBack | null = await Part.findById(petoCamp.partId);
+  const part = await Part.findById(petoCamp.partId);
   if (!part) {
     sendRes(res, false);
     return;
@@ -4997,8 +4989,8 @@ export async function getPetoCampData(
     };
   }
   const buffer: GetPetoData = {
-    camp: conCampBackToFront(camp),
-    part: conPartBackToFront(part),
+    camp,
+    part,
     partPlace,
     meals,
     campMemberCard,
@@ -5019,6 +5011,24 @@ export async function getPetoCampData(
     selectOffset,
     petos,
     pees,
+  };
+  res.status(200).json(buffer);
+}
+
+export async function getPartForUpdate(
+  req: express.Request,
+  res: express.Response
+) {
+  const part = await Part.findById(req.params.id);
+  if (!part) {
+    sendRes(res, false);
+    return;
+  }
+  const place = await Place.findById(part.placeId);
+  const buffer: GetPartForPlan = {
+    name: part.partName,
+    place,
+    _id: part._id,
   };
   res.status(200).json(buffer);
 }

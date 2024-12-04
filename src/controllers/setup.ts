@@ -629,3 +629,36 @@ export const dataSize = {
   type: Map,
   default: startSize(),
 } as const;
+export const updateChatText = "update-chat";
+export const newChatText = "new-chat";
+/**appId: "1905213",
+  key: "a1e9e5afda34e932e6d8",
+  secret: "4b79051a2a3262373957",
+  cluster: "ap1", */
+// PUSHER_APP_ID='1905213'
+// PUSHER_KEY="a1e9e5afda34e932e6d8"
+// PUSHER_SECRET="4b79051a2a3262373957"
+// PUSHER_CLUSTER="ap1"
+
+export function getPusherData(): {
+  appId: string;
+  key: string;
+  secret: string;
+  useTLS: boolean;
+  cluster: string;
+} {
+  console.log({
+    appId: process.env.PUSHER_APP_ID || "",
+    key: process.env.PUSHER_KEY || "",
+    secret: process.env.PUSHER_SECRET || "",
+    cluster: process.env.PUSHER_CLUSTER || "",
+    useTLS: true,
+  });
+  return {
+    appId: "1905213",
+    key: "a1e9e5afda34e932e6d8",
+    secret: "4b79051a2a3262373957",
+    cluster: "ap1",
+    useTLS: true,
+  };
+}
