@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import {
   arrayObjectId,
   dataId,
-  dataMap,
+  dataMapObjectId,
   dataSize,
   dataString,
 } from "../controllers/setup";
@@ -17,7 +17,7 @@ const BaanSchema = new mongoose.Schema({
   nongShirtSize: dataSize,
   peeShirtSize: dataSize,
   songIds: arrayObjectId,
-  mapPeeCampIdByPartId: dataMap,
+  mapPeeCampIdByPartId: dataMapObjectId,
   peeModelIds: arrayObjectId,
   nongModelId: {
     type: mongoose.Schema.ObjectId,
@@ -43,7 +43,7 @@ const BaanSchema = new mongoose.Schema({
     type: mongoose.Schema.ObjectId,
     default: null,
   },
-  mapCampMemberCardIdByUserId: dataMap,
+  mapCampMemberCardIdByUserId: dataMapObjectId,
   groupRef: {
     type: String,
     enum: [

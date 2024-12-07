@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import {
   arrayObjectId,
   dataId,
-  dataMap,
+  dataMapObjectId,
   dataSize,
   dataString,
 } from "../controllers/setup";
@@ -23,7 +23,7 @@ const PartSchema = new mongoose.Schema({
   petoModelId: {
     type: mongoose.Schema.ObjectId,
   },
-  mapPeeCampIdByBaanId: dataMap,
+  mapPeeCampIdByBaanId: dataMapObjectId,
   peeCampMemberCardIds: arrayObjectId,
   petoCampMemberCardIds: arrayObjectId,
   actionPlanIds: arrayObjectId,
@@ -32,7 +32,7 @@ const PartSchema = new mongoose.Schema({
     type: mongoose.Schema.ObjectId,
     default:null
   },
-  mapCampMemberCardIdByUserId: dataMap,
+  mapCampMemberCardIdByUserId: dataMapObjectId,
   partName: dataString,
   peeSleepIds: arrayObjectId,
   chatIds: arrayObjectId,

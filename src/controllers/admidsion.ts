@@ -2,7 +2,7 @@ import Camp from "../models/Camp";
 import { sendRes, stringToId, swop } from "./setup";
 import express from "express";
 import { getUser } from "../middleware/auth";
-import { changePartRaw, getImpotentPartIdBCRP } from "./camp";
+import { changePartRaw, getImpotentPartIdBCRP, triggerRegister } from "./camp";
 import { Id } from "../models/interface";
 export async function interview(req: express.Request, res: express.Response) {
   const { members, campId } = req.body;
@@ -22,7 +22,7 @@ async function interviewRaw(members: Id[], campId: Id) {
   while (i < members.length) {
     camp.nongInterviewIds.set(
       members[i].toString(),
-      camp.nongPendingIds.get(members[i].toString())
+      camp.nongPendingIds.get(members[i].toString()) as string
     );
     camp.nongPendingIds.delete(members[i++].toString());
   }
@@ -30,6 +30,7 @@ async function interviewRaw(members: Id[], campId: Id) {
     nongPendingIds: camp.nongPendingIds,
     nongInterviewIds: camp.nongInterviewIds,
   });
+  await triggerRegister(camp._id,camp.pusherId)
   return i;
 }
 async function passRaw(members: Id[], campId: Id) {
@@ -41,7 +42,7 @@ async function passRaw(members: Id[], campId: Id) {
   while (i < members.length) {
     camp.nongPassIds.set(
       members[i].toString(),
-      camp.nongInterviewIds.get(members[i].toString())
+      camp.nongInterviewIds.get(members[i].toString()) as string
     );
     camp.nongInterviewIds.delete(members[i++].toString());
     if (camp.registerModel === "noPaid") {
@@ -53,6 +54,8 @@ async function passRaw(members: Id[], campId: Id) {
     nongInterviewIds: camp.nongInterviewIds,
     //nongPaidIds:camp.nongPaidIds
   });
+  await triggerRegister(camp._id,camp.pusherId)
+
   return i;
 }
 export async function paid(req: express.Request, res: express.Response) {
@@ -73,6 +76,8 @@ export async function paid(req: express.Request, res: express.Response) {
       nongPaidIds: swop(null, user._id, camp.nongPaidIds),
     });
   }
+  await triggerRegister(camp._id,camp.pusherId)
+  sendRes(res,true)
 }
 export async function sure(req: express.Request, res: express.Response) {
   const { members, campId }: { members: Id[]; campId: Id } = req.body;
@@ -102,6 +107,8 @@ export async function sure(req: express.Request, res: express.Response) {
   });
   //console.log(members)
   //console.log(camp)
+  await triggerRegister(camp._id,camp.pusherId)
+
   res.status(200).json({ count: i });
 }
 export async function pass(req: express.Request, res: express.Response) {
@@ -155,5 +162,6 @@ export async function kickNong(req: express.Request, res: express.Response) {
     nongPassIds: camp.nongPassIds,
     outRoundIds: camp.outRoundIds,
   });
+  await triggerRegister(camp._id,camp.pusherId)
   sendRes(res, true);
 }

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { arrayObjectId, dataId, dataMap } from "../controllers/setup";
+import { arrayObjectId, dataId } from "../controllers/setup";
 const PeeCampSchema = new mongoose.Schema({
   campId: dataId,
   baanId: {
@@ -7,6 +7,5 @@ const PeeCampSchema = new mongoose.Schema({
   },
   nongIds: arrayObjectId,
   nongCampMemberCardIds: arrayObjectId,
-  mapNongCampIdByUserId: dataMap,
 });
 export default mongoose.model("NongCamp", PeeCampSchema);

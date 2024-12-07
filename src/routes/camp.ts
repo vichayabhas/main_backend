@@ -58,6 +58,7 @@ import {
   getPeeCampData,
   getPetoCampData,
   getPartForUpdate,
+  getRegisterData,
 } from "../controllers/camp";
 import {
   interview,
@@ -145,7 +146,8 @@ router.get(
 ); //
 router.get("/getParts/params/:id", protect, getParts); //
 router.get("/getNongCampData/params/:id", protect, getNongCampData); //
-router.get("/getPeeCampData/params/:id", protect, getPeeCampData);//
-router.get("/getPetoCampData/params/:id", protect, getPetoCampData);//
-router.get('/getPartForUpdate/params/:id',getPartForUpdate)//
+router.get("/getPeeCampData/params/:id", protect, getPeeCampData); //
+router.get("/getPetoCampData/params/:id", protect, getPetoCampData); //
+router.get("/getPartForUpdate/params/:id", getPartForUpdate); //
+router.get("/getRegisterData/params/:id", getRegisterData); //
 export default router;

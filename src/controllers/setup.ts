@@ -11,6 +11,9 @@ import {
   MyMap,
   Size,
   Id,
+  PusherClientData,
+  InterPusherData,
+  SystemInfo,
 } from "../models/interface";
 import mongoose from "mongoose";
 
@@ -235,7 +238,7 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
     nongPaidIds,
     nongInterviewIds, ////////////////////////////////i
     registerModel,
-    memberStructure: memberStructure,
+    memberStructure,
     mapCampMemberCardIdByUserId,
     logoUrl,
     registerSheetLink,
@@ -289,6 +292,7 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
     canNongSeeAllActionPlan,
     canNongSeeAllTrackingSheet,
     canNongAccessDataWithRoleNong,
+    lockChangeQuestion,
   } = input;
   return {
     partIds,
@@ -387,6 +391,7 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
     canNongSeeAllAnswer,
     canNongSeeAllTrackingSheet,
     canNongAccessDataWithRoleNong,
+    lockChangeQuestion,
   };
 }
 export function conPartBackToFront(input: InterPartBack): InterPartFront {
@@ -468,31 +473,6 @@ export function isInTime(start: Date, end: Date): boolean {
   const now = new Date(Date.now());
   return now > start && now < end;
 }
-// export function plusActionPlan(input: InterActionPlan, minute: number): InterActionPlan {
-//     const millisecond = minute * 1000 * 60
-//     const {
-//         start,
-//         end,
-//         partId,
-//         placeIds,
-//         action,
-//         headId,
-//         body,
-//         _id,
-//         partName
-//     } = input
-//     return ({
-//         start: new Date(start.getTime() + millisecond),
-//         end: new Date(end.getTime() + millisecond),
-//         partId,
-//         placeIds,
-//         action,
-//         headId,
-//         body,
-//         _id,
-//         partName
-//     })
-// }
 export const backendUrl = "http://localhost:5000";
 export const userPath = "api/v1/auth";
 export function removeDuplicate(input: Id[], compare: Id[]): Id[] {
@@ -612,9 +592,15 @@ export const dataNumber = {
   type: Number,
   default: 0,
 } as const;
-export const dataMap = {
+export const dataMapString = {
   type: Map,
   default: new Map(),
+  of: String,
+} as const;
+export const dataMapObjectId = {
+  type: Map,
+  default: new Map(),
+  of: mongoose.Schema.ObjectId,
 } as const;
 export const dataId = {
   type: mongoose.Schema.ObjectId,
@@ -628,37 +614,34 @@ export const dataSize = {
   // size    count
   type: Map,
   default: startSize(),
+  of: Number,
 } as const;
-export const updateChatText = "update-chat";
-export const newChatText = "new-chat";
-/**appId: "1905213",
-  key: "a1e9e5afda34e932e6d8",
-  secret: "4b79051a2a3262373957",
-  cluster: "ap1", */
-// PUSHER_APP_ID='1905213'
-// PUSHER_KEY="a1e9e5afda34e932e6d8"
-// PUSHER_SECRET="4b79051a2a3262373957"
-// PUSHER_CLUSTER="ap1"
-
-export function getPusherData(): {
-  appId: string;
-  key: string;
-  secret: string;
-  useTLS: boolean;
-  cluster: string;
-} {
-  console.log({
-    appId: process.env.PUSHER_APP_ID || "",
-    key: process.env.PUSHER_KEY || "",
-    secret: process.env.PUSHER_SECRET || "",
-    cluster: process.env.PUSHER_CLUSTER || "",
-    useTLS: true,
-  });
+export function getPusherClient(
+  data: InterPusherData | null
+): PusherClientData | null {
+  if (!data) {
+    return null;
+  }
+  return { first: data.key, second: data };
+}
+export function getSystemInfoRaw(): SystemInfo {
+  const systemMode = getSystemMode() || "";
+  const endEmail = getEndEmail() || "student.chula.ac.th";
+  const studentIdLastTwoDigit = process.env.LAST_TWO_DIGIT || "21";
+  const studentIdLength = parseInt(process.env.ID_LENGTH || "10");
   return {
-    appId: "1905213",
-    key: "a1e9e5afda34e932e6d8",
-    secret: "4b79051a2a3262373957",
-    cluster: "ap1",
-    useTLS: true,
+    studentIdLastTwoDigit,
+    endEmail,
+    studentIdLength,
+    systemMode,
+    peeText: "pee",
+    nongText: "nong",
+    newText: "new",
+    updateText: "update",
+    manageText: "manage",
+    questionText: "question",
+    textQuestionText: "textQuestion",
+    choiceQuestionText: "choiceQuestion",
+    chatText: "chat",
   };
 }

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { arrayObjectId, dataId, dataMap } from "../controllers/setup";
+import { arrayObjectId, dataId, dataMapString } from "../controllers/setup";
 const PeeCampSchema = new mongoose.Schema({
   campId: dataId,
   partId: dataId,
@@ -26,13 +26,13 @@ const PeeCampSchema = new mongoose.Schema({
     type: [String],
     default: [],
   },
-  map1: dataMap,
-  map2: dataMap,
-  map3: dataMap,
-  map4: dataMap,
-  map5: dataMap,
-  mapArrayStringNumberByName: dataMap,
-  mapMapNumberByName: dataMap,
+  map1: dataMapString,
+  map2: dataMapString,
+  map3: dataMapString,
+  map4: dataMapString,
+  map5: dataMapString,
+  mapArrayStringNumberByName: dataMapString,
+  mapMapNumberByName: dataMapString,
   varibleNames: {
     type: [String],
     default: [

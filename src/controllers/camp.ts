@@ -10,6 +10,8 @@ import CampMemberCard from "../models/CampMemberCard";
 import {
   calculate,
   conCampBackToFront,
+  getPusherClient,
+  getSystemInfoRaw,
   ifIsPlus,
   ifIsTrue,
   mapObjectIdToMyMap,
@@ -79,6 +81,11 @@ import {
   InterCampBack,
   BasicPart,
   InterPartBack,
+  RegisPart,
+  RegisBaan,
+  RegisterData,
+  TriggerChoiceQuestion,
+  TriggerTextQuestion,
 } from "../models/interface";
 import Song from "../models/Song";
 import HeathIssue from "../models/HeathIssue";
@@ -97,6 +104,8 @@ import Meal from "../models/Meal";
 import bcrypt from "bcrypt";
 import Food from "../models/Food";
 import TimeOffset from "../models/TimeOffset";
+import PusherData from "../models/PusherData";
+import Pusher from "pusher";
 
 //*export async function getBaan
 //*export async function getCamp
@@ -162,6 +171,7 @@ import TimeOffset from "../models/TimeOffset";
 //*export async function getPeeCampData
 //*export async function getPetoCampData
 //*export async function getPartForUpdate
+//*export async function getRegisterData
 export async function getBaan(req: express.Request, res: express.Response) {
   try {
     const data = await Baan.findById(req.params.id);
@@ -2408,10 +2418,17 @@ export async function getShowRegisters(
   req: express.Request,
   res: express.Response
 ) {
-  const camp: InterCampBack | null = await Camp.findById(req.params.id);
-  if (!camp) {
+  const out = await getShowRegistersRaw(stringToId(req.params.id));
+  if (!out) {
     sendRes(res, false);
     return;
+  }
+  res.status(200).json(out);
+}
+async function getShowRegistersRaw(campId: Id) {
+  const camp: InterCampBack | null = await Camp.findById(campId);
+  if (!camp) {
+    return null;
   }
   const buff = mapObjectIdToMyMap(camp.peePassIds);
   let i = 0;
@@ -2432,7 +2449,7 @@ export async function getShowRegisters(
       partName: part.partName,
     });
   }
-  res.status(200).json(out);
+  return out;
 }
 export async function getAllUserCamp(
   req: express.Request,
@@ -3191,6 +3208,8 @@ export async function editQuestion(
     sendRes(res, false);
     return;
   }
+  const pusher = await getPusherServer(camp.pusherId);
+  const systemInfo = getSystemInfoRaw();
   if (
     !user ||
     (user.role != "admin" && !user.authPartIds.includes(camp.partBoardId as Id))
@@ -3233,8 +3252,37 @@ export async function editQuestion(
         order,
       });
       choiceQuestionIds = swop(null, newChoice._id, choiceQuestionIds);
+      if (!pusher) {
+        continue;
+      }
+      await pusher.trigger(
+        `${systemInfo.choiceQuestionText}${camp._id}`,
+        systemInfo.newText,
+        newChoice
+      );
     } else {
-      await ChoiceQuestion.findByIdAndUpdate(_id, {
+      const choiceQuestion = await ChoiceQuestion.findById(_id);
+      if (!choiceQuestion) {
+        continue;
+      }
+      if (
+        choiceQuestion.question == question &&
+        choiceQuestion.a == a &&
+        choiceQuestion.b == b &&
+        choiceQuestion.c == c &&
+        choiceQuestion.d == d &&
+        choiceQuestion.e == e &&
+        choiceQuestion.scoreA == scoreA &&
+        choiceQuestion.scoreB == scoreB &&
+        choiceQuestion.scoreC == scoreC &&
+        choiceQuestion.scoreD == scoreD &&
+        choiceQuestion.scoreE == scoreE &&
+        choiceQuestion.correct == correct &&
+        choiceQuestion.order == order
+      ) {
+        continue;
+      }
+      await choiceQuestion.updateOne({
         question,
         a,
         b,
@@ -3249,6 +3297,30 @@ export async function editQuestion(
         correct,
         order,
       });
+      if (!pusher) {
+        continue;
+      }
+      const buffer: TriggerChoiceQuestion = {
+        _id,
+        question,
+        a,
+        b,
+        c,
+        d,
+        e,
+        scoreA,
+        scoreB,
+        scoreC,
+        scoreD,
+        scoreE,
+        correct,
+        order,
+      };
+      await pusher.trigger(
+        `${systemInfo.choiceQuestionText}${camp._id}`,
+        systemInfo.updateText,
+        buffer
+      );
     }
   }
   for (const { _id, question, score, order } of edit.texts) {
@@ -3260,8 +3332,41 @@ export async function editQuestion(
         order,
       });
       textQuestionIds = swop(null, newText._id, textQuestionIds);
+      if (!pusher) {
+        continue;
+      }
+      pusher.trigger(
+        `${systemInfo.textQuestionText}${camp._id}`,
+        systemInfo.newText,
+        newText
+      );
     } else {
-      await TextQuestion.findByIdAndUpdate(_id, { question, score, order });
+      const textQuestion = await TextQuestion.findById(_id);
+      if (!textQuestion) {
+        continue;
+      }
+      if (
+        textQuestion.question == question &&
+        textQuestion.score == score &&
+        textQuestion.order == order
+      ) {
+        continue;
+      }
+      await textQuestion.updateOne({ question, score, order });
+      if (!pusher) {
+        continue;
+      }
+      const buffer: TriggerTextQuestion = {
+        _id,
+        question,
+        score,
+        order,
+      };
+      await pusher.trigger(
+        `${systemInfo.textQuestionText}${camp._id}`,
+        systemInfo.updateText,
+        buffer
+      );
     }
   }
   await camp.updateOne({ textQuestionIds, choiceQuestionIds });
@@ -3568,10 +3673,12 @@ async function getAllQuestionRaw(
       });
     }
   }
+  const pusherData = await PusherData.findById(camp.pusherId);
   const buffer: GetAllQuestion = {
     choices,
     texts,
     canAnswerTheQuestion: camp.canAnswerTheQuestion,
+    pusherData: getPusherClient(pusherData),
   };
   return buffer;
 }
@@ -4082,6 +4189,7 @@ export async function getAllAnswerAndQuestion(
       mainTexts.push(question);
     }
   }
+  const pusherData = await PusherData.findById(camp.pusherId);
   const buffer: GetAllAnswerAndQuestion = {
     nongInterviewAnswers,
     nongPaidAnswers,
@@ -4094,6 +4202,9 @@ export async function getAllAnswerAndQuestion(
     peeAnswers,
     success: true,
     groupName: camp.groupName,
+    pusherData: getPusherClient(pusherData),
+    systemInfo: getSystemInfoRaw(),
+    canScoring: camp.lockChangeQuestion && !camp.canAnswerTheQuestion,
   };
   res.status(200).json(buffer);
 }
@@ -4324,10 +4435,17 @@ export async function getAllNongRegister(
   req: express.Request,
   res: express.Response
 ) {
-  const camp: InterCampBack | null = await Camp.findById(req.params.id);
-  if (!camp) {
+  const out = getAllNongRegisterRaw(stringToId(req.params.id));
+  if (!out) {
     sendRes(res, false);
     return;
+  }
+  res.status(200).json(out);
+}
+async function getAllNongRegisterRaw(campId: Id) {
+  const camp: InterCampBack | null = await Camp.findById(campId);
+  if (!camp) {
+    return null;
   }
   interface Buffer {
     userId: Id;
@@ -4407,7 +4525,7 @@ export async function getAllNongRegister(
     sures.push({ user, localId, link });
   }
   const out: AllNongRegister = { interviews, pendings, passs, paids, sures };
-  res.status(200).json(out);
+  return out;
 }
 export async function getActionPlanByCampId(
   req: express.Request,
@@ -5031,4 +5149,91 @@ export async function getPartForUpdate(
     _id: part._id,
   };
   res.status(200).json(buffer);
+}
+export async function getRegisterData(
+  req: express.Request,
+  res: express.Response
+) {
+  const out = await getRegisterDataRaw(stringToId(req.params.id));
+  if (!out) {
+    sendRes(res, false);
+    return;
+  }
+  res.status(200).json(out);
+}
+async function getRegisterDataRaw(campId: Id): Promise<RegisterData | null> {
+  const camp = await Camp.findById(campId);
+  if (!camp) {
+    return null;
+  }
+  let i = 0;
+  const regisParts: RegisPart[] = [];
+  const regisBaans: RegisBaan[] = [];
+  while (i < camp.baanIds.length) {
+    const baan = await Baan.findById(camp.baanIds[i++]);
+    if (!baan) {
+      continue;
+    }
+    regisBaans.push({
+      baan,
+      pees: await getPeesFromBaanIdRaw(baan._id),
+      nongs: await getNongsFromBaanIdRaw(baan._id),
+    });
+  }
+  i = 0;
+  const partMap: MyMap[] = [];
+  while (i < camp.partIds.length) {
+    const part = await Part.findById(camp.partIds[i++]);
+    if (!part) {
+      continue;
+    }
+    regisParts.push({
+      part,
+      pees: await getPeesFromPartIdRaw(part._id),
+      petos: await getPetosFromPartIdRaw(part._id),
+    });
+    partMap.push({ key: part._id, value: part.partName });
+  }
+  const peeRegisters = await getShowRegistersRaw(camp._id);
+  const nongRegister = await getAllNongRegisterRaw(camp._id);
+  if (!peeRegisters || !nongRegister) {
+    return null;
+  }
+  const pusherData = await PusherData.findById(camp.pusherId);
+  return {
+    partBoardIdString: camp.partBoardId?.toString() || "",
+    partRegisterIdString: camp.partRegisterId?.toString() || "",
+    partMap,
+    peeRegisters,
+    nongRegister,
+    camp,
+    regisBaans,
+    regisParts,
+    pusher: getPusherClient(pusherData),
+    systemInfo: getSystemInfoRaw(),
+  };
+}
+export async function triggerRegister(campId: Id, pusherId: Id | null) {
+  const data = getRegisterDataRaw(campId);
+  if (!data) {
+    return;
+  }
+  const pusherServer = await getPusherServer(pusherId);
+  if (!pusherServer) {
+    return;
+  }
+  await pusherServer.trigger(
+    `register${campId}`,
+    getSystemInfoRaw().manageText,
+    data
+  );
+}
+export async function getPusherServer(
+  pusherId: Id | null
+): Promise<Pusher | null> {
+  const pusherData = await PusherData.findById(pusherId);
+  if (!pusherData) {
+    return null;
+  }
+  return new Pusher(pusherData);
 }
