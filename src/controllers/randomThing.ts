@@ -43,6 +43,8 @@ import {
   InterSong,
   Mode,
   RoleCamp,
+  ScoreEvent,
+  SendData,
   ShowCampSong,
   ShowCampSongReady,
   ShowChat,
@@ -68,6 +70,7 @@ import HeathIssue from "../models/HeathIssue";
 import { isFoodValid } from "./user";
 import { getPusherServer } from "./camp";
 import PusherData from "../models/PusherData";
+import Pusher from "pusher";
 //*export async function addLikeSong
 //*export async function addBaanSong
 //*export async function addLostAndFound
@@ -117,6 +120,7 @@ import PusherData from "../models/PusherData";
 //*export async function getShowCampSongs
 //*export async function getShowBaanSongs
 //*export async function getAuthSongs
+//*export async function realTimeScoring
 export async function addLikeSong(req: express.Request, res: express.Response) {
   const { songIds }: { songIds: Id[] } = req.body;
   const user = await getUser(req);
@@ -1419,7 +1423,7 @@ export async function getPeeBaanChat(
     sendRes(res, false);
     return;
   }
-  const systemInfo=getSystemInfoRaw()
+  const systemInfo = getSystemInfoRaw();
   const pusherData = await PusherData.findById(camp.pusherId);
   const output: ChatReady = {
     chats,
@@ -1435,7 +1439,7 @@ export async function getPeeBaanChat(
     userId: user._id,
     subscribe: `chatPee${baan._id}`,
     pusher: getPusherClient(pusherData),
-    systemInfo
+    systemInfo,
   };
   res.status(200).json(output);
 }
@@ -1497,7 +1501,7 @@ export async function getNongChat(req: express.Request, res: express.Response) {
     userId: user._id,
     subscribe: `${getSystemInfoRaw().chatText}${campMemberCard._id}`,
     pusher: getPusherClient(pusherData),
-    systemInfo:getSystemInfoRaw()
+    systemInfo: getSystemInfoRaw(),
   };
   res.status(200).json(output);
 }
@@ -1560,7 +1564,7 @@ export async function getPartPeebaanChat(
     userId: user._id,
     subscribe: `${getSystemInfoRaw().chatText}${part._id}`,
     pusher: getPusherClient(pusherData),
-    systemInfo:getSystemInfoRaw()
+    systemInfo: getSystemInfoRaw(),
   };
   res.status(200).json(output);
 }
@@ -3496,4 +3500,15 @@ export async function getShowChatFromChat(chat: InterChat, mode: Mode) {
   };
 
   return buffer;
+}
+export async function realTimeScoring(
+  req: express.Request,
+  res: express.Response
+) {
+  const buffer: SendData<ScoreEvent> = req.body;
+  const pusher = new Pusher(buffer.pusherData);
+  
+  await pusher.trigger(buffer.chanel, buffer.event, JSON.stringify(buffer.data));
+  console.log(buffer.data)
+  sendRes(res, true);
 }

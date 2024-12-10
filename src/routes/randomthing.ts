@@ -38,6 +38,7 @@ import {
   getShowPlace,
   getShowSong,
   getSystemInfo,
+  realTimeScoring,
   updateFood,
   updateMeal,
   updateSongPage,
@@ -84,4 +85,5 @@ router.post("/addBaanSong/params/:id", protect, addBaanSong); //
 router.get("/getShowCampSongs/params/:id", protect, getShowCampSongs); //
 router.get("/getShowBaanSongs/params/:id", protect, getShowBaanSongs); //
 router.get("/getAuthSongs/params/:id", protect, getAuthSongs); //
+router.post("/realTimeScoring/", realTimeScoring); //
 export default router;

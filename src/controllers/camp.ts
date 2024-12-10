@@ -86,6 +86,7 @@ import {
   RegisterData,
   TriggerChoiceQuestion,
   TriggerTextQuestion,
+  CampState,
 } from "../models/interface";
 import Song from "../models/Song";
 import HeathIssue from "../models/HeathIssue";
@@ -172,6 +173,8 @@ import Pusher from "pusher";
 //*export async function getPetoCampData
 //*export async function getPartForUpdate
 //*export async function getRegisterData
+//*export async function getPusherData
+//*export async function getCampState
 export async function getBaan(req: express.Request, res: express.Response) {
   try {
     const data = await Baan.findById(req.params.id);
@@ -4202,7 +4205,7 @@ export async function getAllAnswerAndQuestion(
     peeAnswers,
     success: true,
     groupName: camp.groupName,
-    pusherData: getPusherClient(pusherData),
+    pusherData,
     systemInfo: getSystemInfoRaw(),
     canScoring: camp.lockChangeQuestion && !camp.canAnswerTheQuestion,
   };
@@ -4213,7 +4216,6 @@ export async function scoreTextQuestions(
   res: express.Response
 ) {
   const input: ScoreTextQuestions = req.body;
-  console.log(input.scores[0]);
   const camp = await Camp.findById(input.campId);
   const user = await getUser(req);
   if (!camp || !user) {
@@ -4229,7 +4231,6 @@ export async function scoreTextQuestions(
   }
   for (const i1 of input.scores) {
     for (const { id, score } of i1) {
-      console.log({ id, score });
       await TextAnswer.findByIdAndUpdate(id, { score });
     }
   }
@@ -5236,4 +5237,84 @@ export async function getPusherServer(
     return null;
   }
   return new Pusher(pusherData);
+}
+export async function getPusherData(
+  req: express.Request,
+  res: express.Response
+) {
+  try {
+    const pusherData = await PusherData.findById(req.params.id);
+    res.status(200).json(pusherData);
+  } catch {
+    res.status(400).json(null);
+  }
+}
+export async function getCampState(
+  req: express.Request,
+  res: express.Response
+) {
+  const user = await getUser(req);
+  const camp = await Camp.findById(req.params.id);
+  if (!user || !camp) {
+    sendRes(res, false);
+    return;
+  }
+  const questions = await getAllQuestionRaw(camp._id, user._id);
+  if (!questions) {
+    sendRes(res, false);
+    return;
+  }
+  let out: CampState;
+  if (camp.nongIds.includes(user._id)) {
+    out = { camp, questions, state: "nong", link: "", user };
+  } else if (camp.peeIds.includes(user._id)) {
+    out = { camp, questions, state: "pee", link: "", user };
+  } else if (camp.petoIds.includes(user._id)) {
+    out = { camp, questions, state: "peto", link: "", user };
+  } else if (camp.nongPendingIds.has(user._id.toString())) {
+    out = {
+      camp,
+      questions,
+      state: "pending",
+      link: camp.nongPendingIds.get(user._id.toString()) || "",
+      user,
+    };
+  } else if (camp.nongInterviewIds.has(user._id.toString())) {
+    out = {
+      camp,
+      questions,
+      state: "interview",
+      link: camp.nongInterviewIds.get(user._id.toString()) || "",
+      user,
+    };
+  } else if (camp.nongPassIds.has(user._id.toString())) {
+    out = {
+      camp,
+      questions,
+      state: "pass",
+      link: camp.nongPassIds.get(user._id.toString()) || "",
+      user,
+    };
+  } else if (camp.nongPaidIds.includes(user._id)) {
+    out = {
+      camp,
+      questions,
+      state: "paid",
+      link: camp.nongPassIds.get(user._id.toString()) || "",
+      user,
+    };
+  } else if (camp.nongSureIds.includes(user._id)) {
+    out = { camp, questions, state: "sure", link: "", user };
+  } else if (camp.peePassIds.has(user._id.toString())) {
+    out = {
+      camp,
+      questions,
+      state: "peePass",
+      link: camp.peePassIds.get(user._id.toString())?.toString() || "",
+      user,
+    };
+  } else {
+    out = { camp, questions, state: "notRegister", link: "", user };
+  }
+  res.status(200).json(out);
 }

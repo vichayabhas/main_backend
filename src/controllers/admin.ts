@@ -21,6 +21,7 @@ import {
   Size,
   Id,
   BasicPart,
+  CreatePusherData,
 } from "../models/interface";
 import {
   calculate,
@@ -54,6 +55,7 @@ import TextAnswer from "../models/TextAnswer";
 import TextQuestion from "../models/TextQuestion";
 import Meal from "../models/Meal";
 import Food from "../models/Food";
+import PusherData from "../models/PusherData";
 //*export async function addBaan
 //*export async function addPart
 //*export async function updateBaan
@@ -85,6 +87,7 @@ import Food from "../models/Food";
 //*export async function getAllRemainPartName
 //*export async function peeToPeto
 //*export async function afterVisnuToPee
+//*export async function updatePusher
 export async function addBaan(req: express.Request, res: express.Response) {
   const user = await getUser(req);
   const { campId, name } = req.body;
@@ -1103,6 +1106,7 @@ async function forceDeleteCampRaw(campId: Id, res: express.Response | null) {
     while (i < camp.foodIds.length) {
       await Food.findByIdAndDelete(camp.foodIds[i++]);
     }
+    await PusherData.findByIdAndDelete(camp.pusherId)
     await camp.deleteOne();
     res?.status(200).json({ success: true });
   } catch {
@@ -3295,5 +3299,31 @@ async function clearHealthIssue(campMemberCardId: Id) {
     healthIssue.campIds.length == 0
   ) {
     await healthIssue.deleteOne();
+  }
+}
+export async function updatePusher(
+  req: express.Request,
+  res: express.Response
+) {
+  const user = await getUser(req);
+  const update: CreatePusherData = req.body;
+  const camp = await Camp.findById(update.campId);
+  if (!camp) {
+    sendRes(res, false);
+    return;
+  }
+  if (
+    !user ||
+    (user.role != "admin" && !user.authPartIds.includes(camp.partBoardId as Id))
+  ) {
+    res.status(403).json({ success: false });
+    return;
+  }
+  const pusherData = await PusherData.findById(camp.pusherId);
+  if (!pusherData) {
+    const newPusherData = await PusherData.create(update);
+    await camp.updateOne({ pusherId: newPusherData._id });
+  } else {
+    await pusherData.updateOne(update);
   }
 }

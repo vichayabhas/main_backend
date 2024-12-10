@@ -293,6 +293,7 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
     canNongSeeAllTrackingSheet,
     canNongAccessDataWithRoleNong,
     lockChangeQuestion,
+    pusherId,
   } = input;
   return {
     partIds,
@@ -392,6 +393,7 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
     canNongSeeAllTrackingSheet,
     canNongAccessDataWithRoleNong,
     lockChangeQuestion,
+    pusherId,
   };
 }
 export function conPartBackToFront(input: InterPartBack): InterPartFront {
