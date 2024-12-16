@@ -153,12 +153,6 @@ const campSchema = new mongoose.Schema({
   partBoardId: {
     type: mongoose.Schema.ObjectId,
   },
-  partCoopId: {
-    type: mongoose.Schema.ObjectId,
-  },
-  partRegisterId: {
-    type: mongoose.Schema.ObjectId,
-  },
   partPeeBaanId: {
     type: mongoose.Schema.ObjectId,
   },
@@ -197,15 +191,6 @@ const campSchema = new mongoose.Schema({
     type: Date,
     default: new Date(Date.now()),
   },
-  partWelfareId: {
-    type: mongoose.Schema.ObjectId,
-  },
-  partMedId: {
-    type: mongoose.Schema.ObjectId,
-  },
-  partPlanId: {
-    type: mongoose.Schema.ObjectId,
-  },
   allPetoChatIds: arrayObjectId,
   petoSleepIds: arrayObjectId,
   nongCampMemberCardHaveHeathIssueIds: arrayObjectId,
@@ -214,9 +199,6 @@ const campSchema = new mongoose.Schema({
   nongHaveBottleIds: arrayObjectId,
   peeHaveBottleIds: arrayObjectId,
   petoHaveBottleIds: arrayObjectId,
-  partPrStudioId: {
-    type: mongoose.Schema.ObjectId,
-  },
   choiceQuestionIds: arrayObjectId,
   textQuestionIds: arrayObjectId,
   nongAnswerPackIds: arrayObjectId,

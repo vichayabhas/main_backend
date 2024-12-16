@@ -22,6 +22,7 @@ import {
   Id,
   BasicPart,
   CreatePusherData,
+  AuthType,
 } from "../models/interface";
 import {
   calculate,
@@ -44,7 +45,7 @@ import Place from "../models/Place";
 import { getUser } from "../middleware/auth";
 import Building from "../models/Building";
 import LostAndFound from "../models/LostAndFound";
-import { addPeeRaw, addPetoRaw, changeBaanRaw } from "./camp";
+import { addPeeRaw, addPetoRaw, changeBaanRaw, getAuthTypes } from "./camp";
 import Chat from "../models/Chat";
 import { revalidationHeathIssues } from "./user";
 import { deleteChatRaw } from "./randomThing";
@@ -191,7 +192,7 @@ export async function addPart(req: express.Request, res: express.Response) {
     res.status(403).json({ success: false });
     return;
   }
-  const newPart = await addPartRaw(camp._id, nameId, false);
+  const newPart = await addPartRaw(camp._id, nameId, []);
   if (!newPart) {
     sendRes(res, false);
     return;
@@ -201,7 +202,7 @@ export async function addPart(req: express.Request, res: express.Response) {
 async function addPartRaw(
   campId: Id,
   nameId: Id,
-  isAuth: boolean
+  auths: AuthType[]
 ): Promise<BasicPart | null> {
   const camp = await Camp.findById(campId);
   const partNameContainer = await PartNameContainer.findById(nameId);
@@ -212,7 +213,7 @@ async function addPartRaw(
     campId: camp._id,
     nameId,
     partName: `${partNameContainer.name} ${camp.campName}`,
-    isAuth,
+    auths,
   });
   //await partNameContainer.updateOne({ partIds: swop(null, part._id, partNameContainer.partIds) })
   partNameContainer.partIds.push(part._id);
@@ -263,14 +264,18 @@ export async function updateBaan(req: express.Request, res: express.Response) {
   }
   const camp: InterCampBack | null = await Camp.findById(baan.campId);
   const user = await getUser(req);
-  if (
-    !user ||
-    !camp ||
-    (user.role != "admin" &&
-      !user.authPartIds.includes(camp.partBoardId) &&
-      !user.authPartIds.includes(camp.partCoopId))
-  ) {
+  if (!user || !camp) {
     res.status(401).json({ success: false });
+    return;
+  }
+  const auths = await getAuthTypes(user._id, camp._id);
+  if (
+    !auths ||
+    (!auths.includes("หัวหน้าพี่เลี้ยง") &&
+      user.role != "admin" &&
+      !user.authPartIds.includes(camp.partBoardId))
+  ) {
+    sendRes(res, false);
     return;
   }
   const s = await updateBaanRaw(update);
@@ -389,15 +394,21 @@ export async function updatePart(req: express.Request, res: express.Response) {
     }
     const camp: InterCampBack | null = await Camp.findById(part.campId);
     const user = await getUser(req);
-    if (
-      !user ||
-      !camp ||
-      (user.role != "admin" &&
-        !user.authPartIds.includes(camp.partBoardId) &&
-        !user.authPartIds.includes(camp.partCoopId))
-    ) {
+    if (!user || !camp) {
       res.status(401).json({ success: false });
       return;
+    }
+    const auths = await getAuthTypes(user._id, camp._id);
+    if (
+      !auths ||
+      (!auths.includes("แผน") &&
+        user.role != "admin" &&
+        !user.authPartIds.includes(camp.partBoardId))
+    ) {
+      {
+        sendRes(res, false);
+        return;
+      }
     }
     const newPlace = await Place.findById(placeId);
     if (newPlace) {
@@ -470,6 +481,7 @@ export async function createCamp(req: express.Request, res: express.Response) {
       memberStructure,
       nongSleepModel,
       peeSleepModel,
+      defaultPartNameAndAuths,
     }: CreateCamp = req.body;
     const nameContainer = await NameContainer.findById(nameId);
     if (!nameContainer) {
@@ -496,10 +508,16 @@ export async function createCamp(req: express.Request, res: express.Response) {
     await nameContainer?.updateOne({
       campIds: swop(null, camp._id, nameContainer.campIds),
     });
-    let partNameContainer = await PartNameContainer.findOne({ name: "board" });
-    if (!partNameContainer) {
-      partNameContainer = await PartNameContainer.create({ name: "board" });
+    let partNameContainerBoard = await PartNameContainer.findOne({
+      name: "board",
+    });
+    if (!partNameContainerBoard) {
+      partNameContainerBoard = await PartNameContainer.create({
+        name: "board",
+      });
     }
+    //["board","ประสาน","ทะเบียน","พี่บ้าน","สวัสดิการ","พยาบาล","แผน","PR/studio"]
+
     let partNameContainerCoop = await PartNameContainer.findOne({
       name: "ประสาน",
     });
@@ -552,29 +570,6 @@ export async function createCamp(req: express.Request, res: express.Response) {
         name: "PR/studio",
       });
     }
-    const part = await Part.create({
-      nameId: partNameContainer._id,
-      campId: camp._id,
-      partName: `${partNameContainer.name} ${nameContainer.name} ${camp.round}`,
-      isAuth: true,
-    });
-    await partNameContainer.updateOne({
-      campIds: swop(null, camp._id, partNameContainer.campIds),
-      partIds: swop(null, part._id, partNameContainer.partIds),
-    });
-    const petoCamp = await PetoCamp.create({
-      partId: part._id,
-      campId: camp._id,
-    });
-    await camp.updateOne({
-      partIds: [part._id],
-      petoModelIds: [petoCamp._id],
-      campName: `${nameContainer.name} ${camp.round}`,
-      baanBoardId: null,
-      partBoardId: part._id,
-      partNameIds: [partNameContainer._id],
-    });
-    await part.updateOne({ petoModelId: petoCamp._id });
     let i = 0;
     while (i < boardIds.length) {
       const boardId = boardIds[i++];
@@ -586,40 +581,44 @@ export async function createCamp(req: express.Request, res: express.Response) {
         authorizeIds: swop(null, camp._id, user.authorizeIds),
       });
     }
-    const coop = await addPartRaw(camp._id, partNameContainerCoop._id, true);
-    const regis = await addPartRaw(camp._id, partNameContainerRegis._id, true);
-    const peeBaan = await addPartRaw(
-      camp._id,
-      partNameContainerPeeBaan._id,
-      false
-    );
-    const welfare = await addPartRaw(
-      camp._id,
-      partNameContainerWelfare._id,
-      true
-    );
-    const med = await addPartRaw(camp._id, partNameContainerMed._id, true);
-    const plan = await addPartRaw(camp._id, partNameContainerPlan._id, true);
-    const prStudio = await addPartRaw(
-      camp._id,
-      partNameContainerPrStudio._id,
-      true
-    );
-    if (!coop || !regis || !peeBaan || !welfare || !med || !plan || !prStudio) {
+    for (const { partName, auths } of defaultPartNameAndAuths) {
+      if (partName == "board") {
+        continue;
+      }
+
+      let partNameContainer = await PartNameContainer.findOne({
+        name: partName,
+      });
+      if (!partNameContainer) {
+        partNameContainer = await PartNameContainer.create({
+          name: partName,
+        });
+      }
+      const part = await addPartRaw(camp._id, partNameContainer._id, auths);
+      if (partName != "พี่บ้าน" || !part) {
+        continue;
+      }
+      await camp.updateOne({ partPeeBaanId: part._id });
+    }
+    const board = await addPartRaw(camp._id, partNameContainerBoard._id, [
+      "pr/studio",
+      "ตรวจคำตอบข้อเขียน",
+      "ทะเบียน",
+      "พยาบาล",
+      "สวัสดิการ",
+      "หัวหน้าพี่เลี้ยง",
+      "แก้ไขคำถาม",
+      "แผน",
+    ]);
+    if (!board) {
       sendRes(res, false);
       return;
     }
     await camp.updateOne({
-      partCoopId: coop._id,
-      partRegisterId: regis._id,
-      partPeeBaanId: peeBaan._id,
-      partMedId: med._id,
-      partWelfareId: welfare._id,
-      partPlanId: plan._id,
-      partPrStudioId: prStudio._id,
+      partBoardId: board._id,
     });
     if (memberStructure == "nong->highSchool,pee->1year,peto->2upYear") {
-      await addPetoRaw(boardIds, part._id, res);
+      await addPetoRaw(boardIds, board._id, res);
     } else {
       const newCamp: InterCampBack | null = await Camp.findById(camp._id);
       if (!newCamp) {
@@ -629,7 +628,7 @@ export async function createCamp(req: express.Request, res: express.Response) {
       const baan = await addBaanRaw(newCamp, "board", "null");
       i = 0;
       while (i < boardIds.length) {
-        camp.peePassIds.set(boardIds[i++].toString(), part._id);
+        camp.peePassIds.set(boardIds[i++].toString(), board._id);
       }
       await camp.updateOne({
         peePassIds: camp.peePassIds,
@@ -973,7 +972,7 @@ async function forceDeleteCampRaw(campId: Id, res: express.Response | null) {
       while (j < part.chatIds.length) {
         await Chat.findByIdAndDelete(part.chatIds[j++]);
       }
-      if (part.isAuth) {
+      if (part.auths.length) {
         j = 0;
         while (j < part.peeIds.length) {
           const user = await User.findById(part.peeIds[j++]);
@@ -1106,7 +1105,7 @@ async function forceDeleteCampRaw(campId: Id, res: express.Response | null) {
     while (i < camp.foodIds.length) {
       await Food.findByIdAndDelete(camp.foodIds[i++]);
     }
-    await PusherData.findByIdAndDelete(camp.pusherId)
+    await PusherData.findByIdAndDelete(camp.pusherId);
     await camp.deleteOne();
     res?.status(200).json({ success: true });
   } catch {
@@ -1354,7 +1353,7 @@ export async function forceDeleteBaan(
       await part.updateOne({ peeIds: p });
       peeIds = swop(user._id, null, peeIds);
       await user.updateOne({ peeCampIds });
-      if (part.isAuth) {
+      if (part.auths.length) {
         await user.updateOne({
           authorizeIds: swop(camp._id, null, user.authorizeIds),
           authPartIds: swop(part._id, null, user.authPartIds),
@@ -1661,7 +1660,7 @@ export async function saveDeletePart(
     !user ||
     (user.role != "admin" &&
       !user.authPartIds.includes(camp.partBoardId as Id)) ||
-    part.isAuth ||
+    part.auths.length ||
     part._id.equals(camp.partPeeBaanId)
   ) {
     return res.status(403).json({ success: false });
@@ -2052,7 +2051,7 @@ async function forceDeletePartRaw(partId: Id) {
     peeCampMemberCardHaveHeathIssueIds,
     petoCampMemberCardHaveHeathIssueIds,
   });
-  if (part.isAuth) {
+  if (part.auths.length) {
     let j = 0;
     while (j < part.peeIds.length) {
       const user = await User.findById(part.peeIds[j++]);
@@ -2202,29 +2201,133 @@ export async function updateCamp(req: express.Request, res: express.Response) {
     res.status(403).json({ success: false });
     return;
   }
-  const update: UpdateCamp = req.body;
-  if (camp.nongDataLock != update.nongDataLock) {
-    if (update.nongDataLock) {
+  const {
+    nongDataLock,
+    open,
+    link,
+    allDone,
+    lockChangePickup,
+    pictureUrls,
+    logoUrl,
+    dateStart,
+    dateEnd,
+    registerSheetLink,
+    peeLock,
+    groupName,
+    peeDataLock,
+    petoDataLock,
+    haveCloth,
+    showCorrectAnswerAndScore,
+    canAnswerTheQuestion,
+    canNongSeeAllAnswer,
+    canNongSeeAllActionPlan,
+    canNongSeeAllTrackingSheet,
+    canNongAccessDataWithRoleNong,
+    lockChangeQuestion,
+    updatePart,
+  }: UpdateCamp = req.body;
+  if (camp.nongDataLock != nongDataLock) {
+    if (nongDataLock) {
       await lockDataNong(camp._id);
     } else {
       await unlockDataNong(camp._id);
     }
   }
-  if (camp.peeDataLock != update.peeDataLock) {
-    if (update.peeDataLock) {
+  if (camp.peeDataLock != peeDataLock) {
+    if (peeDataLock) {
       await lockDataPee(camp._id);
     } else {
       await unlockDataPee(camp._id);
     }
   }
-  if (camp.petoDataLock != update.petoDataLock) {
-    if (update.petoDataLock) {
+  if (camp.petoDataLock != petoDataLock) {
+    if (petoDataLock) {
       await lockDataPeto(camp._id);
     } else {
       await unlockDataPeto(camp._id);
     }
   }
-  await camp.updateOne(update);
+  await camp.updateOne({
+    nongDataLock,
+    open,
+    link,
+    allDone,
+    lockChangePickup,
+    pictureUrls,
+    logoUrl,
+    dateStart,
+    dateEnd,
+    registerSheetLink,
+    peeLock,
+    groupName,
+    peeDataLock,
+    petoDataLock,
+    haveCloth,
+    showCorrectAnswerAndScore,
+    canAnswerTheQuestion,
+    canNongSeeAllAnswer,
+    canNongSeeAllActionPlan,
+    canNongSeeAllTrackingSheet,
+    canNongAccessDataWithRoleNong,
+    lockChangeQuestion,
+  });
+  for (const { id, auths } of updatePart) {
+    const part = await Part.findById(id);
+    if (!part) {
+      continue;
+    }
+    if (auths.length > 0) {
+      if (part.auths.length > 0) {
+        await part.updateOne({ auths });
+      } else {
+        let i = 0;
+        while (i < part.peeIds.length) {
+          const user = await User.findById(part.peeIds[i++]);
+          if (!user) {
+            continue;
+          }
+          await user.updateOne({
+            authPartIds: swop(null, part._id, user.authPartIds),
+          });
+        }
+        i = 0;
+        while (i < part.petoIds.length) {
+          const user = await User.findById(part.petoIds[i++]);
+          if (!user) {
+            continue;
+          }
+          await user.updateOne({
+            authPartIds: swop(null, part._id, user.authPartIds),
+          });
+        }
+        await part.updateOne({ auths });
+      }
+    } else {
+      if (part.auths.length > 0) {
+        let i = 0;
+        while (i < part.peeIds.length) {
+          const user = await User.findById(part.peeIds[i++]);
+          if (!user) {
+            continue;
+          }
+          await user.updateOne({
+            authPartIds: swop(part._id, null, user.authPartIds),
+          });
+        }
+        i = 0;
+        while (i < part.petoIds.length) {
+          const user = await User.findById(part.petoIds[i++]);
+          if (!user) {
+            continue;
+          }
+          await user.updateOne({
+            authPartIds: swop(part._id, null, user.authPartIds),
+          });
+        }
+        await part.updateOne({ auths });
+      }
+    }
+  }
   res.status(200).json(camp);
 }
 export async function getCampNames(
@@ -2348,9 +2451,14 @@ export async function addAllGroup(req: express.Request, res: express.Response) {
     sendRes(res, false);
     return;
   }
+  if (camp.ready.includes(baan.groupRef)) {
+    sendRes(res, false);
+    return;
+  }
+  const auths = await getAuthTypes(user._id, camp._id);
   if (
-    camp.ready.includes(baan.groupRef) ||
-    (!user.authPartIds.includes(camp.partCoopId as Id) &&
+    !auths ||
+    (!auths.includes("หัวหน้าพี่เลี้ยง") &&
       !user.authPartIds.includes(camp.partBoardId as Id))
   ) {
     sendRes(res, false);

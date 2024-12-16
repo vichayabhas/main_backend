@@ -2,7 +2,7 @@ import Camp from "../models/Camp";
 import { sendRes, stringToId, swop } from "./setup";
 import express from "express";
 import { getUser } from "../middleware/auth";
-import { changePartRaw, getImpotentPartIdBCRP, triggerRegister } from "./camp";
+import { triggerRegister } from "./camp";
 import { Id } from "../models/interface";
 export async function interview(req: express.Request, res: express.Response) {
   const { members, campId } = req.body;
@@ -129,14 +129,14 @@ export async function pass(req: express.Request, res: express.Response) {
   res.status(200).json({ count: i });
 }
 export async function kickPee(req: express.Request, res: express.Response) {
-  const { campId, members } = req.body;
-  const camp = await Camp.findById(campId);
-  if (!camp) {
-    sendRes(res, false);
-    return;
-  }
-  const im = await getImpotentPartIdBCRP(camp._id);
-  await changePartRaw(members, im[3]);
+  // const { campId, members } = req.body;
+  // const camp = await Camp.findById(campId);
+  // if (!camp) {
+  //   sendRes(res, false);
+  //   return;
+  // }
+  // const im = await getImpotentPartIdBCRP(camp._id);
+  // await changePartRaw(members, im[3]);
   sendRes(res, true);
 }
 export async function kickNong(req: express.Request, res: express.Response) {

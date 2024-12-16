@@ -6,6 +6,7 @@ import {
   dataSize,
   dataString,
 } from "../controllers/setup";
+import { authTypes } from "./interface";
 const PartSchema = new mongoose.Schema({
   nameId: dataId,
   campId: dataId,
@@ -30,20 +31,25 @@ const PartSchema = new mongoose.Schema({
   workItemIds: arrayObjectId,
   placeId: {
     type: mongoose.Schema.ObjectId,
-    default:null
+    default: null,
   },
   mapCampMemberCardIdByUserId: dataMapObjectId,
   partName: dataString,
   peeSleepIds: arrayObjectId,
   chatIds: arrayObjectId,
-  isAuth: {
-    type: Boolean,
-    required: true,
-  },
   petoSleepIds: arrayObjectId,
   peeCampMemberCardHaveHeathIssueIds: arrayObjectId,
   petoCampMemberCardHaveHeathIssueIds: arrayObjectId,
   peeHaveBottleIds: arrayObjectId,
   petoHaveBottleIds: arrayObjectId,
+  auths: {
+    type: [
+      {
+        type: String,
+        enum: authTypes,
+      },
+    ],
+    default: [],
+  },
 });
 export default mongoose.model("Part", PartSchema);

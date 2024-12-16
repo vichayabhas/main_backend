@@ -68,7 +68,7 @@ import Meal from "../models/Meal";
 import Food from "../models/Food";
 import HeathIssue from "../models/HeathIssue";
 import { isFoodValid } from "./user";
-import { getPusherServer } from "./camp";
+import { getAuthTypes, getPusherServer } from "./camp";
 import PusherData from "../models/PusherData";
 import Pusher from "pusher";
 //*export async function addLikeSong
@@ -217,6 +217,10 @@ async function addBaanSongRaw(baanId: Id, songIds: Id[], userId: Id) {
   if (!campMemberCard) {
     return;
   }
+  const auths = await getAuthTypes(userId, camp._id);
+  if (!auths) {
+    return;
+  }
   switch (campMemberCard.role) {
     case "nong":
       return;
@@ -229,25 +233,15 @@ async function addBaanSongRaw(baanId: Id, songIds: Id[], userId: Id) {
       if (!part) {
         return;
       }
-      switch (part._id.toString()) {
-        case camp.partBoardId?.toString():
-          break;
-        case camp.partCoopId?.toString(): {
-          if (!baan.peeIds.includes(userId)) {
-            return;
-          }
-          break;
-        }
-        case camp.partPrStudioId?.toString(): {
-          if (!baan.peeIds.includes(userId)) {
-            return;
-          }
-          break;
-        }
-        default:
-          return;
+      if (
+        part._id.toString() == camp.partBoardId?.toString() ||
+        auths.includes("pr/studio") ||
+        auths.includes("หัวหน้าพี่เลี้ยง")
+      ) {
+        break;
+      } else {
+        return;
       }
-      break;
     }
     case "peto": {
       const peeCamp = await PeeCamp.findById(campMemberCard.campModelId);
@@ -258,17 +252,15 @@ async function addBaanSongRaw(baanId: Id, songIds: Id[], userId: Id) {
       if (!part) {
         return;
       }
-      switch (part._id.toString()) {
-        case camp.partBoardId?.toString():
-          break;
-        case camp.partCoopId?.toString():
-          break;
-        case camp.partPrStudioId?.toString():
-          break;
-        default:
-          return;
+      if (
+        part._id.toString() == camp.partBoardId?.toString() ||
+        auths.includes("pr/studio") ||
+        auths.includes("หัวหน้าพี่เลี้ยง")
+      ) {
+        break;
+      } else {
+        return;
       }
-      break;
     }
   }
   const add = removeDuplicate(songIds, baan.songIds);
@@ -353,18 +345,21 @@ export async function deleteLostAndFound(
     return;
   }
   const camp = await Camp.findById(lostAndFound.campId);
+  const auths = await getAuthTypes(user._id, lostAndFound.campId);
   if (
     !user ||
     (user.role != "admin" &&
       lostAndFound.userId !== user._id &&
       (camp
-        ? !user.authPartIds.includes(camp.partBoardId as Id) &&
-          !user.authPartIds.includes(camp.partRegisterId as Id)
+        ? !auths ||
+          (!user.authPartIds.includes(camp.partBoardId as Id) &&
+            !auths.includes("ทะเบียน"))
         : true) &&
       !camp?.boardIds.includes(user._id))
   ) {
     res.status(403).json(resError);
   }
+
   const owner = await User.findById(lostAndFound.userId);
   const place = await Place.findById(lostAndFound.placeId);
   const building = await Building.findById(lostAndFound?.buildingId);
@@ -1576,15 +1571,11 @@ export async function createMeal(req: express.Request, res: express.Response) {
     sendRes(res, false);
     return;
   }
-  const welfare = await Part.findById(camp.partWelfareId);
-  const board = await Part.findById(camp.partBoardId);
+  const auths = await getAuthTypes(user._id, camp._id);
   if (
-    !board ||
-    !welfare ||
-    (!board.peeIds.includes(user._id) &&
-      !board.petoIds.includes(user._id) &&
-      !welfare.peeIds.includes(user._id) &&
-      !welfare.petoIds.includes(user._id))
+    !auths ||
+    (!auths.includes("สวัสดิการ") &&
+      !user.authPartIds.includes(camp.partBoardId as Id))
   ) {
     sendRes(res, false);
     return;
@@ -1602,15 +1593,11 @@ export async function createFood(req: express.Request, res: express.Response) {
     sendRes(res, false);
     return;
   }
-  const welfare = await Part.findById(camp.partWelfareId);
-  const board = await Part.findById(camp.partBoardId);
+  const auths = await getAuthTypes(user._id, camp._id);
   if (
-    !board ||
-    !welfare ||
-    (!board.peeIds.includes(user._id) &&
-      !board.petoIds.includes(user._id) &&
-      !welfare.peeIds.includes(user._id) &&
-      !welfare.petoIds.includes(user._id))
+    !auths ||
+    (!auths.includes("สวัสดิการ") &&
+      !user.authPartIds.includes(camp.partBoardId as Id))
   ) {
     sendRes(res, false);
     return;
@@ -1727,15 +1714,11 @@ export async function updateFood(req: express.Request, res: express.Response) {
     sendRes(res, false);
     return;
   }
-  const welfare = await Part.findById(camp.partWelfareId);
-  const board = await Part.findById(camp.partBoardId);
+  const auths = await getAuthTypes(user._id, camp._id);
   if (
-    !board ||
-    !welfare ||
-    (!board.peeIds.includes(user._id) &&
-      !board.petoIds.includes(user._id) &&
-      !welfare.peeIds.includes(user._id) &&
-      !welfare.petoIds.includes(user._id))
+    !auths ||
+    (!auths.includes("สวัสดิการ") &&
+      !user.authPartIds.includes(camp.partBoardId as Id))
   ) {
     sendRes(res, false);
     return;
@@ -2436,15 +2419,11 @@ export async function deleteFood(req: express.Request, res: express.Response) {
     sendRes(res, false);
     return;
   }
-  const welfare = await Part.findById(camp.partWelfareId);
-  const board = await Part.findById(camp.partBoardId);
+  const auths = await getAuthTypes(user._id, camp._id);
   if (
-    !board ||
-    !welfare ||
-    (!board.peeIds.includes(user._id) &&
-      !board.petoIds.includes(user._id) &&
-      !welfare.peeIds.includes(user._id) &&
-      !welfare.petoIds.includes(user._id))
+    !auths ||
+    (!auths.includes("สวัสดิการ") &&
+      !user.authPartIds.includes(camp.partBoardId as Id))
   ) {
     sendRes(res, false);
     return;
@@ -2464,15 +2443,11 @@ export async function deleteMeal(req: express.Request, res: express.Response) {
     sendRes(res, false);
     return;
   }
-  const welfare = await Part.findById(camp.partWelfareId);
-  const board = await Part.findById(camp.partBoardId);
+  const auths = await getAuthTypes(user._id, camp._id);
   if (
-    !board ||
-    !welfare ||
-    (!board.peeIds.includes(user._id) &&
-      !board.petoIds.includes(user._id) &&
-      !welfare.peeIds.includes(user._id) &&
-      !welfare.petoIds.includes(user._id))
+    !auths ||
+    (!auths.includes("สวัสดิการ") &&
+      !user.authPartIds.includes(camp.partBoardId as Id))
   ) {
     sendRes(res, false);
     return;
@@ -2520,15 +2495,11 @@ export async function updateMeal(req: express.Request, res: express.Response) {
     sendRes(res, false);
     return;
   }
-  const welfare = await Part.findById(camp.partWelfareId);
-  const board = await Part.findById(camp.partBoardId);
+  const auths = await getAuthTypes(user._id, camp._id);
   if (
-    !board ||
-    !welfare ||
-    (!board.peeIds.includes(user._id) &&
-      !board.petoIds.includes(user._id) &&
-      !welfare.peeIds.includes(user._id) &&
-      !welfare.petoIds.includes(user._id))
+    !auths ||
+    (!auths.includes("สวัสดิการ") &&
+      !user.authPartIds.includes(camp.partBoardId as Id))
   ) {
     sendRes(res, false);
     return;
@@ -2671,101 +2642,41 @@ export async function getMenuSongs(
       if (!camp) {
         continue;
       }
-      switch (part._id.toString()) {
-        case camp.partPrStudioId.toString(): {
-          const campMemberCard = await CampMemberCard.findById(
-            camp.mapCampMemberCardIdByUserId.get(user._id)
-          );
-          if (!campMemberCard) {
+      const auths = await getAuthTypes(user._id, camp._id);
+      if (!auths) {
+        continue;
+      }
+      if (user.authPartIds.includes(camp.partBoardId)) {
+        let j = 0;
+        while (j < camp.baanIds.length) {
+          const baan = await Baan.findById(camp.baanIds[j++]);
+          if (!baan) {
             continue;
           }
-          switch (campMemberCard.role) {
-            case "nong":
-              break;
-            case "pee": {
-              const peeCamp = await PeeCamp.findById(
-                campMemberCard.campModelId
-              );
-              if (!peeCamp) {
-                continue;
-              }
-              const baan = await Baan.findById(peeCamp.baanId);
-              if (!baan) {
-                continue;
-              }
-              authBaans.push({
-                data: baan,
-                showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
-              });
-              authCamps.push(camp);
-              break;
-            }
-            case "peto": {
-              let j = 0;
-              while (j < camp.baanIds.length) {
-                const baan = await Baan.findById(camp.baanIds[j++]);
-                if (!baan) {
-                  continue;
-                }
-                authBaans.push({
-                  data: baan,
-                  showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
-                });
-              }
-              authCamps.push(camp);
-              break;
-            }
-          }
-          break;
+          authBaans.push({
+            data: baan,
+            showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
+          });
         }
-        case camp.partCoopId.toString(): {
-          const campMemberCard = await CampMemberCard.findById(
-            camp.mapCampMemberCardIdByUserId.get(user._id)
-          );
-          if (!campMemberCard) {
-            continue;
-          }
-          switch (campMemberCard.role) {
-            case "nong":
-              break;
-            case "pee": {
-              const peeCamp = await PeeCamp.findById(
-                campMemberCard.campModelId
-              );
-              if (!peeCamp) {
-                continue;
-              }
-              const baan = await Baan.findById(peeCamp.baanId);
-              if (!baan) {
-                continue;
-              }
-              authBaans.push({
-                data: baan,
-                showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
-              });
-              break;
-            }
-            case "peto": {
-              let j = 0;
-              while (j < camp.baanIds.length) {
-                const baan = await Baan.findById(camp.baanIds[j++]);
-                if (!baan) {
-                  continue;
-                }
-                authBaans.push({
-                  data: baan,
-                  showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
-                });
-              }
-              break;
-            }
-          }
-          break;
+        authCamps.push(camp);
+        continue;
+      }
+      if (auths.includes("pr/studio")) {
+        const campMemberCard = await CampMemberCard.findById(
+          camp.mapCampMemberCardIdByUserId.get(user._id)
+        );
+        if (!campMemberCard) {
+          continue;
         }
-        case camp.partBoardId.toString(): {
-          let j = 0;
-          while (j < camp.baanIds.length) {
-            const baan = await Baan.findById(camp.baanIds[j++]);
+        switch (campMemberCard.role) {
+          case "nong":
+            break;
+          case "pee": {
+            const peeCamp = await PeeCamp.findById(campMemberCard.campModelId);
+            if (!peeCamp) {
+              continue;
+            }
+            const baan = await Baan.findById(peeCamp.baanId);
             if (!baan) {
               continue;
             }
@@ -2773,10 +2684,68 @@ export async function getMenuSongs(
               data: baan,
               showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
             });
+            authCamps.push(camp);
+            break;
           }
-          authCamps.push(camp);
-          break;
+          case "peto": {
+            let j = 0;
+            while (j < camp.baanIds.length) {
+              const baan = await Baan.findById(camp.baanIds[j++]);
+              if (!baan) {
+                continue;
+              }
+              authBaans.push({
+                data: baan,
+                showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
+              });
+            }
+            authCamps.push(camp);
+            break;
+          }
         }
+        continue;
+      }
+      if (auths.includes("หัวหน้าพี่เลี้ยง")) {
+        const campMemberCard = await CampMemberCard.findById(
+          camp.mapCampMemberCardIdByUserId.get(user._id)
+        );
+        if (!campMemberCard) {
+          continue;
+        }
+        switch (campMemberCard.role) {
+          case "nong":
+            break;
+          case "pee": {
+            const peeCamp = await PeeCamp.findById(campMemberCard.campModelId);
+            if (!peeCamp) {
+              continue;
+            }
+            const baan = await Baan.findById(peeCamp.baanId);
+            if (!baan) {
+              continue;
+            }
+            authBaans.push({
+              data: baan,
+              showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
+            });
+            break;
+          }
+          case "peto": {
+            let j = 0;
+            while (j < camp.baanIds.length) {
+              const baan = await Baan.findById(camp.baanIds[j++]);
+              if (!baan) {
+                continue;
+              }
+              authBaans.push({
+                data: baan,
+                showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
+              });
+            }
+            break;
+          }
+        }
+        continue;
       }
     }
     const buffer: GetMenuSongs = {
@@ -2825,101 +2794,41 @@ export async function getShowSong(req: express.Request, res: express.Response) {
       if (!camp) {
         continue;
       }
-      switch (part._id.toString()) {
-        case camp.partPrStudioId.toString(): {
-          const campMemberCard = await CampMemberCard.findById(
-            camp.mapCampMemberCardIdByUserId.get(user._id)
-          );
-          if (!campMemberCard) {
+      const auths = await getAuthTypes(user._id, camp._id);
+      if (!auths) {
+        continue;
+      }
+      if (user.authPartIds.includes(camp.partBoardId)) {
+        let j = 0;
+        while (j < camp.baanIds.length) {
+          const baan = await Baan.findById(camp.baanIds[j++]);
+          if (!baan) {
             continue;
           }
-          switch (campMemberCard.role) {
-            case "nong":
-              break;
-            case "pee": {
-              const peeCamp = await PeeCamp.findById(
-                campMemberCard.campModelId
-              );
-              if (!peeCamp) {
-                continue;
-              }
-              const baan = await Baan.findById(peeCamp.baanId);
-              if (!baan) {
-                continue;
-              }
-              authBaans.push({
-                data: baan,
-                showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
-              });
-              authCamps.push(camp);
-              break;
-            }
-            case "peto": {
-              let j = 0;
-              while (j < camp.baanIds.length) {
-                const baan = await Baan.findById(camp.baanIds[j++]);
-                if (!baan) {
-                  continue;
-                }
-                authBaans.push({
-                  data: baan,
-                  showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
-                });
-              }
-              authCamps.push(camp);
-              break;
-            }
-          }
-          break;
+          authBaans.push({
+            data: baan,
+            showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
+          });
         }
-        case camp.partCoopId.toString(): {
-          const campMemberCard = await CampMemberCard.findById(
-            camp.mapCampMemberCardIdByUserId.get(user._id)
-          );
-          if (!campMemberCard) {
-            continue;
-          }
-          switch (campMemberCard.role) {
-            case "nong":
-              break;
-            case "pee": {
-              const peeCamp = await PeeCamp.findById(
-                campMemberCard.campModelId
-              );
-              if (!peeCamp) {
-                continue;
-              }
-              const baan = await Baan.findById(peeCamp.baanId);
-              if (!baan) {
-                continue;
-              }
-              authBaans.push({
-                data: baan,
-                showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
-              });
-              break;
-            }
-            case "peto": {
-              let j = 0;
-              while (j < camp.baanIds.length) {
-                const baan = await Baan.findById(camp.baanIds[j++]);
-                if (!baan) {
-                  continue;
-                }
-                authBaans.push({
-                  data: baan,
-                  showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
-                });
-              }
-              break;
-            }
-          }
-          break;
+        authCamps.push(camp);
+        continue;
+      }
+      if (auths.includes("pr/studio")) {
+        const campMemberCard = await CampMemberCard.findById(
+          camp.mapCampMemberCardIdByUserId.get(user._id)
+        );
+        if (!campMemberCard) {
+          continue;
         }
-        case camp.partBoardId.toString(): {
-          let j = 0;
-          while (j < camp.baanIds.length) {
-            const baan = await Baan.findById(camp.baanIds[j++]);
+        switch (campMemberCard.role) {
+          case "nong":
+            break;
+          case "pee": {
+            const peeCamp = await PeeCamp.findById(campMemberCard.campModelId);
+            if (!peeCamp) {
+              continue;
+            }
+            const baan = await Baan.findById(peeCamp.baanId);
             if (!baan) {
               continue;
             }
@@ -2927,10 +2836,68 @@ export async function getShowSong(req: express.Request, res: express.Response) {
               data: baan,
               showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
             });
+            authCamps.push(camp);
+            break;
           }
-          authCamps.push(camp);
-          break;
+          case "peto": {
+            let j = 0;
+            while (j < camp.baanIds.length) {
+              const baan = await Baan.findById(camp.baanIds[j++]);
+              if (!baan) {
+                continue;
+              }
+              authBaans.push({
+                data: baan,
+                showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
+              });
+            }
+            authCamps.push(camp);
+            break;
+          }
         }
+        continue;
+      }
+      if (auths.includes("หัวหน้าพี่เลี้ยง")) {
+        const campMemberCard = await CampMemberCard.findById(
+          camp.mapCampMemberCardIdByUserId.get(user._id)
+        );
+        if (!campMemberCard) {
+          continue;
+        }
+        switch (campMemberCard.role) {
+          case "nong":
+            break;
+          case "pee": {
+            const peeCamp = await PeeCamp.findById(campMemberCard.campModelId);
+            if (!peeCamp) {
+              continue;
+            }
+            const baan = await Baan.findById(peeCamp.baanId);
+            if (!baan) {
+              continue;
+            }
+            authBaans.push({
+              data: baan,
+              showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
+            });
+            break;
+          }
+          case "peto": {
+            let j = 0;
+            while (j < camp.baanIds.length) {
+              const baan = await Baan.findById(camp.baanIds[j++]);
+              if (!baan) {
+                continue;
+              }
+              authBaans.push({
+                data: baan,
+                showName: `${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
+              });
+            }
+            break;
+          }
+        }
+        continue;
       }
     }
     const buffer: ShowSongPage = {
@@ -2954,58 +2921,19 @@ export async function addCampSong(req: express.Request, res: express.Response) {
 }
 async function addCampSongRaw(campId: Id, songIds: Id[], userId: Id) {
   const camp = await Camp.findById(campId);
-  if (!camp) {
+  const user = await User.findById(userId);
+  if (!camp || !user) {
     return;
   }
-  const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(userId.toString())
-  );
-  if (!campMemberCard) {
+  const auths = await getAuthTypes(user._id, camp._id);
+  if (!auths) {
     return;
   }
-  switch (campMemberCard.role) {
-    case "nong":
-      return;
-    case "pee": {
-      const peeCamp = await PeeCamp.findById(campMemberCard.campModelId);
-      if (!peeCamp) {
-        return;
-      }
-      const part = await Part.findById(peeCamp.partId);
-      if (!part) {
-        return;
-      }
-      switch (part._id.toString()) {
-        case camp.partBoardId?.toString():
-          break;
-        case camp.partPrStudioId?.toString():
-          break;
-        default:
-          return;
-      }
-      break;
-    }
-    case "peto": {
-      const peeCamp = await PeeCamp.findById(campMemberCard.campModelId);
-      if (!peeCamp) {
-        return;
-      }
-      const part = await Part.findById(peeCamp.partId);
-      if (!part) {
-        return;
-      }
-      switch (part._id.toString()) {
-        case camp.partBoardId?.toString():
-          break;
-        case camp.partCoopId?.toString():
-          break;
-        case camp.partPrStudioId?.toString():
-          break;
-        default:
-          return;
-      }
-      break;
-    }
+  if (
+    !auths.includes("pr/studio") &&
+    user.authPartIds.includes(camp.partBoardId as Id)
+  ) {
+    return;
   }
   const add = removeDuplicate(songIds, camp.songIds);
   const remove = removeDuplicate(camp.songIds, songIds);
@@ -3203,107 +3131,107 @@ export async function getAuthSongs(
   let authCamp: boolean;
   const baans: BasicBaan[] = [];
   let i = 0;
-  switch (campMemberCard.role) {
-    case "nong":
+  const auths = await getAuthTypes(user._id, camp._id);
+  if (!auths) {
+    sendRes(res, false);
+    return;
+  }
+  if (user.authPartIds.includes(camp.partBoardId)) {
+    let j = 0;
+    while (j < camp.baanIds.length) {
+      const baan = await Baan.findById(camp.baanIds[j++]);
+      if (!baan) {
+        continue;
+      }
+      baans.push(baan);
+    }
+    authCamp = true;
+  } else if (auths.includes("pr/studio")) {
+    const campMemberCard = await CampMemberCard.findById(
+      camp.mapCampMemberCardIdByUserId.get(user._id)
+    );
+    if (!campMemberCard) {
+      sendRes(res, false);
       return;
-    case "pee": {
-      const peeCamp = await PeeCamp.findById(campMemberCard.campModelId);
-      if (!peeCamp) {
+    }
+    switch (campMemberCard.role) {
+      case "nong": {
         sendRes(res, false);
         return;
       }
-      const part = await Part.findById(peeCamp.partId);
-      if (!part) {
+      case "pee": {
+        const peeCamp = await PeeCamp.findById(campMemberCard.campModelId);
+        if (!peeCamp) {
+          sendRes(res, false);
+          return;
+        }
+        const baan = await Baan.findById(peeCamp.baanId);
+        if (!baan) {
+          sendRes(res, false);
+          return;
+        }
+        baans.push(baan);
+        authCamp = true;
+        break;
+      }
+      case "peto": {
+        let j = 0;
+        while (j < camp.baanIds.length) {
+          const baan = await Baan.findById(camp.baanIds[j++]);
+          if (!baan) {
+            continue;
+          }
+          baans.push(baan);
+        }
+        authCamp = true;
+        break;
+      }
+    }
+  } else if (auths.includes("หัวหน้าพี่เลี้ยง")) {
+    const campMemberCard = await CampMemberCard.findById(
+      camp.mapCampMemberCardIdByUserId.get(user._id)
+    );
+    if (!campMemberCard) {
+      sendRes(res, false);
+      return;
+    }
+    switch (campMemberCard.role) {
+      case "nong": {
         sendRes(res, false);
         return;
       }
-      switch (part._id.toString()) {
-        case camp.partBoardId?.toString(): {
-          while (i < camp.baanIds.length) {
-            const baan = await Baan.findById(camp.baanIds[i++]);
-            if (!baan) {
-              continue;
-            }
-            baans.push(baan);
-          }
-          authCamp = true;
-          break;
-        }
-        case camp.partPrStudioId?.toString(): {
-          authCamp = true;
-          const baan = await Baan.findById(peeCamp.baanId);
-          if (!baan) {
-            break;
-          }
-          baans.push(baan);
-          break;
-        }
-        case camp.partCoopId.toString(): {
-          authCamp = true;
-          const baan = await Baan.findById(peeCamp.baanId);
-          if (!baan) {
-            break;
-          }
-          baans.push(baan);
-          break;
-        }
-        default: {
+
+      case "pee": {
+        const peeCamp = await PeeCamp.findById(campMemberCard.campModelId);
+        if (!peeCamp) {
           sendRes(res, false);
           return;
         }
-      }
-      break;
-    }
-    case "peto": {
-      const peeCamp = await PeeCamp.findById(campMemberCard.campModelId);
-      if (!peeCamp) {
-        return;
-      }
-      const part = await Part.findById(peeCamp.partId);
-      if (!part) {
-        return;
-      }
-      switch (part._id.toString()) {
-        case camp.partBoardId?.toString(): {
-          while (i < camp.baanIds.length) {
-            const baan = await Baan.findById(camp.baanIds[i++]);
-            if (!baan) {
-              continue;
-            }
-            baans.push(baan);
-          }
-          authCamp = true;
-          break;
-        }
-        case camp.partCoopId?.toString(): {
-          while (i < camp.baanIds.length) {
-            const baan = await Baan.findById(camp.baanIds[i++]);
-            if (!baan) {
-              continue;
-            }
-            baans.push(baan);
-          }
-          authCamp = false;
-          break;
-        }
-        case camp.partPrStudioId?.toString(): {
-          while (i < camp.baanIds.length) {
-            const baan = await Baan.findById(camp.baanIds[i++]);
-            if (!baan) {
-              continue;
-            }
-            baans.push(baan);
-          }
-          authCamp = true;
-          break;
-        }
-        default: {
+        const baan = await Baan.findById(peeCamp.baanId);
+        if (!baan) {
           sendRes(res, false);
           return;
         }
+        baans.push(baan);
+        authCamp = false;
+        break;
       }
-      break;
+      case "peto": {
+        let j = 0;
+        while (j < camp.baanIds.length) {
+          const baan = await Baan.findById(camp.baanIds[j++]);
+          if (!baan) {
+            continue;
+          }
+          baans.push(baan);
+        }
+        authCamp = false;
+        break;
+      }
     }
+  } else {
+    sendRes(res, false);
+    return;
   }
   const songs = await Song.find();
   const outputs: ShowCampSong[] = [];
@@ -3507,8 +3435,12 @@ export async function realTimeScoring(
 ) {
   const buffer: SendData<ScoreEvent> = req.body;
   const pusher = new Pusher(buffer.pusherData);
-  
-  await pusher.trigger(buffer.chanel, buffer.event, JSON.stringify(buffer.data));
-  console.log(buffer.data)
+
+  await pusher.trigger(
+    buffer.chanel,
+    buffer.event,
+    JSON.stringify(buffer.data)
+  );
+  console.log(buffer.data);
   sendRes(res, true);
 }

@@ -87,6 +87,7 @@ import {
   TriggerChoiceQuestion,
   TriggerTextQuestion,
   CampState,
+  AuthType,
 } from "../models/interface";
 import Song from "../models/Song";
 import HeathIssue from "../models/HeathIssue";
@@ -488,7 +489,7 @@ export async function addPee(req: express.Request, res: express.Response) {
     if (!part) {
       continue;
     }
-    if (part.isAuth) {
+    if (part.auths.length) {
       await user.updateOne({
         authPartIds: swop(null, part._id, user.authPartIds),
       });
@@ -605,7 +606,11 @@ export async function addPeeRaw(members: Id[], baanId: Id) {
         peeCampIds: user.peeCampIds,
         campMemberCardIds: user.campMemberCardIds,
         registerIds: user.registerIds,
-        authPartIds: ifIsTrue(part.isAuth, part._id, user.authPartIds),
+        authPartIds: ifIsTrue(
+          part.auths.length > 0,
+          part._id,
+          user.authPartIds
+        ),
       });
       await part.updateOne({
         mapCampMemberCardIdByUserId: part.mapCampMemberCardIdByUserId,
@@ -781,7 +786,7 @@ export async function addPetoRaw(
       petoCampIds: user.petoCampIds,
       campMemberCardIds: user.campMemberCardIds,
       registerIds: user.registerIds,
-      authPartIds: ifIsTrue(part.isAuth, part._id, user.authPartIds),
+      authPartIds: ifIsTrue(part.auths.length > 0, part._id, user.authPartIds),
     });
   }
   size.forEach((v, k) => {
@@ -1238,11 +1243,14 @@ export async function changeBaan(req: express.Request, res: express.Response) {
     return;
   }
   const camp: InterCampBack | null = await Camp.findById(baan.campId);
+  if (!user || !camp) {
+    sendRes(res, false);
+    return;
+  }
+  const auths = await getAuthTypes(user._id, camp._id);
   if (
-    !user ||
-    !camp ||
-    (!user.authPartIds.includes(camp.partBoardId) &&
-      !user.authPartIds.includes(camp.partRegisterId))
+    !auths ||
+    (!auths.includes("ทะเบียน") && !user.authPartIds.includes(camp.partBoardId))
   ) {
     sendRes(res, false);
     return;
@@ -1576,12 +1584,12 @@ export async function changePartRaw(userIds: Id[], partId: Id) {
           });
           part.petoSleepIds.push(user._id);
         }
-        if (oldPart.isAuth) {
+        if (oldPart.auths.length) {
           await user.updateOne({
             authPartIds: swop(oldPart._id, null, user.authPartIds),
           });
         }
-        if (part.isAuth) {
+        if (part.auths.length) {
           await user.updateOne({
             authPartIds: swop(null, oldPart._id, user.authPartIds),
           });
@@ -1671,12 +1679,12 @@ export async function changePartRaw(userIds: Id[], partId: Id) {
           });
           part.peeSleepIds.push(user._id);
         }
-        if (oldPart.isAuth) {
+        if (oldPart.auths.length) {
           await user.updateOne({
             authPartIds: swop(oldPart._id, null, user.authPartIds),
           });
         }
-        if (part.isAuth) {
+        if (part.auths.length) {
           await user.updateOne({
             authPartIds: swop(null, oldPart._id, user.authPartIds),
           });
@@ -2046,21 +2054,6 @@ export async function getLinkRegister(
     return;
   }
   res.status(200).json({ link: camp.nongPendingIds.get(user.id) });
-}
-export async function getImpotentPartIdBCRP(campId: Id) {
-  const camp = await Camp.findById(campId);
-  if (!camp) {
-    return [];
-  }
-  return [
-    camp.partBoardId,
-    camp.partCoopId,
-    camp.partRegisterId,
-    camp.partPeeBaanId,
-    camp.partWelfareId,
-    camp.partMedId,
-    camp.partPlanId,
-  ] as Id[];
 }
 export async function getActionPlan(
   req: express.Request,
@@ -3104,49 +3097,12 @@ export async function planUpdateCamp(
     sendRes(res, false);
     return;
   }
-  const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
-  );
-  if (!campMemberCard) {
+  const auths = await getAuthTypes(user._id, camp._id);
+  if (!auths || !auths.includes("แผน")) {
     sendRes(res, false);
     return;
   }
-  switch (campMemberCard.role) {
-    case "nong": {
-      sendRes(res, false);
-      return;
-    }
-    case "pee": {
-      const peeCamp = await PeeCamp.findById(campMemberCard.campModelId);
-      if (!peeCamp) {
-        sendRes(res, false);
-        return;
-      }
-      if (
-        !peeCamp.partId.equals(camp.partBoardId) &&
-        !peeCamp.partId.equals(camp.partPlanId)
-      ) {
-        sendRes(res, false);
-        return;
-      }
-      break;
-    }
-    case "peto": {
-      const petoCamp = await PetoCamp.findById(campMemberCard.campModelId);
-      if (!petoCamp) {
-        sendRes(res, false);
-        return;
-      }
-      if (
-        petoCamp.partId?.toString() != camp.partBoardId?.toString() &&
-        petoCamp.partId?.toString() != camp.partPlanId?.toString()
-      ) {
-        sendRes(res, false);
-        return;
-      }
-      break;
-    }
-  }
+
   let i = 0;
   while (i < update.baanDatas.length) {
     const updateBaan = update.baanDatas[i++];
@@ -3213,11 +3169,13 @@ export async function editQuestion(
   }
   const pusher = await getPusherServer(camp.pusherId);
   const systemInfo = getSystemInfoRaw();
-  if (
-    !user ||
-    (user.role != "admin" && !user.authPartIds.includes(camp.partBoardId as Id))
-  ) {
+  if (!user) {
     res.status(403).json({ success: false });
+    return;
+  }
+  const auths = await getAuthTypes(user._id, camp._id);
+  if (!auths || !auths.includes("แก้ไขคำถาม")) {
+    sendRes(res, false);
     return;
   }
   let { choiceQuestionIds, textQuestionIds } = camp;
@@ -5203,7 +5161,6 @@ async function getRegisterDataRaw(campId: Id): Promise<RegisterData | null> {
   const pusherData = await PusherData.findById(camp.pusherId);
   return {
     partBoardIdString: camp.partBoardId?.toString() || "",
-    partRegisterIdString: camp.partRegisterId?.toString() || "",
     partMap,
     peeRegisters,
     nongRegister,
@@ -5317,4 +5274,45 @@ export async function getCampState(
     out = { camp, questions, state: "notRegister", link: "", user };
   }
   res.status(200).json(out);
+}
+export async function getAuthTypes(
+  userId: Id,
+  campId: Id
+): Promise<AuthType[] | null> {
+  const camp = await Camp.findById(campId);
+  if (!camp) {
+    return null;
+  }
+  const campMemberCard = await CampMemberCard.findById(
+    camp.mapCampMemberCardIdByUserId.get(userId.toString())
+  );
+  if (!campMemberCard) {
+    return null;
+  }
+  switch (campMemberCard.role) {
+    case "nong":
+      return null;
+    case "pee": {
+      const peeCamp = await PeeCamp.findById(campMemberCard.campModelId);
+      if (!peeCamp) {
+        return null;
+      }
+      const part = await Part.findById(peeCamp.partId);
+      if (!part) {
+        return null;
+      }
+      return part.auths;
+    }
+    case "peto": {
+      const petoCamp = await PetoCamp.findById(campMemberCard.campModelId);
+      if (!petoCamp) {
+        return null;
+      }
+      const part = await Part.findById(petoCamp.partId);
+      if (!part) {
+        return null;
+      }
+      return part.auths;
+    }
+  }
 }
