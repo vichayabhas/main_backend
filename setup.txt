@@ -1,0 +1,39 @@
+สร้างไฟล์ config/config.env
+
+ปีกกาช่วยอธิบายเท่านั้น ของจริงลบปีกกาออกด้วย ภาษาไทยให้อ่านแล้วทำดามแล้วแก้ให้ครบ
+
+
+env ตามนี้
+
+
+PORT = เลข 4 หลัก port ที่ใช้
+NODE_ENV = development
+
+MONGO_URI = connection string ที่ใช้กับ mongo
+
+
+
+JWT_SECECRET = อะไรก็ได้ที่เป็นความลับ
+JWT_EXPIRE = 30d
+JWT_COOKIE_EXPIRE = 30
+PEEBAAN='peebaan' สำหรับ bypass ได้บทบาทพี่บ้าน (ปี1)
+PETO='peto' สำหรับ bypass ได้บทบาทปีโต (ปี2-4)
+ADMIN='admin' สำหรับ bypass ได้บทบาท admin ตรงตัว
+NONG='nong' สำหรับ bypass ได้บทบาทน้องค่าย (ก่อน reclude พี่บ้านค่ายลานเกียร์)
+
+MODE='test and demo only'
+{
+END_EMAIL='student.chula.ac.th'
+ID_LENGTH='10'
+LAST_TWO_DIGIT='21'
+}เงื่อนไข email ที่จะยืนยันว่าเข้าวิศวะจุฬาแล้ว
+วิธียกเลิกการเช็คอีเมล ให้แก้ function ใน src/controllers/user.ts
+บรรทัดที่ 1268-1277 ให้ return true เลย ไม่สน input
+และ ใน frontend \src\app\(topMenu)\verify\page.tsx
+บรรทัดที่ 16-18 ให้comment ทื้ง
+
+และ ใน frontend src/components/TopMenu.tsx
+
+บรรทัดที่ 61 {!endEmail.split(",").includes(user.email.split("@")[1]) ||
+ให้แก้เป็น { แทน
+

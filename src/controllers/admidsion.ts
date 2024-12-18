@@ -30,7 +30,7 @@ async function interviewRaw(members: Id[], campId: Id) {
     nongPendingIds: camp.nongPendingIds,
     nongInterviewIds: camp.nongInterviewIds,
   });
-  await triggerRegister(camp._id,camp.pusherId)
+  await triggerRegister(camp._id, camp.pusherId);
   return i;
 }
 async function passRaw(members: Id[], campId: Id) {
@@ -54,7 +54,7 @@ async function passRaw(members: Id[], campId: Id) {
     nongInterviewIds: camp.nongInterviewIds,
     //nongPaidIds:camp.nongPaidIds
   });
-  await triggerRegister(camp._id,camp.pusherId)
+  await triggerRegister(camp._id, camp.pusherId);
 
   return i;
 }
@@ -76,8 +76,8 @@ export async function paid(req: express.Request, res: express.Response) {
       nongPaidIds: swop(null, user._id, camp.nongPaidIds),
     });
   }
-  await triggerRegister(camp._id,camp.pusherId)
-  sendRes(res,true)
+  await triggerRegister(camp._id, camp.pusherId);
+  sendRes(res, true);
 }
 export async function sure(req: express.Request, res: express.Response) {
   const { members, campId }: { members: Id[]; campId: Id } = req.body;
@@ -107,7 +107,7 @@ export async function sure(req: express.Request, res: express.Response) {
   });
   //console.log(members)
   //console.log(camp)
-  await triggerRegister(camp._id,camp.pusherId)
+  await triggerRegister(camp._id, camp.pusherId);
 
   res.status(200).json({ count: i });
 }
@@ -162,6 +162,6 @@ export async function kickNong(req: express.Request, res: express.Response) {
     nongPassIds: camp.nongPassIds,
     outRoundIds: camp.outRoundIds,
   });
-  await triggerRegister(camp._id,camp.pusherId)
+  await triggerRegister(camp._id, camp.pusherId);
   sendRes(res, true);
 }

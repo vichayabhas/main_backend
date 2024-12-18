@@ -873,10 +873,10 @@ export async function getActionPlanByPartId(
       sendRes(res, false);
       return;
     }
-    let j = 0;
-    while (j < part.actionPlanIds.length) {
+    let i = 0;
+    while (i < part.actionPlanIds.length) {
       const actionPlan: InterActionPlan | null = await ActionPlan.findById(
-        part.actionPlanIds[j++]
+        part.actionPlanIds[i++]
       );
       if (!actionPlan) {
         continue;
@@ -896,10 +896,10 @@ export async function getActionPlanByPartId(
       if (!user) {
         continue;
       }
-      let k = 0;
+      let j = 0;
       const placeName: string[] = [];
-      while (k < placeIds.length) {
-        const place = await Place.findById(placeIds[k++]);
+      while (j < placeIds.length) {
+        const place = await Place.findById(placeIds[j++]);
         const building = await Building.findById(place?.buildingId);
         placeName.push(`${building?.name} ${place?.floor} ${place?.room}`);
       }
@@ -2079,10 +2079,10 @@ export async function getActionPlan(
       _id,
     } = actionPlan;
     const user = await User.findById(headId);
-    let k = 0;
+    let i = 0;
     const placeName: string[] = [];
-    while (k < placeIds.length) {
-      const place = await Place.findById(placeIds[k++]);
+    while (i < placeIds.length) {
+      const place = await Place.findById(placeIds[i++]);
       const building = await Building.findById(place?.buildingId);
       placeName.push(`${building?.name} ${place?.floor} ${place?.room}`);
     }
@@ -2846,6 +2846,7 @@ export async function getAllWelfare(
     }
     meals.push(meal);
   }
+  const name = camp.campName;
   const buffer: CampWelfarePack = {
     isHavePeto:
       camp.memberStructure == "nong->highSchool,pee->1year,peto->2upYear",
@@ -2856,7 +2857,7 @@ export async function getAllWelfare(
       nongSize: sizeMapToJson(camp.nongShirtSize),
       peeSize: sizeMapToJson(camp.peeShirtSize),
       petoSize: sizeMapToJson(camp.petoShirtSize),
-      name: camp.campName,
+      name,
       nongHealths,
       peeHealths,
       petoHealths,
@@ -2867,7 +2868,7 @@ export async function getAllWelfare(
       nongNumber: camp.nongHaveBottleIds.length,
       peeNumber: camp.peeHaveBottleIds.length,
       petoNumber: camp.petoHaveBottleIds.length,
-      name: camp.campName,
+      name,
     },
     baanHalalS,
     baanSpicyS,
@@ -2878,25 +2879,25 @@ export async function getAllWelfare(
     partVegans,
     partVegetarians,
     campSpicyNumber: {
-      name: camp.campName,
+      name,
       nongNumber: campNongSpicyS,
       peeNumber: campPeeSpicyS,
       petoNumber: campPetoSpicyS,
     },
     campHalalNumber: {
-      name: camp.campName,
+      name,
       nongNumber: campNongHalalS,
       peeNumber: campPeeHalalS,
       petoNumber: campPetoHalalS,
     },
     campVegetarianNumber: {
-      name: camp.campName,
+      name,
       nongNumber: campNongVegetarians,
       peeNumber: campPeeVegetarians,
       petoNumber: campPetoVegetarians,
     },
     campVeganNumber: {
-      name: camp.campName,
+      name,
       nongNumber: campNongVegans,
       peeNumber: campPeeVegans,
       petoNumber: campPetoVegans,
@@ -2904,7 +2905,7 @@ export async function getAllWelfare(
     partIsWearings,
     baanIsWearings,
     campWearingNumber: {
-      name: camp.campName,
+      name,
       nongNumber: campNongIsWearings,
       peeNumber: campPeeIsWearings,
       petoNumber: campPetoIsWearings,
@@ -2913,6 +2914,22 @@ export async function getAllWelfare(
     _id: camp._id,
   };
   res.status(200).json(buffer);
+}
+function addSleepMember(
+  user: BasicUser,
+  boys: BasicUser[],
+  girls: BasicUser[]
+) {
+  switch (user.gender) {
+    case "Male": {
+      boys.push(user);
+      return;
+    }
+    case "Female": {
+      girls.push(user);
+      return;
+    }
+  }
 }
 export async function getAllPlanData(
   req: express.Request,
@@ -2956,8 +2973,7 @@ export async function getAllPlanData(
       if (!user) {
         continue;
       }
-      ifIsTrue(user.gender == "Male", user, nongBoys);
-      ifIsTrue(user.gender == "Female", user, nongGirls);
+      addSleepMember(user, nongBoys, nongGirls);
     }
     j = 0;
     while (j < baan.peeSleepIds.length) {
@@ -2965,8 +2981,7 @@ export async function getAllPlanData(
       if (!user) {
         continue;
       }
-      ifIsTrue(user.gender == "Male", user, peeBoys);
-      ifIsTrue(user.gender == "Female", user, peeGirls);
+      addSleepMember(user, peeBoys, peeGirls);
     }
     baanDatas.push({
       boy,
@@ -3018,8 +3033,7 @@ export async function getAllPlanData(
       if (!user) {
         continue;
       }
-      ifIsTrue(user.gender == "Male", user, petoBoys);
-      ifIsTrue(user.gender == "Female", user, petoGirls);
+      addSleepMember(user, petoBoys, petoGirls);
     }
     j = 0;
     while (j < part.peeSleepIds.length) {
@@ -3027,8 +3041,7 @@ export async function getAllPlanData(
       if (!user) {
         continue;
       }
-      ifIsTrue(user.gender == "Male", user, peeBoys);
-      ifIsTrue(user.gender == "Female", user, peeGirls);
+      addSleepMember(user, peeBoys, peeGirls);
     }
     const place = await Place.findById(part.placeId);
     partDatas.push({ place, name: part.partName, _id: part._id });
@@ -3056,10 +3069,11 @@ export async function getAllPlanData(
     petoBoySleep += petoBoys.length;
     petoGirlSleep += petoGirls.length;
   }
+  const name = camp.campName;
   const buffer: GetAllPlanData = {
     partDatas,
     baanDatas,
-    name: camp.campName,
+    name,
     _id: camp._id,
     groupName: camp.groupName,
     isOverNightCamp: camp.nongSleepModel != "ไม่มีการค้างคืน",
@@ -3072,13 +3086,13 @@ export async function getAllPlanData(
     partBoySleeps,
     partGirlSleeps,
     boySleepNumber: {
-      name: camp.campName,
+      name,
       nongNumber: nongBoySleep,
       peeNumber: peeBoySleep,
       petoNumber: petoBoySleep,
     },
     girlSleepNumber: {
-      name: camp.campName,
+      name,
       nongNumber: nongGirlSleep,
       peeNumber: peeGirlSleep,
       petoNumber: petoGirlSleep,
@@ -3102,7 +3116,6 @@ export async function planUpdateCamp(
     sendRes(res, false);
     return;
   }
-
   let i = 0;
   while (i < update.baanDatas.length) {
     const updateBaan = update.baanDatas[i++];
@@ -3153,6 +3166,7 @@ export async function planUpdateCamp(
         });
       }
     }
+    await part.updateOne({ placeId: newPlace ? newPlace._id : null });
   }
   sendRes(res, true);
 }
@@ -4506,10 +4520,10 @@ export async function getActionPlanByCampId(
       sendRes(res, false);
       return;
     }
-    let j = 0;
-    while (j <= camp.actionPlanIds.length) {
+    let i = 0;
+    while (i <= camp.actionPlanIds.length) {
       const actionPlan: InterActionPlan | null = await ActionPlan.findById(
-        camp.actionPlanIds[j++]
+        camp.actionPlanIds[i++]
       );
       if (!actionPlan) {
         continue;
@@ -4529,10 +4543,10 @@ export async function getActionPlanByCampId(
       if (!user) {
         continue;
       }
-      let k = 0;
+      let j = 0;
       const placeName: string[] = [];
-      while (k < placeIds.length) {
-        const place = await Place.findById(placeIds[k++]);
+      while (j < placeIds.length) {
+        const place = await Place.findById(placeIds[j++]);
         const building = await Building.findById(place?.buildingId);
         placeName.push(`${building?.name} ${place?.floor} ${place?.room}`);
       }
@@ -4706,13 +4720,17 @@ async function getMealsByHealthIssue(
           switch (healthIssue.foodLimit) {
             case "อิสลาม": {
               if (healthIssue.spicy) {
-                if (!food.isSpicy && food.lists.includes("อิสลาม")) {
+                if (
+                  !food.isSpicy &&
+                  food.lists.includes("อิสลาม") &&
+                  !food.listPriority
+                ) {
                   whiteLists.push(food);
                 } else {
                   blackLists.push(food);
                 }
               } else {
-                if (food.lists.includes("อิสลาม")) {
+                if (food.lists.includes("อิสลาม") && !food.listPriority) {
                   whiteLists.push(food);
                 } else {
                   blackLists.push(food);
@@ -4722,13 +4740,17 @@ async function getMealsByHealthIssue(
             }
             case "มังสวิรัติ": {
               if (healthIssue.spicy) {
-                if (!food.isSpicy && food.lists.includes("มังสวิรัติ")) {
+                if (
+                  !food.isSpicy &&
+                  food.lists.includes("มังสวิรัติ") &&
+                  !food.listPriority
+                ) {
                   whiteLists.push(food);
                 } else {
                   blackLists.push(food);
                 }
               } else {
-                if (food.lists.includes("มังสวิรัติ")) {
+                if (food.lists.includes("มังสวิรัติ") && !food.listPriority) {
                   whiteLists.push(food);
                 } else {
                   blackLists.push(food);
@@ -4738,13 +4760,17 @@ async function getMealsByHealthIssue(
             }
             case "เจ": {
               if (healthIssue.spicy) {
-                if (!food.isSpicy && food.lists.includes("เจ")) {
+                if (
+                  !food.isSpicy &&
+                  food.lists.includes("เจ") &&
+                  !food.listPriority
+                ) {
                   whiteLists.push(food);
                 } else {
                   blackLists.push(food);
                 }
               } else {
-                if (food.lists.includes("เจ")) {
+                if (food.lists.includes("เจ") && !food.listPriority) {
                   whiteLists.push(food);
                 } else {
                   blackLists.push(food);
@@ -4754,7 +4780,7 @@ async function getMealsByHealthIssue(
             }
             case "ไม่มีข้อจำกัดด้านความเชื่อ": {
               if (healthIssue.spicy) {
-                if (food.isSpicy) {
+                if (food.isSpicy || food.listPriority) {
                   blackLists.push(food);
                 } else {
                   whiteLists.push(food);
@@ -5091,7 +5117,6 @@ export async function getPetoCampData(
   };
   res.status(200).json(buffer);
 }
-
 export async function getPartForUpdate(
   req: express.Request,
   res: express.Response

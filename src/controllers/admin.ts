@@ -215,7 +215,6 @@ async function addPartRaw(
     partName: `${partNameContainer.name} ${camp.campName}`,
     auths,
   });
-  //await partNameContainer.updateOne({ partIds: swop(null, part._id, partNameContainer.partIds) })
   partNameContainer.partIds.push(part._id);
   partNameContainer.campIds.push(camp._id);
   await partNameContainer.updateOne({
@@ -516,60 +515,6 @@ export async function createCamp(req: express.Request, res: express.Response) {
         name: "board",
       });
     }
-    //["board","ประสาน","ทะเบียน","พี่บ้าน","สวัสดิการ","พยาบาล","แผน","PR/studio"]
-
-    let partNameContainerCoop = await PartNameContainer.findOne({
-      name: "ประสาน",
-    });
-    if (!partNameContainerCoop) {
-      partNameContainerCoop = await PartNameContainer.create({
-        name: "ประสาน",
-      });
-    }
-    let partNameContainerRegis = await PartNameContainer.findOne({
-      name: "ทะเบียน",
-    });
-    if (!partNameContainerRegis) {
-      partNameContainerRegis = await PartNameContainer.create({
-        name: "ทะเบียน",
-      });
-    }
-    let partNameContainerPeeBaan = await PartNameContainer.findOne({
-      name: "พี่บ้าน",
-    });
-    if (!partNameContainerPeeBaan) {
-      partNameContainerPeeBaan = await PartNameContainer.create({
-        name: "พี่บ้าน",
-      });
-    }
-    let partNameContainerWelfare = await PartNameContainer.findOne({
-      name: "สวัสดิการ",
-    });
-    if (!partNameContainerWelfare) {
-      partNameContainerWelfare = await PartNameContainer.create({
-        name: "สวัสดิการ",
-      });
-    }
-    let partNameContainerMed = await PartNameContainer.findOne({
-      name: "พยาบาล",
-    });
-    if (!partNameContainerMed) {
-      partNameContainerMed = await PartNameContainer.create({ name: "พยาบาล" });
-    }
-    let partNameContainerPlan = await PartNameContainer.findOne({
-      name: "แผน",
-    });
-    if (!partNameContainerPlan) {
-      partNameContainerPlan = await PartNameContainer.create({ name: "แผน" });
-    }
-    let partNameContainerPrStudio = await PartNameContainer.findOne({
-      name: "PR/studio",
-    });
-    if (!partNameContainerPrStudio) {
-      partNameContainerPrStudio = await PartNameContainer.create({
-        name: "PR/studio",
-      });
-    }
     let i = 0;
     while (i < boardIds.length) {
       const boardId = boardIds[i++];
@@ -585,7 +530,6 @@ export async function createCamp(req: express.Request, res: express.Response) {
       if (partName == "board") {
         continue;
       }
-
       let partNameContainer = await PartNameContainer.findOne({
         name: partName,
       });
