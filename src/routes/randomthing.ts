@@ -1,48 +1,56 @@
 import express from "express";
 import { modePee, pee, protect } from "../middleware/auth";
+import { realTimeScoring } from "../controllers/camp/questionAndAnswer";
 import {
-  addBaanSong,
-  addCampSong,
-  addLikeSong,
-  addLostAndFound,
-  createBuilding,
-  createFood,
-  createMeal,
-  createNongBaanChat,
-  createNongChat,
   createPartChat,
+  getSystemInfo,
+  getAllChatFromCampId,
+  getPartChat,
+  getNongBaanChat,
+  getPeeBaanChat,
+  getNongChat,
+  createNongChat,
   createPeeBaanChat,
-  createPlace,
-  createSong,
+  createNongBaanChat,
+  getPartPeebaanChat,
+} from "../controllers/randomThing/chat";
+import {
+  getLostAndFounds,
+  addLostAndFound,
+} from "../controllers/randomThing/lostAndFound";
+import {
+  createMeal,
+  createFood,
+  getFoodForUpdate,
+  updateFood,
+  getMealByUser,
   deleteFood,
   deleteMeal,
-  getAllBuilding,
-  getAllChatFromCampId,
-  getAuthSongs,
-  getBuilding,
-  getFoodForUpdate,
   getFoods,
-  getLostAndFounds,
   getMeal,
-  getMealByUser,
-  getMenuSongs,
-  getNongBaanChat,
-  getNongChat,
-  getPartChat,
-  getPartPeebaanChat,
-  getPeeBaanChat,
-  getPlace,
-  getPlaces,
-  getShowBaanSongs,
-  getShowCampSongs,
-  getShowPlace,
-  getShowSong,
-  getSystemInfo,
-  realTimeScoring,
-  updateFood,
   updateMeal,
+} from "../controllers/randomThing/meal";
+import {
+  getAllBuilding,
+  createBuilding,
+  getPlaces,
+  getPlace,
+  createPlace,
+  getBuilding,
+  getShowPlace,
+} from "../controllers/randomThing/place";
+import {
+  getMenuSongs,
+  createSong,
+  getShowSong,
+  addCampSong,
   updateSongPage,
-} from "../controllers/randomThing";
+  addLikeSong,
+  addBaanSong,
+  getShowCampSongs,
+  getShowBaanSongs,
+  getAuthSongs,
+} from "../controllers/randomThing/song";
 
 const router = express.Router();
 router.get("/getAllBuilding/", getAllBuilding); //

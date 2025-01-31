@@ -1,75 +1,88 @@
 import express from "express";
-
-const router = express.Router();
-
-import { protect, pee } from "../middleware/auth";
 import {
-  getCamps,
-  getCampName,
-  getCamp,
-  getNongCamp,
-  getPeeCamp,
-  getBaan,
-  getPart,
-  getPartName,
-  nongRegister,
-  staffRegister,
-  getNongsFromBaanId,
-  getPeesFromBaanId,
-  getPeesFromPartId,
-  getPetosFromPartId,
-  getBaans,
   getActionPlans,
   getActionPlanByPartId,
   createActionPlan,
   getActionPlan,
   updateActionPlan,
   deleteActionPlan,
+  getActionPlanByCampId,
+} from "../controllers/camp/actionPlan";
+import {
+  nongRegister,
+  staffRegister,
+  interview,
+  pass,
+  sure,
+  paid,
+  addNong,
+  addPee,
+  kickPee,
+  kickNong,
+} from "../controllers/camp/admidsion";
+import {
+  getShowRegisters,
+  getAllUserCamp,
+  getAllWelfare,
+  getAllPlanData,
+  planUpdateCamp,
+  plusActionPlan,
+  getCoopData,
+  getAllNongRegister,
+  getRegisterData,
+} from "../controllers/camp/authPart";
+import { changeBaan, changePart } from "../controllers/camp/change";
+import {
+  getCamps,
+  getCampName,
+  getCamp,
+  getNongCamp,
+  getPeeCamp,
+  getPetoCamp,
+  getBaan,
+  getPart,
+  getPartName,
+  getNongsFromBaanId,
+  getPeesFromBaanId,
+  getPeesFromPartId,
+  getPetosFromPartId,
+  getBaans,
+  getParts,
+  getNongCampData,
+  getPeeCampData,
+  getPetoCampData,
+  getPartForUpdate,
+  getPusherData,
+  getCampState,
+} from "../controllers/camp/getCampData";
+import {
+  editQuestion,
+  getAllQuestion,
+  deleteChoiceQuestion,
+  deleteTextQuestion,
+  peeAnswerQuestion,
+  getAllAnswerAndQuestion,
+  scoreTextQuestions,
+} from "../controllers/camp/questionAndAnswer";
+import {
   createWorkingItem,
   getWorkingItems,
   getWorkingItemByPartId,
   getWorkingItem,
   updateWorkingItem,
   deleteWorkingItem,
-  getPetoCamp,
-  getShowRegisters,
-  addNong,
-  addPee,
-  changeBaan,
-  changePart,
-  getAllUserCamp,
-  getAllWelfare,
-  getAllPlanData,
-  planUpdateCamp,
-  editQuestion,
-  deleteChoiceQuestion,
-  deleteTextQuestion,
-  getAllQuestion,
-  plusActionPlan,
-  peeAnswerQuestion,
-  getAllAnswerAndQuestion,
-  scoreTextQuestions,
-  getCoopData,
-  getAllNongRegister,
-  getParts,
-  getActionPlanByCampId,
   getWorkingItemByCampId,
-  getNongCampData,
-  getPeeCampData,
-  getPetoCampData,
-  getPartForUpdate,
-  getRegisterData,
-  getPusherData,
-  getCampState,
-} from "../controllers/camp";
+} from "../controllers/camp/trackingSheet";
+import { protect, pee } from "../middleware/auth";
 import {
-  interview,
-  kickNong,
-  kickPee,
-  paid,
-  pass,
-  sure,
-} from "../controllers/admidsion";
+  createImageAndDescriptionContainer,
+  deleteImageAndDescryption,
+  editImageAndDescription,
+  getImageAndDescriptions,
+} from "../controllers/camp/imageAndDescription";
+
+const router = express.Router();
+
 router.get("/getCamps/", getCamps); //
 router.get("/getCampName/params/:id", getCampName); //
 router.get("/getCamp/params/:id", getCamp); //
@@ -154,4 +167,20 @@ router.get("/getPartForUpdate/params/:id", getPartForUpdate); //
 router.get("/getRegisterData/params/:id", getRegisterData); //
 router.get("/getPusherData/params/:id", getPusherData); //
 router.get("/getCampState/params/:id", protect, getCampState); //
+router.post(
+  "/createImageAndDescriptionContainer/",
+  protect,
+  createImageAndDescriptionContainer
+); //
+router.put("/editImageAndDescription/", protect, editImageAndDescription); //
+router.delete(
+  "/deleteImageAndDescryption/params/:id",
+  protect,
+  deleteImageAndDescryption
+); //
+router.get(
+  "/getImageAndDescriptions/params/:id",
+  protect,
+  getImageAndDescriptions
+); //
 export default router;

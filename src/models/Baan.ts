@@ -86,5 +86,8 @@ const BaanSchema = new mongoose.Schema({
   peeCampMemberCardHaveHeathIssueIds: arrayObjectId,
   nongHaveBottleIds: arrayObjectId,
   peeHaveBottleIds: arrayObjectId,
+  imageAndDescriptionContainerIds: arrayObjectId,
+  //679c85620cfba8def1ffb156
+  //679c85690cfba8def1ffb162
 });
 export default mongoose.model("Baan", BaanSchema);

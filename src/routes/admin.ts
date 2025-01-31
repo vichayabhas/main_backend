@@ -1,23 +1,25 @@
 import express from "express";
 import {
-  addBaan,
   addCampName,
-  addPart,
   addPartName,
-  afterVisnuToPee,
-  createBaanByGroup,
-  createCamp,
-  getAllRemainPartName,
-  getCampNames,
-  getPartNames,
-  peeToPeto,
   saveDeleteCamp,
-  updateBaan,
+} from "../controllers/admin/delete";
+import {
+  getCampNames,
+  createCamp,
+  getPartNames,
   updateCamp,
+  addBaan,
   updatePart,
+  getAllRemainPartName,
+  addPart,
+  createBaanByGroup,
+  updateBaan,
+  afterVisnuToPee,
+  peeToPeto,
   updatePusher,
-} from "../controllers/admin";
-import { admin, pee, protect } from "../middleware/auth";
+} from "../controllers/admin/main";
+import { protect, admin, pee } from "../middleware/auth";
 
 const router = express.Router();
 router.get("/getCampNames/", getCampNames); //

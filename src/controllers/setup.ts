@@ -157,6 +157,7 @@ export function conBaanBackToFront(input: InterBaanBack): InterBaanFront {
     nongCampMemberCardHaveHeathIssueIds,
     peeHaveBottleIds,
     peeCampMemberCardHaveHeathIssueIds,
+    imageAndDescriptionContainerIds,
   } = input;
   return {
     name,
@@ -194,6 +195,7 @@ export function conBaanBackToFront(input: InterBaanBack): InterBaanFront {
     nongCampMemberCardHaveHeathIssueIds,
     peeHaveBottleIds,
     peeCampMemberCardHaveHeathIssueIds,
+    imageAndDescriptionContainerIds,
   };
 }
 export function conCampBackToFront(input: InterCampBack): InterCampFront {
