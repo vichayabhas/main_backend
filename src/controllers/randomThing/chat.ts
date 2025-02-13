@@ -543,7 +543,7 @@ export async function createPeeBaanChat(
       continue;
     }
     await pusherServer?.trigger(
-      `chatPee${baan._id}`,
+      `${getSystemInfoRaw().chatText}Pee${baan._id}`,
       getSystemInfoRaw().newText,
       showChat
     );
@@ -644,7 +644,7 @@ export async function createNongBaanChat(
   const showChat = await getShowChatFromChat(chat, "pee");
 
   await pusherServer?.trigger(
-    `${getSystemInfoRaw().chatText}${camp._id}${user._id}`,
+    `${getSystemInfoRaw().chatText}Nong${baan._id}`,
     getSystemInfoRaw().newText,
     showChat
   );
@@ -806,7 +806,7 @@ export async function getNongBaanChat(
         success: true,
         roomName: `ห้อง${camp.groupName}${baan.name}`,
         userId: user._id,
-        subscribe: `chatNong${baan._id}`,
+        subscribe: `${getSystemInfoRaw().chatText}Nong${baan._id}`,
         pusher: getPusherClient(pusherData),
         systemInfo,
       };
@@ -840,7 +840,7 @@ export async function getNongBaanChat(
             ? `ห้อง${camp.groupName}${baan.name}ที่มีน้องด้วย`
             : `ห้อง${camp.groupName}${baan.name}`,
         userId: user._id,
-        subscribe: `chatNong${baan._id}`,
+        subscribe: `${getSystemInfoRaw().chatText}Nong`,
         pusher: getPusherClient(pusherData),
         systemInfo,
       };
@@ -900,7 +900,7 @@ export async function getPeeBaanChat(
     success: true,
     roomName: `ห้อง${camp.groupName}${baan.name}ที่มีแต่พี่`,
     userId: user._id,
-    subscribe: `chatPee${baan._id}`,
+    subscribe: `${getSystemInfoRaw().chatText}Pee${baan._id}`,
     pusher: getPusherClient(pusherData),
     systemInfo,
   };
