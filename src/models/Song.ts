@@ -1,14 +1,11 @@
 import mongoose from "mongoose";
-import { arrayObjectId, dataString } from "../controllers/setup";
+import { arrayObjectId, dataNumberReq, dataString } from "../controllers/setup";
 const PartSchema = new mongoose.Schema({
   name: dataString,
   campIds: arrayObjectId,
   baanIds: arrayObjectId,
   author: dataString,
-  time: {
-    type: Number,
-    required: true,
-  },
+  time:dataNumberReq,
   link: dataString,
   userLikeIds: arrayObjectId,
 });

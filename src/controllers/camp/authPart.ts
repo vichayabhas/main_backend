@@ -62,6 +62,7 @@ import {
   getPusherServer,
 } from "./getCampData";
 import { getHealthIssuePack } from "../randomThing/meal";
+import { getBaanJobsRaw } from "./jobAssign";
 export async function getRegisterData(
   req: express.Request,
   res: express.Response
@@ -1176,6 +1177,7 @@ export async function getCoopData(req: express.Request, res: express.Response) {
     baan.peeCampMemberCardHaveHeathIssueIds,
     isCoopValid
   );
+  const baanJobs = await getBaanJobsRaw(baan.jobIds, null);
   const buffer: GetCoopData = {
     baan,
     camp,
@@ -1184,6 +1186,7 @@ export async function getCoopData(req: express.Request, res: express.Response) {
     normal,
     nongHealths,
     peeHealths,
+    baanJobs,
   };
   res.status(200).json(buffer);
 }

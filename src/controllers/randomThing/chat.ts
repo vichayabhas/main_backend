@@ -549,6 +549,7 @@ export async function createPeeBaanChat(
     );
   }
   await baan.updateOne({ peeChatIds: swop(null, chat._id, baan.peeChatIds) });
+  sendRes(res,true)
 }
 export async function createNongBaanChat(
   req: express.Request,
@@ -648,6 +649,7 @@ export async function createNongBaanChat(
     getSystemInfoRaw().newText,
     showChat
   );
+  sendRes(res,true)
 }
 export async function getAllChatFromCampId(
   req: express.Request,

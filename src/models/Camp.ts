@@ -6,16 +6,15 @@ import {
   dataMapObjectId,
   dataMapString,
   dataNumber,
+  dataNumberReq,
   dataSize,
   dataString,
+  getDafaultBoolean,
 } from "../controllers/setup";
 
 const campSchema = new mongoose.Schema({
   nameId: dataId,
-  round: {
-    type: Number,
-    required: true,
-  },
+  round: dataNumberReq,
   dateStart: dataDate,
   dateEnd: dataDate,
   boardIds: arrayObjectId,
@@ -27,10 +26,7 @@ const campSchema = new mongoose.Schema({
   nongHeathIssueIds: arrayObjectId,
   peeHeathIssueIds: arrayObjectId,
   petoHeathIssueIds: arrayObjectId,
-  nongDataLock: {
-    type: Boolean,
-    default: false,
-  },
+  nongDataLock: getDafaultBoolean(false),
   nongShirtSize: dataSize,
   peeShirtSize: dataSize,
   petoShirtSize: dataSize,
@@ -54,10 +50,7 @@ const campSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
-  allDone: {
-    type: Boolean,
-    default: false,
-  },
+  allDone: getDafaultBoolean(false),
   lockChangePickup: {
     type: Boolean,
     default: false,
@@ -95,10 +88,7 @@ const campSchema = new mongoose.Schema({
     default: null,
   },
   mapCampMemberCardIdByUserId: dataMapObjectId,
-  peeLock: {
-    type: Boolean,
-    default: false,
-  },
+  peeLock: getDafaultBoolean(false),
   registerSheetLink: {
     type: String,
     default: null,
@@ -160,18 +150,9 @@ const campSchema = new mongoose.Schema({
     type: String,
     default: "บ้าน",
   },
-  peeDataLock: {
-    type: Boolean,
-    default: false,
-  },
-  petoDataLock: {
-    type: Boolean,
-    default: false,
-  },
-  haveCloth: {
-    type: Boolean,
-    default: true,
-  },
+  peeDataLock: getDafaultBoolean(false),
+  petoDataLock: getDafaultBoolean(false),
+  haveCloth: getDafaultBoolean(true),
   actionPlanOffset: dataNumber,
   nongMapIdLtoG: dataMapObjectId,
   peeMapIdLtoG: dataMapObjectId,
@@ -205,39 +186,19 @@ const campSchema = new mongoose.Schema({
   peeAnswerPackIds: arrayObjectId,
   mapAnswerPackIdByUserId: dataMapObjectId,
   peeAnswerIds: arrayObjectId,
-  showCorrectAnswerAndScore: {
-    type: Boolean,
-    default: false,
-  },
-  canAnswerTheQuestion: {
-    type: Boolean,
-    default: false,
-  },
+  showCorrectAnswerAndScore: getDafaultBoolean(false),
+  canAnswerTheQuestion: getDafaultBoolean(false),
   mealIds: arrayObjectId,
   foodIds: arrayObjectId,
-  canNongSeeAllAnswer: {
-    type: Boolean,
-    default: false,
-  },
-  canNongSeeAllActionPlan: {
-    type: Boolean,
-    default: false,
-  },
-  canNongSeeAllTrackingSheet: {
-    type: Boolean,
-    default: false,
-  },
-  canNongAccessDataWithRoleNong: {
-    type: Boolean,
-    default: false,
-  },
+  canNongSeeAllAnswer: getDafaultBoolean(false),
+  canNongSeeAllActionPlan: getDafaultBoolean(false),
+  canNongSeeAllTrackingSheet: getDafaultBoolean(false),
+  canNongAccessDataWithRoleNong: getDafaultBoolean(false),
   pusherId: {
     type: mongoose.Schema.ObjectId,
     default: null,
   },
-  lockChangeQuestion: {
-    type: Boolean,
-    default: false,
-  },
+  lockChangeQuestion: getDafaultBoolean(false),
+  jobIds: arrayObjectId,
 });
 export default mongoose.model("Camp", campSchema);

@@ -219,11 +219,9 @@ export async function addNong(req: express.Request, res: express.Response) {
       ) {
         continue;
       }
-      await nongCamp.updateOne({
-        nongIds: swop(null, user._id, nongCamp.nongIds),
-      });
-      await baan.updateOne({ nongIds: swop(null, user._id, baan.nongIds) });
-      await camp.updateOne({ nongIds: swop(null, user._id, camp.nongIds) });
+      baan.nongIds.push(user._id)
+      camp.nongIds.push(user._id)
+      nongCamp.nongIds.push(user._id)
       let sleepAtCamp: boolean;
       switch (camp.nongSleepModel) {
         case "นอนทุกคน": {
@@ -283,9 +281,6 @@ export async function addNong(req: express.Request, res: express.Response) {
       user.nongCampIds.push(nongCamp._id);
       camp.mapCampMemberCardIdByUserId.set(user.id, campMemberCard._id);
       baan.mapCampMemberCardIdByUserId.set(user.id, campMemberCard._id); //
-      await baan.updateOne({
-        mapCampMemberCardIdByUserId: baan.mapCampMemberCardIdByUserId,
-      });
       await user.updateOne({
         nongCampIds: user.nongCampIds,
         campMemberCardIds: user.campMemberCardIds,

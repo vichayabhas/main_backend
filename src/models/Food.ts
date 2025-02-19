@@ -1,12 +1,14 @@
 import mongoose from "mongoose";
-import { arrayObjectId, dataId, dataString } from "../controllers/setup";
+import {
+  arrayObjectId,
+  dataId,
+  dataString,
+  getDafaultBoolean,
+} from "../controllers/setup";
 import { foodLimits } from "./interface";
 const PeeCampSchema = new mongoose.Schema({
   campId: dataId,
-  isWhiteList: {
-    type: Boolean,
-    required: true,
-  },
+  isWhiteList: getDafaultBoolean(true),
   peeIds: arrayObjectId,
   nongIds: arrayObjectId,
   petoIds: arrayObjectId,
@@ -27,13 +29,7 @@ const PeeCampSchema = new mongoose.Schema({
     ],
     default: [],
   },
-  isSpicy: {
-    type: Boolean,
-    required: true,
-  },
-  listPriority: {
-    type: Boolean,
-    required: true,
-  },
+  isSpicy: getDafaultBoolean(true),
+  listPriority: getDafaultBoolean(true),
 });
 export default mongoose.model("Food", PeeCampSchema);

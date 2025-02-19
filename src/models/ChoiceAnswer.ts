@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { dataId } from "../controllers/setup";
+import { dataId, dataNumberReq } from "../controllers/setup";
 const PeeCampSchema = new mongoose.Schema({
   userId: dataId,
   campId: dataId,
@@ -9,10 +9,7 @@ const PeeCampSchema = new mongoose.Schema({
     enum: ["A", "B", "C", "D", "E", "-"],
     required: true,
   },
-  score: {
-    type: Number,
-    required: true,
-  },
+  score: dataNumberReq,
   containerId: dataId,
 });
 export default mongoose.model("ChoiceAnswer", PeeCampSchema);

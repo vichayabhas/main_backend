@@ -80,6 +80,13 @@ import {
   editImageAndDescription,
   getImageAndDescriptions,
 } from "../controllers/camp/imageAndDescription";
+import {
+  createJob,
+  updateJobAssign,
+  registerJob,
+  deleteBaanJob,
+  deletPartJob,
+} from "../controllers/camp/jobAssign";
 
 const router = express.Router();
 
@@ -183,4 +190,9 @@ router.get(
   protect,
   getImageAndDescriptions
 ); //
+router.post("/createJob", protect, createJob); //
+router.put("/updateJobAssign", protect, updateJobAssign); //
+router.post("/registerJob", protect, registerJob); //
+router.delete("/deleteBaanJob/params/:id", protect, deleteBaanJob); //
+router.delete("/deletPartJob/params/:id", protect, deletPartJob); //
 export default router;

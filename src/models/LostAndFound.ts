@@ -11,10 +11,7 @@ const LostAndFoundSchema = new mongoose.Schema({
     required: true,
   },
   name: dataString,
-  detail: {
-    type: String,
-    required: true,
-  },
+  detail: dataString,
   userId: dataId,
   placeId: {
     type: mongoose.Schema.ObjectId,

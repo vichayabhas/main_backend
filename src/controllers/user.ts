@@ -362,6 +362,7 @@ export async function updateHeath(req: express.Request, res: express.Response) {
         foodConcern,
         userId: user._id,
       });
+      const campMemberCardIds: Id[] = [];
       await user.updateOne({
         healthIssueId: heath._id,
       });
@@ -405,13 +406,7 @@ export async function updateHeath(req: express.Request, res: express.Response) {
                 baan.nongCampMemberCardHaveHeathIssueIds
               ),
             });
-            await heath.updateOne({
-              campMemberCardIds: swop(
-                null,
-                campMemberCard._id,
-                heath.campMemberCardIds
-              ),
-            });
+            campMemberCardIds.push(campMemberCard._id);
             await campMemberCard.updateOne({ healthIssueId: heath._id });
             break;
           }
@@ -453,13 +448,7 @@ export async function updateHeath(req: express.Request, res: express.Response) {
                 part.peeCampMemberCardHaveHeathIssueIds
               ),
             });
-            await heath.updateOne({
-              campMemberCardIds: swop(
-                null,
-                campMemberCard._id,
-                heath.campMemberCardIds
-              ),
-            });
+            campMemberCardIds.push(campMemberCard._id);
             await campMemberCard.updateOne({ healthIssueId: heath._id });
             break;
           }
@@ -492,18 +481,13 @@ export async function updateHeath(req: express.Request, res: express.Response) {
                 part.petoCampMemberCardHaveHeathIssueIds
               ),
             });
-            await heath.updateOne({
-              campMemberCardIds: swop(
-                null,
-                campMemberCard._id,
-                heath.campMemberCardIds
-              ),
-            });
+            campMemberCardIds.push(campMemberCard._id);
             await campMemberCard.updateOne({ healthIssueId: heath._id });
             break;
           }
         }
       }
+      await heath.updateOne({ campMemberCardIds });
       sendRes(res, true);
       return;
     }

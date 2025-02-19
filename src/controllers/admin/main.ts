@@ -20,12 +20,7 @@ import {
   CreatePusherData,
   AuthType,
 } from "../../models/interface";
-import {
-  removeDuplicate,
-  resOk,
-  sendRes,
-  swop,
-} from "../setup";
+import { removeDuplicate, resOk, sendRes, swop } from "../setup";
 import express from "express";
 import PartNameContainer from "../../models/PartNameContainer";
 import Place from "../../models/Place";
@@ -43,6 +38,8 @@ import {
   lockDataPeto,
   unlockDataPeto,
 } from "./lockAndUnlock";
+import JobAssign from "../../models/JobAssign";
+import BaanJob from "../../models/BaanJob";
 //*export async function addBaan
 //*export async function addPart
 //*export async function updateBaan
@@ -147,6 +144,17 @@ export async function addBaanRaw(
     await part?.updateOne({ mapPeeCampIdByBaanId: part.mapPeeCampIdByBaanId });
     i = i + 1;
   }
+  i = 0;
+  const jobIds: Id[] = [];
+  while (i < camp.jobIds.length) {
+    const job = await JobAssign.findById(camp.jobIds[i++]);
+    if (!job) {
+      continue;
+    }
+    const baanJob = await BaanJob.create({ baanId: baan._id, jobId: job._id });
+    await job.updateOne({ memberIds: swop(null, baanJob._id, job.memberIds) });
+    jobIds.push(baanJob._id);
+  }
   await Camp.findByIdAndUpdate(camp._id, {
     nongModelIds: swop(null, nongCamp._id, camp.nongModelIds),
     baanIds: swop(null, baan._id, camp.baanIds),
@@ -158,6 +166,7 @@ export async function addBaanRaw(
     mapPeeCampIdByPartId: baan.mapPeeCampIdByPartId,
     nongModelId: nongCamp._id,
     peeModelIds: baan.peeModelIds,
+    jobIds,
   });
   return baan._id;
 }
@@ -982,7 +991,6 @@ export async function afterVisnuToPee(
   }
   sendRes(res, true);
 }
-
 
 export async function updatePusher(
   req: express.Request,

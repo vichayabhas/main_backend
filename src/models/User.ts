@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
-import { arrayObjectId, dataString } from "../controllers/setup";
+import { arrayObjectId, dataString, getDafaultBoolean } from "../controllers/setup";
 export const buf: string = process.env.JWT_SECECRET || "asdfjkl;;lkjfdsa";
 const UserSchema = new mongoose.Schema({
   name: dataString,
@@ -117,10 +117,7 @@ const UserSchema = new mongoose.Schema({
     default: "null",
   },
   citizenId: dataString,
-  likeToSleepAtCamp: {
-    type: Boolean,
-    required: true,
-  },
+  likeToSleepAtCamp: getDafaultBoolean(true),
   authPartIds: arrayObjectId,
   selectOffsetId: {
     type: mongoose.Schema.ObjectId,

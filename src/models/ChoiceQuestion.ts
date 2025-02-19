@@ -3,6 +3,7 @@ import {
   arrayObjectId,
   dataId,
   dataNumber,
+  dataNumberReq,
   dataString,
 } from "../controllers/setup";
 const PeeCampSchema = new mongoose.Schema({
@@ -13,26 +14,11 @@ const PeeCampSchema = new mongoose.Schema({
   c: dataString,
   d: dataString,
   e: dataString,
-  scoreA: {
-    type: Number,
-    required: true,
-  },
-  scoreB: {
-    type: Number,
-    required: true,
-  },
-  scoreC: {
-    type: Number,
-    required: true,
-  },
-  scoreD: {
-    type: Number,
-    required: true,
-  },
-  scoreE: {
-    type: Number,
-    required: true,
-  },
+  scoreA: dataNumberReq,
+  scoreB: dataNumberReq,
+  scoreC: dataNumberReq,
+  scoreD: dataNumberReq,
+  scoreE: dataNumberReq,
   nongAnswerA: dataNumber,
   nongAnswerB: dataNumber,
   nongAnswerC: dataNumber,
@@ -48,10 +34,7 @@ const PeeCampSchema = new mongoose.Schema({
     required: true,
     enum: ["A", "B", "C", "D", "E", "-"],
   },
-  order: {
-    type: Number,
-    required: true,
-  },
+  order: dataNumberReq,
   answerIds: arrayObjectId,
 });
 export default mongoose.model("ChoiceQuestion", PeeCampSchema);

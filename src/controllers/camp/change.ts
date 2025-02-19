@@ -11,6 +11,9 @@ import PetoCamp from "../../models/PetoCamp";
 import User from "../../models/User";
 import { sendRes, swop, calculate } from "../setup";
 import { getAuthTypes } from "./getCampData";
+import TimeRegister from "../../models/TimeRegister";
+import BaanJob from "../../models/BaanJob";
+import JobAssign from "../../models/JobAssign";
 
 export async function changeBaan(req: express.Request, res: express.Response) {
   const { userIds, baanId }: { userIds: Id[]; baanId: Id } = req.body;
@@ -142,21 +145,8 @@ export async function changeBaanRaw(
           baan.nongSleepIds.push(user._id);
         }
         newNongCamp.nongIds.push(user._id);
-        await baan.updateOne({
-          mapCampMemberCardIdByUserId: baan.mapCampMemberCardIdByUserId,
-          nongHeathIssueIds: baan.nongHeathIssueIds,
-          nongIds: baan.nongIds,
-          nongCampMemberCardIds: baan.nongCampMemberCardIds,
-          nongShirtSize: baan.nongShirtSize,
-          nongCampMemberCardHaveHeathIssueIds:
-            baan.nongCampMemberCardHaveHeathIssueIds,
-          nongHaveBottleIds: baan.nongHaveBottleIds,
-          nongSleepIds: baan.nongSleepIds,
-        });
-        await newNongCamp.updateOne({
-          nongIds: newNongCamp.nongIds,
-          nongCampMemberCardIds: newNongCamp.nongCampMemberCardIds,
-        });
+        await campMemberCard.updateOne({ campModelId: newNongCamp._id });
+
         break;
       }
       case "pee": {
@@ -203,7 +193,7 @@ export async function changeBaanRaw(
           });
           baan.peeHaveBottleIds.push(user._id);
         }
-        oldBaan?.mapCampMemberCardIdByUserId.delete(user.id);
+        oldBaan.mapCampMemberCardIdByUserId.delete(user.id);
         baan.mapCampMemberCardIdByUserId.set(user.id, campMemberCard._id);
         if (campMemberCard.healthIssueId) {
           await oldBaan.updateOne({
@@ -243,21 +233,54 @@ export async function changeBaanRaw(
           ),
           peeIds: swop(user._id, null, oldPeeCamp.peeIds),
         });
-        await baan.updateOne({
-          peeHeathIssueIds: baan.peeHeathIssueIds,
-          mapCampMemberCardIdByUserId: baan.mapCampMemberCardIdByUserId,
-          peeIds: baan.peeIds,
-          peeCampMemberCardIds: baan.peeCampMemberCardIds,
-          peeShirtSize: baan.peeShirtSize,
-          peeCampMemberCardHaveHeathIssueIds:
-            baan.peeCampMemberCardHaveHeathIssueIds,
-          peeHaveBottleIds: baan.peeHaveBottleIds,
-          peeSleepIds: baan.peeSleepIds,
+        let j = 0;
+        while (j < campMemberCard.baanJobIds.length) {
+          const timeRegister = await TimeRegister.findById(
+            campMemberCard.baanJobIds[j++]
+          );
+          if (!timeRegister) {
+            continue;
+          }
+          const baanJob = await BaanJob.findById(timeRegister.refId);
+          if (!baanJob) {
+            continue;
+          }
+          await baanJob.updateOne({
+            memberIds: swop(timeRegister._id, null, baanJob.memberIds),
+            userIds: swop(user._id, null, baanJob.userIds),
+          });
+          await timeRegister.deleteOne();
+        }
+        await campMemberCard.updateOne({
+          campModelId: newPeeCamp._id,
+          baanJobIds: [],
         });
         break;
       }
     }
   }
+  await newNongCamp.updateOne({
+    nongIds: newNongCamp.nongIds,
+    nongCampMemberCardIds: newNongCamp.nongCampMemberCardIds,
+  });
+  await baan.updateOne({
+    mapCampMemberCardIdByUserId: baan.mapCampMemberCardIdByUserId,
+    nongHeathIssueIds: baan.nongHeathIssueIds,
+    nongIds: baan.nongIds,
+    nongCampMemberCardIds: baan.nongCampMemberCardIds,
+    nongShirtSize: baan.nongShirtSize,
+    nongCampMemberCardHaveHeathIssueIds:
+      baan.nongCampMemberCardHaveHeathIssueIds,
+    nongHaveBottleIds: baan.nongHaveBottleIds,
+    nongSleepIds: baan.nongSleepIds,
+    peeHeathIssueIds: baan.peeHeathIssueIds,
+    peeIds: baan.peeIds,
+    peeCampMemberCardIds: baan.peeCampMemberCardIds,
+    peeShirtSize: baan.peeShirtSize,
+    peeCampMemberCardHaveHeathIssueIds: baan.peeCampMemberCardHaveHeathIssueIds,
+    peeHaveBottleIds: baan.peeHaveBottleIds,
+    peeSleepIds: baan.peeSleepIds,
+  });
   sendRes(res, true);
 }
 export async function changePart(req: express.Request, res: express.Response) {
@@ -289,6 +312,24 @@ export async function changePartRaw(userIds: Id[], partId: Id) {
     );
     if (!campMemberCard) {
       continue;
+    }
+    let j = 0;
+    while (j < campMemberCard.partJobIds.length) {
+      const timeRegister = await TimeRegister.findById(
+        campMemberCard.partJobIds[j++]
+      );
+      if (!timeRegister) {
+        continue;
+      }
+      const job = await JobAssign.findById(timeRegister.refId);
+      if (!job) {
+        continue;
+      }
+      await job.updateOne({
+        memberIds: swop(timeRegister._id, null, job.memberIds),
+        userIds: swop(user._id, null, job.userIds),
+      });
+      await timeRegister.deleteOne();
     }
     switch (campMemberCard.role) {
       case "peto": {
@@ -377,15 +418,9 @@ export async function changePartRaw(userIds: Id[], partId: Id) {
           petoIds: newPetoCamp.petoIds,
           petoCampMemberCardIds: newPetoCamp.petoCampMemberCardIds,
         });
-        await part.updateOne({
-          mapCampMemberCardIdByUserId: part.mapCampMemberCardIdByUserId,
-          petoHeathIssueIds: part.petoHeathIssueIds,
-          petoIds: part.petoIds,
-          petoCampMemberCardIds: part.petoCampMemberCardIds,
-          petoCampMemberCardHaveHeathIssueIds:
-            part.petoCampMemberCardHaveHeathIssueIds,
-          petoHaveBottleIds: part.petoHaveBottleIds,
-          petoSleepIds: part.petoSleepIds,
+        await campMemberCard.updateOne({
+          campModelId: newPetoCamp._id,
+          partJobIds: [],
         });
         break;
       }
@@ -483,20 +518,30 @@ export async function changePartRaw(userIds: Id[], partId: Id) {
           ),
           peeIds: swop(user._id, null, oldPeeCamp.peeIds),
         });
-        await part.updateOne({
-          peeHeathIssueIds: part.peeHeathIssueIds,
-          mapCampMemberCardIdByUserId: part.mapCampMemberCardIdByUserId,
-          peeIds: part.peeIds,
-          peeCampMemberCardIds: part.peeCampMemberCardIds,
-          peeShirtSize: part.peeShirtSize,
-          peeCampMemberCardHaveHeathIssueIds:
-            part.peeCampMemberCardHaveHeathIssueIds,
-          peeHaveBottleIds: part.peeHaveBottleIds,
-          peeSleepIds: part.peeSleepIds,
+        await campMemberCard.updateOne({
+          campModelId: newPeeCamp._id,
+          partJobIds: [],
         });
         break;
       }
     }
   }
+  await part.updateOne({
+    mapCampMemberCardIdByUserId: part.mapCampMemberCardIdByUserId,
+    petoHeathIssueIds: part.petoHeathIssueIds,
+    petoIds: part.petoIds,
+    petoCampMemberCardIds: part.petoCampMemberCardIds,
+    petoCampMemberCardHaveHeathIssueIds:
+      part.petoCampMemberCardHaveHeathIssueIds,
+    petoHaveBottleIds: part.petoHaveBottleIds,
+    petoSleepIds: part.petoSleepIds,
+    peeHeathIssueIds: part.peeHeathIssueIds,
+    peeIds: part.peeIds,
+    peeCampMemberCardIds: part.peeCampMemberCardIds,
+    peeShirtSize: part.peeShirtSize,
+    peeCampMemberCardHaveHeathIssueIds: part.peeCampMemberCardHaveHeathIssueIds,
+    peeHaveBottleIds: part.peeHaveBottleIds,
+    peeSleepIds: part.peeSleepIds,
+  });
   return true;
 }

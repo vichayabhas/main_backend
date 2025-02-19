@@ -10,11 +10,7 @@ import { authTypes } from "./interface";
 const PartSchema = new mongoose.Schema({
   nameId: dataId,
   campId: dataId,
-  peeIds: {
-    //user
-    type: [mongoose.Schema.ObjectId],
-    default: [],
-  },
+  peeIds: arrayObjectId,
   petoIds: arrayObjectId,
   peeHeathIssueIds: arrayObjectId,
   petoHeathIssueIds: arrayObjectId,
@@ -51,5 +47,6 @@ const PartSchema = new mongoose.Schema({
     ],
     default: [],
   },
+  jobIds: arrayObjectId,
 });
 export default mongoose.model("Part", PartSchema);

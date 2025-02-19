@@ -1,5 +1,10 @@
 import mongoose from "mongoose";
-import { arrayObjectId, dataId, dataNumber } from "../controllers/setup";
+import {
+  arrayObjectId,
+  dataId,
+  dataNumber,
+  getDafaultBoolean,
+} from "../controllers/setup";
 const PeeCampSchema = new mongoose.Schema({
   userId: dataId,
   size: {
@@ -19,14 +24,8 @@ const PeeCampSchema = new mongoose.Schema({
     default: "baan",
   },
   received: dataNumber,
-  haveBottle: {
-    type: Boolean,
-    default: false,
-  },
-  sleepAtCamp: {
-    type: Boolean,
-    default: false,
-  },
+  haveBottle: getDafaultBoolean(false),
+  sleepAtCamp: getDafaultBoolean(false),
   chatIds: arrayObjectId,
   allChatIds: arrayObjectId,
   ownChatIds: arrayObjectId,
@@ -36,5 +35,7 @@ const PeeCampSchema = new mongoose.Schema({
   },
   blackListFoodIds: arrayObjectId,
   whiteListFoodIds: arrayObjectId,
+  baanJobIds: arrayObjectId,
+  partJobIds: arrayObjectId,
 });
 export default mongoose.model("CampMemberCard", PeeCampSchema);

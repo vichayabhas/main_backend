@@ -158,6 +158,7 @@ export function conBaanBackToFront(input: InterBaanBack): InterBaanFront {
     peeHaveBottleIds,
     peeCampMemberCardHaveHeathIssueIds,
     imageAndDescriptionContainerIds,
+    jobIds,
   } = input;
   return {
     name,
@@ -196,6 +197,7 @@ export function conBaanBackToFront(input: InterBaanBack): InterBaanFront {
     peeHaveBottleIds,
     peeCampMemberCardHaveHeathIssueIds,
     imageAndDescriptionContainerIds,
+    jobIds,
   };
 }
 export function conCampBackToFront(input: InterCampBack): InterCampFront {
@@ -290,6 +292,7 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
     canNongAccessDataWithRoleNong,
     lockChangeQuestion,
     pusherId,
+    jobIds,
   } = input;
   return {
     partIds,
@@ -384,6 +387,7 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
     canNongAccessDataWithRoleNong,
     lockChangeQuestion,
     pusherId,
+    jobIds,
   };
 }
 export function conPartBackToFront(input: InterPartBack): InterPartFront {
@@ -414,6 +418,7 @@ export function conPartBackToFront(input: InterPartBack): InterPartFront {
     petoHaveBottleIds,
     petoCampMemberCardHaveHeathIssueIds,
     auths,
+    jobIds,
   } = input;
 
   return {
@@ -445,6 +450,7 @@ export function conPartBackToFront(input: InterPartBack): InterPartFront {
     petoHaveBottleIds,
     petoCampMemberCardHaveHeathIssueIds,
     auths,
+    jobIds,
   };
 }
 export function mapStringToMyMap(input: Map<Id, string | number>): MyMap[] {
@@ -584,6 +590,16 @@ export const dataNumber = {
   type: Number,
   default: 0,
 } as const;
+export const dataNumberReq = {
+  type: Number,
+  default: 0,
+} as const;
+export function getDafaultBoolean(init: boolean) {
+  return {
+    type: Boolean,
+    default: init,
+  };
+}
 export const dataMapString = {
   type: Map,
   default: new Map(),

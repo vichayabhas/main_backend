@@ -43,6 +43,7 @@ import PusherData from "../../models/PusherData";
 import TimeOffset from "../../models/TimeOffset";
 import { getAllQuestionRaw } from "./questionAndAnswer";
 import { getImageAndDescriptionsRaw } from "./imageAndDescription";
+import { getBaanJobsRaw, getPartJobsRaw } from "./jobAssign";
 export async function getBaan(req: express.Request, res: express.Response) {
   try {
     const data = await Baan.findById(req.params.id);
@@ -814,6 +815,8 @@ export async function getPeeCampData(
       minute: 0,
     };
   }
+  const baanJobs = await getBaanJobsRaw(baan.jobIds, user._id);
+  const partJobs = await getPartJobsRaw(part.jobIds, user._id);
   const buffer: GetPeeData = {
     baan,
     camp,
@@ -844,6 +847,8 @@ export async function getPeeCampData(
     petoParts,
     peeParts,
     imageAndDescriptions,
+    baanJobs,
+    partJobs,
   };
   res.status(200).json(buffer);
 }
@@ -923,6 +928,7 @@ export async function getPetoCampData(
       minute: 0,
     };
   }
+  const partJobs = await getPartJobsRaw(part.jobIds, user._id);
   const buffer: GetPetoData = {
     camp,
     part,
@@ -946,6 +952,7 @@ export async function getPetoCampData(
     selectOffset,
     petos,
     pees,
+    partJobs,
   };
   res.status(200).json(buffer);
 }

@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { foodLimits } from "./interface";
-import { arrayObjectId, dataId } from "../controllers/setup";
+import { arrayObjectId, dataId, getDafaultBoolean } from "../controllers/setup";
 const PeeCampSchema = new mongoose.Schema({
   userId: dataId,
   food: {
@@ -19,14 +19,8 @@ const PeeCampSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
-  isWearing: {
-    type: Boolean,
-    default: false,
-  },
-  spicy: {
-    type: Boolean,
-    default: false,
-  },
+  isWearing:getDafaultBoolean(false),
+  spicy:getDafaultBoolean(false),
   foodConcern: {
     type: String,
     default: "",

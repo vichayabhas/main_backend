@@ -89,5 +89,6 @@ const BaanSchema = new mongoose.Schema({
   imageAndDescriptionContainerIds: arrayObjectId,
   //679c85620cfba8def1ffb156
   //679c85690cfba8def1ffb162
+  jobIds: arrayObjectId,
 });
 export default mongoose.model("Baan", BaanSchema);
