@@ -200,5 +200,6 @@ const campSchema = new mongoose.Schema({
   },
   lockChangeQuestion: getDafaultBoolean(false),
   jobIds: arrayObjectId,
+  canReadTimeOnMirror: getDafaultBoolean(false),
 });
 export default mongoose.model("Camp", campSchema);

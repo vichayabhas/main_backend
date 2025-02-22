@@ -37,5 +37,8 @@ const PeeCampSchema = new mongoose.Schema({
   whiteListFoodIds: arrayObjectId,
   baanJobIds: arrayObjectId,
   partJobIds: arrayObjectId,
+  mirrorSenderIds: arrayObjectId,
+  mirrorReciverIds: arrayObjectId,
+  mirrorBaanIds: arrayObjectId,
 });
 export default mongoose.model("CampMemberCard", PeeCampSchema);

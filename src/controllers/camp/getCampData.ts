@@ -44,6 +44,7 @@ import TimeOffset from "../../models/TimeOffset";
 import { getAllQuestionRaw } from "./questionAndAnswer";
 import { getImageAndDescriptionsRaw } from "./imageAndDescription";
 import { getBaanJobsRaw, getPartJobsRaw } from "./jobAssign";
+import { getMirrorRaw } from "./mirror";
 export async function getBaan(req: express.Request, res: express.Response) {
   try {
     const data = await Baan.findById(req.params.id);
@@ -704,6 +705,7 @@ export async function getNongCampData(
       minute: 0,
     };
   }
+  const mirrorData = await getMirrorRaw(baan, campMemberCard, user);
   const buffer: GetNongData = {
     baan,
     camp,
@@ -728,6 +730,7 @@ export async function getNongCampData(
         },
     user,
     displayOffset,
+    mirrorData,
   };
   res.status(200).json(buffer);
 }
@@ -817,6 +820,7 @@ export async function getPeeCampData(
   }
   const baanJobs = await getBaanJobsRaw(baan.jobIds, user._id);
   const partJobs = await getPartJobsRaw(part.jobIds, user._id);
+  const mirrorData = await getMirrorRaw(baan, campMemberCard, user);
   const buffer: GetPeeData = {
     baan,
     camp,
@@ -849,6 +853,7 @@ export async function getPeeCampData(
     imageAndDescriptions,
     baanJobs,
     partJobs,
+    mirrorData,
   };
   res.status(200).json(buffer);
 }

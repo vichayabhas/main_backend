@@ -286,6 +286,8 @@ export async function updateBaanRaw(update: UpdateBaan) {
       boySleepPlaceId,
       normalPlaceId,
       nongSendMessage,
+      canReadMirror,
+      canWhriteMirror,
     } = update;
     const baan = await Baan.findById(baanId);
     if (!baan) {
@@ -371,6 +373,8 @@ export async function updateBaanRaw(update: UpdateBaan) {
       boySleepPlaceId: boyNewP ? boyNewP._id : null,
       normalPlaceId: normalNewP ? normalNewP._id : null,
       nongSendMessage,
+      canReadMirror,
+      canWhriteMirror,
     });
     return true;
   } catch (err) {
@@ -686,6 +690,7 @@ export async function updateCamp(req: express.Request, res: express.Response) {
     canNongAccessDataWithRoleNong,
     lockChangeQuestion,
     updatePart,
+    canReadTimeOnMirror,
   }: UpdateCamp = req.body;
   if (camp.nongDataLock != nongDataLock) {
     if (nongDataLock) {
@@ -731,6 +736,7 @@ export async function updateCamp(req: express.Request, res: express.Response) {
     canNongSeeAllTrackingSheet,
     canNongAccessDataWithRoleNong,
     lockChangeQuestion,
+    canReadTimeOnMirror,
   });
   for (const { id, auths } of updatePart) {
     const part = await Part.findById(id);
@@ -1017,4 +1023,5 @@ export async function updatePusher(
   } else {
     await pusherData.updateOne(update);
   }
+  sendRes(res,true)
 }

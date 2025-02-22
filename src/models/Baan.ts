@@ -5,6 +5,7 @@ import {
   dataMapObjectId,
   dataSize,
   dataString,
+  getDafaultBoolean,
 } from "../controllers/setup";
 const BaanSchema = new mongoose.Schema({
   name: dataString,
@@ -90,5 +91,8 @@ const BaanSchema = new mongoose.Schema({
   //679c85620cfba8def1ffb156
   //679c85690cfba8def1ffb162
   jobIds: arrayObjectId,
+  mirrorIds: arrayObjectId,
+  canReadMirror: getDafaultBoolean(false),
+  canWhriteMirror: getDafaultBoolean(false),
 });
 export default mongoose.model("Baan", BaanSchema);

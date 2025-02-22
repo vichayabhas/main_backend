@@ -37,6 +37,7 @@ import { deleteChatRaw } from "../randomThing/chat";
 import JobAssign from "../../models/JobAssign";
 import TimeRegister from "../../models/TimeRegister";
 import BaanJob from "../../models/BaanJob";
+import Mirror from "../../models/Mirror";
 
 export async function forceDeleteCamp(
   req: express.Request,
@@ -198,6 +199,10 @@ async function forceDeleteCampRaw(campId: Id, res: express.Response | null) {
       while (j < baan.jobIds.length) {
         await BaanJob.findByIdAndDelete(baan.jobIds[j++]);
       }
+      j = 0;
+      while (j < baan.mirrorIds.length) {
+        await Mirror.findByIdAndDelete(baan.mirrorIds[j++]);
+      }
       await baan.deleteOne();
     }
     await CampStyle.findByIdAndDelete(camp.campStyleId);
@@ -328,6 +333,10 @@ async function forceDeleteCampRaw(campId: Id, res: express.Response | null) {
       j = 0;
       while (j < campMemberCard.partJobIds.length) {
         await TimeRegister.findByIdAndDelete(campMemberCard.partJobIds[j++]);
+      }
+      j = 0;
+      while (j < campMemberCard.mirrorSenderIds.length) {
+        await Mirror.findByIdAndDelete(campMemberCard.mirrorSenderIds[j++]);
       }
       await user.updateOne({
         campMemberCardIds: swop(
@@ -860,6 +869,23 @@ export async function forceDeleteBaan(
   camp.peeShirtSize.forEach((v, k) => {
     camp.peeShirtSize.set(k, calculate(v, 0, baan?.peeShirtSize.get(k)));
   });
+  while (i < baan.mirrorIds.length) {
+    const mirror = await Mirror.findById(baan.mirrorIds[i++]);
+    if (!mirror) {
+      continue;
+    }
+    const campMemberCard = await CampMemberCard.findById(
+      mirror.senderCampMemberCardId
+    );
+    if (!campMemberCard) {
+      continue;
+    }
+    await campMemberCard.updateOne({
+      mirrorBaanIds: swop(mirror._id, null, campMemberCard.mirrorBaanIds),
+    });
+    await mirror.deleteOne();
+  }
+  i = 0;
   while (i < baan.nongCampMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
       baan.nongCampMemberCardIds[i++]
@@ -899,6 +925,62 @@ export async function forceDeleteBaan(
     j = 0;
     while (j < campMemberCard.ownChatIds.length) {
       await deleteChatRaw(campMemberCard.ownChatIds[j++]);
+    }
+    j = 0;
+    while (j < campMemberCard.mirrorBaanIds.length) {
+      const mirror = await Mirror.findById(campMemberCard.mirrorBaanIds[j++]);
+      if (!mirror) {
+        continue;
+      }
+      const receiverBaan = await Baan.findById(mirror.reciverId);
+      if (!receiverBaan) {
+        continue;
+      }
+      await receiverBaan.updateOne({
+        mirrorIds: swop(mirror._id, null, receiverBaan.mirrorIds),
+      });
+    }
+    j = 0;
+    while (j < campMemberCard.mirrorReciverIds.length) {
+      const mirror = await Mirror.findById(
+        campMemberCard.mirrorReciverIds[j++]
+      );
+      if (!mirror) {
+        continue;
+      }
+      const otherCampMemberCard = await CampMemberCard.findById(
+        mirror.senderCampMemberCardId
+      );
+      if (!otherCampMemberCard) {
+        continue;
+      }
+      await otherCampMemberCard.updateOne({
+        mirrorSenderIds: swop(
+          mirror._id,
+          null,
+          otherCampMemberCard.mirrorSenderIds
+        ),
+      });
+    }
+    j = 0;
+    while (j < campMemberCard.mirrorSenderIds.length) {
+      const mirror = await Mirror.findById(campMemberCard.mirrorSenderIds[j++]);
+      if (!mirror) {
+        continue;
+      }
+      const otherCampMemberCard = await CampMemberCard.findById(
+        mirror.reciverId
+      );
+      if (!otherCampMemberCard) {
+        continue;
+      }
+      await otherCampMemberCard.updateOne({
+        mirrorReciverIds: swop(
+          mirror._id,
+          null,
+          otherCampMemberCard.mirrorReciverIds
+        ),
+      });
     }
     await removeAnswer(user._id, camp._id);
     await campMemberCard.deleteOne();
@@ -981,9 +1063,65 @@ export async function forceDeleteBaan(
       }
       await job.updateOne({
         memberIds: swop(timeRegister._id, null, job.memberIds),
-        userIds:swop(campMemberCard.userId,null,job.userIds)
+        userIds: swop(campMemberCard.userId, null, job.userIds),
       });
       await timeRegister.deleteOne();
+    }
+    j = 0;
+    while (j < campMemberCard.mirrorBaanIds.length) {
+      const mirror = await Mirror.findById(campMemberCard.mirrorBaanIds[j++]);
+      if (!mirror) {
+        continue;
+      }
+      const receiverBaan = await Baan.findById(mirror.reciverId);
+      if (!receiverBaan) {
+        continue;
+      }
+      await receiverBaan.updateOne({
+        mirrorIds: swop(mirror._id, null, receiverBaan.mirrorIds),
+      });
+    }
+    j = 0;
+    while (j < campMemberCard.mirrorReciverIds.length) {
+      const mirror = await Mirror.findById(
+        campMemberCard.mirrorReciverIds[j++]
+      );
+      if (!mirror) {
+        continue;
+      }
+      const otherCampMemberCard = await CampMemberCard.findById(
+        mirror.senderCampMemberCardId
+      );
+      if (!otherCampMemberCard) {
+        continue;
+      }
+      await otherCampMemberCard.updateOne({
+        mirrorSenderIds: swop(
+          mirror._id,
+          null,
+          otherCampMemberCard.mirrorSenderIds
+        ),
+      });
+    }
+    j = 0;
+    while (j < campMemberCard.mirrorSenderIds.length) {
+      const mirror = await Mirror.findById(campMemberCard.mirrorSenderIds[j++]);
+      if (!mirror) {
+        continue;
+      }
+      const otherCampMemberCard = await CampMemberCard.findById(
+        mirror.reciverId
+      );
+      if (!otherCampMemberCard) {
+        continue;
+      }
+      await otherCampMemberCard.updateOne({
+        mirrorReciverIds: swop(
+          mirror._id,
+          null,
+          otherCampMemberCard.mirrorReciverIds
+        ),
+      });
     }
     await CampMemberCard.findByIdAndDelete(campMemberCard._id);
   }
@@ -1495,6 +1633,10 @@ async function forceDeletePartRaw(partId: Id) {
       campMemberCard.size,
       calculate(baan.peeShirtSize.get(campMemberCard.size), 0, 1)
     );
+    camp.peeShirtSize.set(
+      campMemberCard.size,
+      calculate(camp.peeShirtSize.get(campMemberCard.size), 0, 1)
+    );
     let j = 0;
     while (j < campMemberCard.allChatIds.length) {
       const chat = await Chat.findById(campMemberCard.allChatIds[j++]);
@@ -1530,13 +1672,69 @@ async function forceDeletePartRaw(partId: Id) {
       }
       await baanJob.updateOne({
         memberIds: swop(timeRegister._id, null, baanJob.memberIds),
-        userIds:swop(campMemberCard.userId,null,baanJob.userIds)
+        userIds: swop(campMemberCard.userId, null, baanJob.userIds),
       });
       await timeRegister.deleteOne();
     }
     j = 0;
     while (j < campMemberCard.partJobIds.length) {
       await TimeRegister.findByIdAndDelete(campMemberCard.partJobIds[j++]);
+    }
+    j = 0;
+    while (j < campMemberCard.mirrorBaanIds.length) {
+      const mirror = await Mirror.findById(campMemberCard.mirrorBaanIds[j++]);
+      if (!mirror) {
+        continue;
+      }
+      const receiverBaan = await Baan.findById(mirror.reciverId);
+      if (!receiverBaan) {
+        continue;
+      }
+      await receiverBaan.updateOne({
+        mirrorIds: swop(mirror._id, null, receiverBaan.mirrorIds),
+      });
+    }
+    j = 0;
+    while (j < campMemberCard.mirrorReciverIds.length) {
+      const mirror = await Mirror.findById(
+        campMemberCard.mirrorReciverIds[j++]
+      );
+      if (!mirror) {
+        continue;
+      }
+      const otherCampMemberCard = await CampMemberCard.findById(
+        mirror.senderCampMemberCardId
+      );
+      if (!otherCampMemberCard) {
+        continue;
+      }
+      await otherCampMemberCard.updateOne({
+        mirrorSenderIds: swop(
+          mirror._id,
+          null,
+          otherCampMemberCard.mirrorSenderIds
+        ),
+      });
+    }
+    j = 0;
+    while (j < campMemberCard.mirrorSenderIds.length) {
+      const mirror = await Mirror.findById(campMemberCard.mirrorSenderIds[j++]);
+      if (!mirror) {
+        continue;
+      }
+      const otherCampMemberCard = await CampMemberCard.findById(
+        mirror.reciverId
+      );
+      if (!otherCampMemberCard) {
+        continue;
+      }
+      await otherCampMemberCard.updateOne({
+        mirrorReciverIds: swop(
+          mirror._id,
+          null,
+          otherCampMemberCard.mirrorReciverIds
+        ),
+      });
     }
     await campMemberCard.deleteOne();
     await baan.updateOne({ peeShirtSize: baan.peeShirtSize });
@@ -1553,6 +1751,7 @@ async function forceDeletePartRaw(partId: Id) {
     partIds: swop(part._id, null, camp.partIds),
     petoModelIds: swop(part.petoModelId as Id, null, camp.petoModelIds),
     petoShirtSize: camp.petoShirtSize,
+    peeShirtSize:camp.peeShirtSize,
     petoCampMemberCardIds,
     peeCampMemberCardIds,
     peeModelIds,

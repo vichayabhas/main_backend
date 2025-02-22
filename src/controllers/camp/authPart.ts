@@ -926,7 +926,14 @@ export async function planUpdateCamp(
     if (!baan) {
       continue;
     }
-    const { link, name, fullName, nongSendMessage } = baan;
+    const {
+      link,
+      name,
+      fullName,
+      nongSendMessage,
+      canReadMirror,
+      canWhriteMirror,
+    } = baan;
     await updateBaanRaw({
       baanId: baan._id,
       boySleepPlaceId: updateBaan.boyId,
@@ -936,6 +943,8 @@ export async function planUpdateCamp(
       normalPlaceId: updateBaan.normalId,
       link,
       fullName,
+      canReadMirror,
+      canWhriteMirror,
     });
   }
   i = 0;

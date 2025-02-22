@@ -87,6 +87,11 @@ import {
   deleteBaanJob,
   deletPartJob,
 } from "../controllers/camp/jobAssign";
+import {
+  createMirror,
+  updateMirror,
+  deleteMirror,
+} from "../controllers/camp/mirror";
 
 const router = express.Router();
 
@@ -195,4 +200,7 @@ router.put("/updateJobAssign", protect, updateJobAssign); //
 router.post("/registerJob", protect, registerJob); //
 router.delete("/deleteBaanJob/params/:id", protect, deleteBaanJob); //
 router.delete("/deletPartJob/params/:id", protect, deletPartJob); //
+router.post("/createMirror/", protect, createMirror); //
+router.put("/updateMirror/", protect, updateMirror); //
+router.delete("/deleteMirror/params/:id", protect, deleteMirror); //
 export default router;

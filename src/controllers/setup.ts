@@ -159,6 +159,9 @@ export function conBaanBackToFront(input: InterBaanBack): InterBaanFront {
     peeCampMemberCardHaveHeathIssueIds,
     imageAndDescriptionContainerIds,
     jobIds,
+    canReadMirror,
+    canWhriteMirror,
+    mirrorIds,
   } = input;
   return {
     name,
@@ -198,6 +201,9 @@ export function conBaanBackToFront(input: InterBaanBack): InterBaanFront {
     peeCampMemberCardHaveHeathIssueIds,
     imageAndDescriptionContainerIds,
     jobIds,
+    canReadMirror,
+    canWhriteMirror,
+    mirrorIds,
   };
 }
 export function conCampBackToFront(input: InterCampBack): InterCampFront {
@@ -293,6 +299,7 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
     lockChangeQuestion,
     pusherId,
     jobIds,
+    canReadTimeOnMirror,
   } = input;
   return {
     partIds,
@@ -388,6 +395,7 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
     lockChangeQuestion,
     pusherId,
     jobIds,
+    canReadTimeOnMirror,
   };
 }
 export function conPartBackToFront(input: InterPartBack): InterPartFront {
