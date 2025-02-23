@@ -1060,14 +1060,8 @@ export async function getCampState(
       link: camp.nongInterviewIds.get(user._id.toString()) || "",
       user,
     };
-  } else if (camp.nongPassIds.has(user._id.toString())) {
-    out = {
-      camp,
-      questions,
-      state: "pass",
-      link: camp.nongPassIds.get(user._id.toString()) || "",
-      user,
-    };
+  } else if (camp.nongSureIds.includes(user._id)) {
+    out = { camp, questions, state: "sure", link: "", user };
   } else if (camp.nongPaidIds.includes(user._id)) {
     out = {
       camp,
@@ -1076,8 +1070,14 @@ export async function getCampState(
       link: camp.nongPassIds.get(user._id.toString()) || "",
       user,
     };
-  } else if (camp.nongSureIds.includes(user._id)) {
-    out = { camp, questions, state: "sure", link: "", user };
+  } else if (camp.nongPassIds.has(user._id.toString())) {
+    out = {
+      camp,
+      questions,
+      state: "pass",
+      link: camp.nongPassIds.get(user._id.toString()) || "",
+      user,
+    };
   } else if (camp.peePassIds.has(user._id.toString())) {
     out = {
       camp,

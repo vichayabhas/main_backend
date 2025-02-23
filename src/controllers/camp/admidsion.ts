@@ -219,9 +219,9 @@ export async function addNong(req: express.Request, res: express.Response) {
       ) {
         continue;
       }
-      baan.nongIds.push(user._id)
-      camp.nongIds.push(user._id)
-      nongCamp.nongIds.push(user._id)
+      baan.nongIds.push(user._id);
+      camp.nongIds.push(user._id);
+      nongCamp.nongIds.push(user._id);
       let sleepAtCamp: boolean;
       switch (camp.nongSleepModel) {
         case "นอนทุกคน": {

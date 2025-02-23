@@ -108,13 +108,13 @@ export async function createPartChat(
   }
   await part.updateOne({ chatIds: swop(null, chat._id, part.chatIds) });
   const showChat = await getShowChatFromChat(chat, "pee");
-  if (pusherServer)
-    await pusherServer.trigger(
-      `${getSystemInfoRaw().chatText}${part._id}`,
-      getSystemInfoRaw().newText,
-      showChat
-    );
-  res.status(201).json(chat);
+  // if (pusherServer)
+  //   await pusherServer.trigger(
+  //     `${getSystemInfoRaw().chatText}${part._id}`,
+  //     getSystemInfoRaw().newText,
+  //     showChat
+  //   );
+  res.status(201).json(showChat);
 }
 export async function getShowChatFromChatIds(inputs: Id[], mode: Mode) {
   const out: ShowChat[] = [];
@@ -180,6 +180,7 @@ export async function getShowChatFromChatIds(inputs: Id[], mode: Mode) {
       }
     }
     let roomName: string;
+    let canReadInModeNong: boolean;
     switch (chat.typeChat) {
       case "คุยกันในบ้าน": {
         const baan = await Baan.findById(chat.refId);
@@ -191,6 +192,7 @@ export async function getShowChatFromChatIds(inputs: Id[], mode: Mode) {
           continue;
         }
         roomName = `${camp.groupName}${baan.name}`;
+        canReadInModeNong = true;
         break;
       }
       case "พี่บ้านคุยกัน": {
@@ -203,6 +205,7 @@ export async function getShowChatFromChatIds(inputs: Id[], mode: Mode) {
           continue;
         }
         roomName = `พี่${camp.groupName}`;
+        canReadInModeNong = true;
         break;
       }
       case "น้องคุยส่วนตัวกับพี่": {
@@ -220,6 +223,7 @@ export async function getShowChatFromChatIds(inputs: Id[], mode: Mode) {
           continue;
         }
         roomName = `น้อง${user.nickname} บ้าน${baan.name}`;
+        canReadInModeNong = true;
         break;
       }
       case "คุยกันในฝ่าย": {
@@ -232,6 +236,7 @@ export async function getShowChatFromChatIds(inputs: Id[], mode: Mode) {
           continue;
         }
         roomName = `ฝ่าย${part.partName}`;
+        canReadInModeNong = false;
         break;
       }
       case "พี่คุยกันในบ้าน": {
@@ -244,6 +249,7 @@ export async function getShowChatFromChatIds(inputs: Id[], mode: Mode) {
           continue;
         }
         roomName = `พี่${camp.groupName}${baan.name}`;
+        canReadInModeNong = false;
         break;
       }
     }
@@ -261,6 +267,7 @@ export async function getShowChatFromChatIds(inputs: Id[], mode: Mode) {
       campMemberCardIds,
       date,
       _id,
+      canReadInModeNong,
     });
   }
   return out;
@@ -470,11 +477,11 @@ export async function createNongChat(
     );
   }
   const showChat = await getShowChatFromChat(chat, "pee");
-  await pusherServer?.trigger(
-    `${getSystemInfoRaw().chatText}${campMemberCardHost._id}`,
-    getSystemInfoRaw().newText,
-    showChat
-  );
+  // await pusherServer?.trigger(
+  //   `${getSystemInfoRaw().chatText}${campMemberCardHost._id}`,
+  //   getSystemInfoRaw().newText,
+  //   showChat
+  // );
   await campMemberCardHost.updateOne({
     chatIds: swop(null, chat._id, campMemberCardHost.chatIds),
   });
@@ -485,7 +492,7 @@ export async function createNongChat(
       chat.campMemberCardIds
     ),
   });
-  res.status(201).json(chat);
+  res.status(201).json(showChat);
 }
 export async function createPeeBaanChat(
   req: express.Request,
@@ -510,7 +517,7 @@ export async function createPeeBaanChat(
     sendRes(res, false);
     return;
   }
-  const pusherServer = await getPusherServer(camp.pusherId);
+  // const pusherServer = await getPusherServer(camp.pusherId);
   const chat = await Chat.create({
     message: create.message,
     campModelId: campMemberCardSender.campModelId,
@@ -534,22 +541,24 @@ export async function createPeeBaanChat(
     await campMemberCard.updateOne({
       allChatIds: swop(null, chat._id, campMemberCard.allChatIds),
     });
-    const user = await User.findById(campMemberCard.userId);
-    if (!user) {
-      continue;
-    }
-    const showChat = await getShowChatFromChat(chat, user.mode);
-    if (!showChat) {
-      continue;
-    }
-    await pusherServer?.trigger(
-      `${getSystemInfoRaw().chatText}Pee${baan._id}`,
-      getSystemInfoRaw().newText,
-      showChat
-    );
+    // const user = await User.findById(campMemberCard.userId);
+    // if (!user) {
+    //   continue;
+    // }
+
+    // await pusherServer?.trigger(
+    //   `${getSystemInfoRaw().chatText}Pee${baan._id}`,
+    //   getSystemInfoRaw().newText,
+    //   showChat
+    // );
+  }
+  const showChat = await getShowChatFromChat(chat, user.mode);
+  if (!showChat) {
+    sendRes(res, false);
+    return;
   }
   await baan.updateOne({ peeChatIds: swop(null, chat._id, baan.peeChatIds) });
-  sendRes(res,true)
+  res.status(201).json(showChat);
 }
 export async function createNongBaanChat(
   req: express.Request,
@@ -567,7 +576,7 @@ export async function createNongBaanChat(
     sendRes(res, false);
     return;
   }
-  const pusherServer = await getPusherServer(camp.pusherId);
+  // const pusherServer = await getPusherServer(camp.pusherId);
   const campMemberCardSender = await CampMemberCard.findById(
     camp.mapCampMemberCardIdByUserId.get(user._id.toString())
   );
@@ -596,19 +605,19 @@ export async function createNongBaanChat(
       allChatIds: swop(null, chat._id, campMemberCard.allChatIds),
     });
     campMemberCardIds.push(campMemberCard._id);
-    const user = await User.findById(campMemberCard.userId);
-    if (!user) {
-      continue;
-    }
-    const showChat = await getShowChatFromChat(chat, user.mode);
-    if (!showChat) {
-      continue;
-    }
-    await pusherServer?.trigger(
-      `${getSystemInfoRaw().chatText}${camp._id}${user._id}`,
-      getSystemInfoRaw().newText,
-      showChat
-    );
+    // const user = await User.findById(campMemberCard.userId);
+    // if (!user) {
+    //   continue;
+    // }
+    // const showChat = await getShowChatFromChat(chat, user.mode);
+    // if (!showChat) {
+    //   continue;
+    // }
+    // await pusherServer?.trigger(
+    //   `${getSystemInfoRaw().chatText}${camp._id}${user._id}`,
+    //   getSystemInfoRaw().newText,
+    //   showChat
+    // );
   }
   i = 0;
   while (i < baan.nongCampMemberCardIds.length) {
@@ -622,19 +631,19 @@ export async function createNongBaanChat(
       allChatIds: swop(null, chat._id, campMemberCard.allChatIds),
     });
     campMemberCardIds.push(campMemberCard._id);
-    const user = await User.findById(campMemberCard.userId);
-    if (!user) {
-      continue;
-    }
-    const showChat = await getShowChatFromChat(chat, user.mode);
-    if (!showChat) {
-      continue;
-    }
-    await pusherServer?.trigger(
-      `${getSystemInfoRaw().chatText}${camp._id}${user._id}`,
-      getSystemInfoRaw().newText,
-      showChat
-    );
+    // const user = await User.findById(campMemberCard.userId);
+    // if (!user) {
+    //   continue;
+    // }
+    // const showChat = await getShowChatFromChat(chat, user.mode);
+    // if (!showChat) {
+    //   continue;
+    // }
+    // await pusherServer?.trigger(
+    //   `${getSystemInfoRaw().chatText}${camp._id}${user._id}`,
+    //   getSystemInfoRaw().newText,
+    //   showChat
+    // );
   }
   await campMemberCardSender.updateOne({
     ownChatIds: swop(null, chat._id, campMemberCardSender.ownChatIds),
@@ -644,12 +653,13 @@ export async function createNongBaanChat(
 
   const showChat = await getShowChatFromChat(chat, "pee");
 
-  await pusherServer?.trigger(
-    `${getSystemInfoRaw().chatText}Nong${baan._id}`,
-    getSystemInfoRaw().newText,
-    showChat
-  );
-  sendRes(res,true)
+  // await pusherServer?.trigger(
+  //   `${getSystemInfoRaw().chatText}Nong${baan._id}`,
+  //   getSystemInfoRaw().newText,
+  //   showChat
+  // );
+  // sendRes(res,true)
+  res.status(201).json(showChat);
 }
 export async function getAllChatFromCampId(
   req: express.Request,
@@ -1035,144 +1045,150 @@ export async function getPartPeebaanChat(
 }
 
 export async function getShowChatFromChat(chat: InterChat, mode: Mode) {
-    const {
-      message,
-      userId,
-      role,
-      campModelId,
-      typeChat,
-      refId,
-      campMemberCardIds,
-      date,
-      _id,
-    } = chat;
-    let baanName: string;
-    let partName: string;
-    const user = await User.findById(userId);
-    switch (role) {
-      case "pee": {
-        const peeCamp = await PeeCamp.findById(campModelId);
-        if (!peeCamp || !user) {
-          return null;
-        }
-        const part = await Part.findById(peeCamp.partId);
-        const baan = await Baan.findById(peeCamp.baanId);
-        if (!part || !baan) {
-          return null;
-        }
-        partName = part.partName;
-        baanName = baan.name;
-        break;
+  const {
+    message,
+    userId,
+    role,
+    campModelId,
+    typeChat,
+    refId,
+    campMemberCardIds,
+    date,
+    _id,
+  } = chat;
+  let baanName: string;
+  let partName: string;
+  const user = await User.findById(userId);
+  switch (role) {
+    case "pee": {
+      const peeCamp = await PeeCamp.findById(campModelId);
+      if (!peeCamp || !user) {
+        return null;
       }
-      case "peto": {
-        const petoCamp = await PetoCamp.findById(campModelId);
-        if (!petoCamp || !user) {
-          return null;
-        }
-        const part = await Part.findById(petoCamp.partId);
-        if (!part) {
-          return null;
-        }
-        partName = part.partName;
-        baanName = "ปีโต";
-        break;
+      const part = await Part.findById(peeCamp.partId);
+      const baan = await Baan.findById(peeCamp.baanId);
+      if (!part || !baan) {
+        return null;
       }
-      case "nong": {
-        const nongCamp = await NongCamp.findById(chat.campModelId);
-        if (!user || !nongCamp) {
-          return null;
-        }
-        const baan = await Baan.findById(nongCamp.baanId);
-        if (!baan) {
-          return null;
-        }
-        partName = "น้องค่าย";
-        baanName = baan.name;
-      }
+      partName = part.partName;
+      baanName = baan.name;
+      break;
     }
-    let roomName: string;
-    switch (chat.typeChat) {
-      case "คุยกันในบ้าน": {
-        const baan = await Baan.findById(chat.refId);
-        if (!baan) {
-          return null;
-        }
-        const camp = await Camp.findById(baan.campId);
-        if (!camp) {
-          return null;
-        }
-        roomName = `${camp.groupName}${baan.name}`;
-        break;
+    case "peto": {
+      const petoCamp = await PetoCamp.findById(campModelId);
+      if (!petoCamp || !user) {
+        return null;
       }
-      case "พี่บ้านคุยกัน": {
-        const part = await Part.findById(chat.refId);
-        if (!part) {
-          return null;
-        }
-        const camp = await Camp.findById(part.campId);
-        if (!camp) {
-          return null;
-        }
-        roomName = `พี่${camp.groupName}`;
-        break;
+      const part = await Part.findById(petoCamp.partId);
+      if (!part) {
+        return null;
       }
-      case "น้องคุยส่วนตัวกับพี่": {
-        const campMemberCard = await CampMemberCard.findById(chat.refId);
-        if (!campMemberCard) {
-          return null;
-        }
-        const user = await User.findById(campMemberCard.userId);
-        const nongCamp = await NongCamp.findById(campMemberCard.campModelId);
-        if (!user || !nongCamp) {
-          return null;
-        }
-        const baan = await Baan.findById(nongCamp.baanId);
-        if (!baan) {
-          return null;
-        }
-        roomName = `น้อง${user.nickname} บ้าน${baan.name}`;
-        break;
-      }
-      case "คุยกันในฝ่าย": {
-        const part = await Part.findById(chat.refId);
-        if (!part || mode == "nong") {
-          return null;
-        }
-        const camp = await Camp.findById(part.campId);
-        if (!camp) {
-          return null;
-        }
-        roomName = `ฝ่าย${part.partName}`;
-        break;
-      }
-      case "พี่คุยกันในบ้าน": {
-        const baan = await Baan.findById(chat.refId);
-        if (!baan || mode == "nong") {
-          return null;
-        }
-        const camp = await Camp.findById(baan.campId);
-        if (!camp) {
-          return null;
-        }
-        roomName = `พี่${camp.groupName}${baan.name}`;
-        break;
-      }
+      partName = part.partName;
+      baanName = "ปีโต";
+      break;
     }
-    const buffer: ShowChat = {
-      nickname: user.nickname,
-      partName,
-      baanName,
-      message,
-      role,
-      userId,
-      campModelId,
-      roomName,
-      typeChat,
-      refId,
-      campMemberCardIds,
-      date,
-      _id,
-    };
-  
-    return buffer;
+    case "nong": {
+      const nongCamp = await NongCamp.findById(chat.campModelId);
+      if (!user || !nongCamp) {
+        return null;
+      }
+      const baan = await Baan.findById(nongCamp.baanId);
+      if (!baan) {
+        return null;
+      }
+      partName = "น้องค่าย";
+      baanName = baan.name;
+    }
   }
+  let roomName: string;
+  let canReadInModeNong: boolean;
+  switch (chat.typeChat) {
+    case "คุยกันในบ้าน": {
+      const baan = await Baan.findById(chat.refId);
+      if (!baan) {
+        return null;
+      }
+      const camp = await Camp.findById(baan.campId);
+      if (!camp) {
+        return null;
+      }
+      roomName = `${camp.groupName}${baan.name}`;
+      canReadInModeNong = true;
+      break;
+    }
+    case "พี่บ้านคุยกัน": {
+      const part = await Part.findById(chat.refId);
+      if (!part) {
+        return null;
+      }
+      const camp = await Camp.findById(part.campId);
+      if (!camp) {
+        return null;
+      }
+      roomName = `พี่${camp.groupName}`;
+      canReadInModeNong = true;
+      break;
+    }
+    case "น้องคุยส่วนตัวกับพี่": {
+      const campMemberCard = await CampMemberCard.findById(chat.refId);
+      if (!campMemberCard) {
+        return null;
+      }
+      const user = await User.findById(campMemberCard.userId);
+      const nongCamp = await NongCamp.findById(campMemberCard.campModelId);
+      if (!user || !nongCamp) {
+        return null;
+      }
+      const baan = await Baan.findById(nongCamp.baanId);
+      if (!baan) {
+        return null;
+      }
+      roomName = `น้อง${user.nickname} บ้าน${baan.name}`;
+      canReadInModeNong = true;
+      break;
+    }
+    case "คุยกันในฝ่าย": {
+      const part = await Part.findById(chat.refId);
+      if (!part || mode == "nong") {
+        return null;
+      }
+      const camp = await Camp.findById(part.campId);
+      if (!camp) {
+        return null;
+      }
+      roomName = `ฝ่าย${part.partName}`;
+      canReadInModeNong = false;
+      break;
+    }
+    case "พี่คุยกันในบ้าน": {
+      const baan = await Baan.findById(chat.refId);
+      if (!baan || mode == "nong") {
+        return null;
+      }
+      const camp = await Camp.findById(baan.campId);
+      if (!camp) {
+        return null;
+      }
+      roomName = `พี่${camp.groupName}${baan.name}`;
+      canReadInModeNong = false;
+      break;
+    }
+  }
+  const buffer: ShowChat = {
+    nickname: user.nickname,
+    partName,
+    baanName,
+    message,
+    role,
+    userId,
+    campModelId,
+    roomName,
+    typeChat,
+    refId,
+    campMemberCardIds,
+    date,
+    _id,
+    canReadInModeNong,
+  };
+  return buffer;
+}

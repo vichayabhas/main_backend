@@ -9,6 +9,9 @@ import camp from "./src/routes/camp";
 import admin from "./src/routes/admin";
 import randomthing from "./src/routes/randomthing";
 import subFrontend from "./src/routes/subFrontend";
+import { createServer } from "http";
+import { Server } from "socket.io";
+import { socketEvents } from "./src/models/interface";
 
 config({ path: "./config/config.env" });
 
@@ -26,9 +29,21 @@ app.use("/subFunction", subFrontend);
 
 app.use("/camp", camp);
 app.use("/api/v1/auth", user);
+const httpServer = createServer(app);
+
+export const io = new Server(httpServer, {
+  cors: { origin: "*" },
+});
+io.on("connection", (socket) => {
+  socketEvents.map((v) => {
+    socket.on(`${v}Send`, (a, b) => {
+      io.emit(v, a, b);
+    });
+  });
+});
 
 const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, () =>
+const server = httpServer.listen(PORT, () =>
   console.log(
     "Server running in ",
     process.env.NODE_ENV,
@@ -41,5 +56,5 @@ process.on("unhandledRejection", (err: Error) => {
   console.log(`Error: ${err.message}`);
   server.close(() => process.exit(1));
 });
-export default app;
+export default httpServer;
 //console.log('jjjjjjjjjjjjjjjjjjjbutfyiknjjjjj')
