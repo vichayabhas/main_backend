@@ -52,7 +52,6 @@ import {
   getPeeCampData,
   getPetoCampData,
   getPartForUpdate,
-  getPusherData,
   getCampState,
 } from "../controllers/camp/getCampData";
 import {
@@ -177,7 +176,6 @@ router.get("/getPeeCampData/params/:id", protect, getPeeCampData); //
 router.get("/getPetoCampData/params/:id", protect, getPetoCampData); //
 router.get("/getPartForUpdate/params/:id", getPartForUpdate); //
 router.get("/getRegisterData/params/:id", getRegisterData); //
-router.get("/getPusherData/params/:id", getPusherData); //
 router.get("/getCampState/params/:id", protect, getCampState); //
 router.post(
   "/createImageAndDescriptionContainer/",

@@ -194,10 +194,6 @@ const campSchema = new mongoose.Schema({
   canNongSeeAllActionPlan: getDafaultBoolean(false),
   canNongSeeAllTrackingSheet: getDafaultBoolean(false),
   canNongAccessDataWithRoleNong: getDafaultBoolean(false),
-  pusherId: {
-    type: mongoose.Schema.ObjectId,
-    default: null,
-  },
   lockChangeQuestion: getDafaultBoolean(false),
   jobIds: arrayObjectId,
   canReadTimeOnMirror: getDafaultBoolean(false),

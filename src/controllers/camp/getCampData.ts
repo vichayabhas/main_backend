@@ -33,13 +33,11 @@ import CampMemberCard from "../../models/CampMemberCard";
 import HeathIssue from "../../models/HeathIssue";
 import Song from "../../models/Song";
 import User from "../../models/User";
-import Pusher from "pusher";
 import { getUser } from "../../middleware/auth";
 import Building from "../../models/Building";
 import Food from "../../models/Food";
 import Meal from "../../models/Meal";
 import Place from "../../models/Place";
-import PusherData from "../../models/PusherData";
 import TimeOffset from "../../models/TimeOffset";
 import { getAllQuestionRaw } from "./questionAndAnswer";
 import { getImageAndDescriptionsRaw } from "./imageAndDescription";
@@ -978,27 +976,6 @@ export async function getPartForUpdate(
   };
   res.status(200).json(buffer);
 }
-export async function getPusherServer(
-  pusherId: Id | null
-): Promise<Pusher | null> {
-  const pusherData = await PusherData.findById(pusherId);
-  if (!pusherData) {
-    return null;
-  }
-  return new Pusher(pusherData);
-}
-export async function getPusherData(
-  req: express.Request,
-  res: express.Response
-) {
-  try {
-    const pusherData = await PusherData.findById(req.params.id);
-    res.status(200).json(pusherData);
-  } catch {
-    res.status(400).json(null);
-  }
-}
-
 export async function getParts(req: express.Request, res: express.Response) {
   const camp = await Camp.findById(req.params.id);
   const user = await getUser(req);

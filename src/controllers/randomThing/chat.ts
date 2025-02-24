@@ -22,16 +22,13 @@ import NongCamp from "../../models/NongCamp";
 import Part from "../../models/Part";
 import PeeCamp from "../../models/PeeCamp";
 import PetoCamp from "../../models/PetoCamp";
-import PusherData from "../../models/PusherData";
 import TimeOffset from "../../models/TimeOffset";
 import User from "../../models/User";
-import { getPusherServer } from "../camp/getCampData";
 import {
   sendRes,
   swop,
   getSystemInfoRaw,
   stringToId,
-  getPusherClient,
 } from "../setup";
 export async function createPartChat(
   req: express.Request,
@@ -78,7 +75,6 @@ export async function createPartChat(
     allPetoChatIds: swop(null, chat._id, camp.allPetoChatIds),
   });
   let i = 0;
-  const pusherServer = await getPusherServer(camp.pusherId);
   while (i < camp.peeCampMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
       camp.peeCampMemberCardIds[i++]
@@ -97,14 +93,6 @@ export async function createPartChat(
     if (!showChat) {
       continue;
     }
-    if (!pusherServer) {
-      continue;
-    }
-    await pusherServer.trigger(
-      `${getSystemInfoRaw().chatText}${camp._id}${user._id}`,
-      getSystemInfoRaw().newText,
-      showChat
-    );
   }
   await part.updateOne({ chatIds: swop(null, chat._id, part.chatIds) });
   const showChat = await getShowChatFromChat(chat, "pee");
@@ -438,7 +426,6 @@ export async function createNongChat(
     sendRes(res, false);
     return;
   }
-  const pusherServer = await getPusherServer(camp.pusherId);
   const chat = await Chat.create({
     message: create.message,
     campModelId: campMemberCardSender.campModelId,
@@ -466,15 +453,6 @@ export async function createNongChat(
     if (!user) {
       continue;
     }
-    const showChat = await getShowChatFromChat(chat, user.mode);
-    if (!showChat) {
-      continue;
-    }
-    await pusherServer?.trigger(
-      `${getSystemInfoRaw().chatText}${camp._id}${user._id}`,
-      getSystemInfoRaw().newText,
-      showChat
-    );
   }
   const showChat = await getShowChatFromChat(chat, "pee");
   // await pusherServer?.trigger(
@@ -677,7 +655,6 @@ export async function getAllChatFromCampId(
     return;
   }
   const systemInfo = getSystemInfoRaw();
-  const pusherData = await PusherData.findById(camp.pusherId);
   if (camp.petoIds.includes(user._id)) {
     const chats = await getShowChatFromChatIds(camp.allPetoChatIds, user.mode);
     const output: ChatReady = {
@@ -690,7 +667,6 @@ export async function getAllChatFromCampId(
       roomName: "รวมทุกแชต",
       userId: user._id,
       subscribe: `${getSystemInfoRaw().chatText}${camp._id}${user._id}`,
-      pusher: getPusherClient(pusherData),
       systemInfo,
     };
     res.status(200).json(output);
@@ -716,7 +692,6 @@ export async function getAllChatFromCampId(
       roomName: "รวมทุกแชต",
       userId: user._id,
       subscribe: `${getSystemInfoRaw().chatText}${camp._id}${user._id}`,
-      pusher: getPusherClient(pusherData),
       systemInfo,
     };
     res.status(200).json(output);
@@ -743,7 +718,6 @@ export async function getPartChat(req: express.Request, res: express.Response) {
     sendRes(res, false);
     return;
   }
-  const pusherData = await PusherData.findById(camp.pusherId);
   const output: ChatReady = {
     chats,
     mode: getModeBySituation(user.mode, "pee", true),
@@ -759,7 +733,6 @@ export async function getPartChat(req: express.Request, res: express.Response) {
       : `ฝ่าย${part.partName}`,
     userId: user._id,
     subscribe: `${getSystemInfoRaw().chatText}${part._id}`,
-    pusher: getPusherClient(pusherData),
     systemInfo: getSystemInfoRaw(),
   };
   res.status(200).json(output);
@@ -787,7 +760,6 @@ export async function getNongBaanChat(
     return;
   }
   const systemInfo = getSystemInfoRaw();
-  const pusherData = await PusherData.findById(camp.pusherId);
   switch (campMemberCard.role) {
     case "nong": {
       const nongCamp = await NongCamp.findById(campMemberCard.campModelId);
@@ -819,7 +791,6 @@ export async function getNongBaanChat(
         roomName: `ห้อง${camp.groupName}${baan.name}`,
         userId: user._id,
         subscribe: `${getSystemInfoRaw().chatText}Nong${baan._id}`,
-        pusher: getPusherClient(pusherData),
         systemInfo,
       };
       res.status(200).json(output);
@@ -853,7 +824,6 @@ export async function getNongBaanChat(
             : `ห้อง${camp.groupName}${baan.name}`,
         userId: user._id,
         subscribe: `${getSystemInfoRaw().chatText}Nong`,
-        pusher: getPusherClient(pusherData),
         systemInfo,
       };
       res.status(200).json(output);
@@ -899,7 +869,6 @@ export async function getPeeBaanChat(
     return;
   }
   const systemInfo = getSystemInfoRaw();
-  const pusherData = await PusherData.findById(camp.pusherId);
   const output: ChatReady = {
     chats,
     mode: "pee",
@@ -913,7 +882,6 @@ export async function getPeeBaanChat(
     roomName: `ห้อง${camp.groupName}${baan.name}ที่มีแต่พี่`,
     userId: user._id,
     subscribe: `${getSystemInfoRaw().chatText}Pee${baan._id}`,
-    pusher: getPusherClient(pusherData),
     systemInfo,
   };
   res.status(200).json(output);
@@ -957,7 +925,6 @@ export async function getNongChat(req: express.Request, res: express.Response) {
     sendRes(res, false);
     return;
   }
-  const pusherData = await PusherData.findById(camp.pusherId);
   const output: ChatReady = {
     chats,
     mode: getModeBySituation(
@@ -975,7 +942,6 @@ export async function getNongChat(req: express.Request, res: express.Response) {
     roomName: `คุยส่วนตัวกับน้อง${host.nickname} บ้าน${baan.name}`,
     userId: user._id,
     subscribe: `${getSystemInfoRaw().chatText}${campMemberCard._id}`,
-    pusher: getPusherClient(pusherData),
     systemInfo: getSystemInfoRaw(),
   };
   res.status(200).json(output);
@@ -1021,7 +987,6 @@ export async function getPartPeebaanChat(
     sendRes(res, false);
     return;
   }
-  const pusherData = await PusherData.findById(camp.pusherId);
   const output: ChatReady = {
     chats,
     mode: getModeBySituation(user.mode, "pee", true),
@@ -1038,7 +1003,6 @@ export async function getPartPeebaanChat(
         : `ห้องพี่${camp.groupName}คุยกัน`,
     userId: user._id,
     subscribe: `${getSystemInfoRaw().chatText}${part._id}`,
-    pusher: getPusherClient(pusherData),
     systemInfo: getSystemInfoRaw(),
   };
   res.status(200).json(output);

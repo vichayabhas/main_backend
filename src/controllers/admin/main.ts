@@ -17,7 +17,6 @@ import {
   MyMap,
   Id,
   BasicPart,
-  CreatePusherData,
   AuthType,
 } from "../../models/interface";
 import { removeDuplicate, resOk, sendRes, swop } from "../setup";
@@ -26,7 +25,6 @@ import PartNameContainer from "../../models/PartNameContainer";
 import Place from "../../models/Place";
 import { getUser } from "../../middleware/auth";
 import Building from "../../models/Building";
-import PusherData from "../../models/PusherData";
 import { addPetoRaw, addPeeRaw } from "../camp/admidsion";
 import { changeBaanRaw } from "../camp/change";
 import { getAuthTypes } from "../camp/getCampData";
@@ -996,32 +994,4 @@ export async function afterVisnuToPee(
     await users[i++].updateOne({ role: "pee" });
   }
   sendRes(res, true);
-}
-
-export async function updatePusher(
-  req: express.Request,
-  res: express.Response
-) {
-  const user = await getUser(req);
-  const update: CreatePusherData = req.body;
-  const camp = await Camp.findById(update.campId);
-  if (!camp) {
-    sendRes(res, false);
-    return;
-  }
-  if (
-    !user ||
-    (user.role != "admin" && !user.authPartIds.includes(camp.partBoardId as Id))
-  ) {
-    res.status(403).json({ success: false });
-    return;
-  }
-  const pusherData = await PusherData.findById(camp.pusherId);
-  if (!pusherData) {
-    const newPusherData = await PusherData.create(update);
-    await camp.updateOne({ pusherId: newPusherData._id });
-  } else {
-    await pusherData.updateOne(update);
-  }
-  sendRes(res,true)
 }

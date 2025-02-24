@@ -17,7 +17,6 @@ import {
   updateBaan,
   afterVisnuToPee,
   peeToPeto,
-  updatePusher,
 } from "../controllers/admin/main";
 import { protect, admin, pee } from "../middleware/auth";
 
@@ -42,5 +41,4 @@ router.put("/updateBaan/", protect, updateBaan); //
 router.delete("/saveDeleteCamp/params/:id", protect, saveDeleteCamp); //
 router.post("/afterVisnuToPee/", protect, admin, afterVisnuToPee); //
 router.post("/peeToPeto/", protect, admin, peeToPeto); //
-router.post("/updatePusher/", protect, updatePusher); //
 export default router;

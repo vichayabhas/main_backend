@@ -1,6 +1,5 @@
 import express from "express";
 import { modePee, pee, protect } from "../middleware/auth";
-import { realTimeScoring } from "../controllers/camp/questionAndAnswer";
 import {
   createPartChat,
   getSystemInfo,
@@ -93,5 +92,4 @@ router.post("/addBaanSong/params/:id", protect, addBaanSong); //
 router.get("/getShowCampSongs/params/:id", protect, getShowCampSongs); //
 router.get("/getShowBaanSongs/params/:id", protect, getShowBaanSongs); //
 router.get("/getAuthSongs/params/:id", protect, getAuthSongs); //
-router.post("/realTimeScoring/", realTimeScoring); //
 export default router;

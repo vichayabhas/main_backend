@@ -23,7 +23,6 @@ import PartNameContainer from "../../models/PartNameContainer";
 import PeeCamp from "../../models/PeeCamp";
 import PetoCamp from "../../models/PetoCamp";
 import Place from "../../models/Place";
-import PusherData from "../../models/PusherData";
 import Song from "../../models/Song";
 import TextAnswer from "../../models/TextAnswer";
 import TextQuestion from "../../models/TextQuestion";
@@ -546,7 +545,6 @@ async function forceDeleteCampRaw(campId: Id, res: express.Response | null) {
     while (i < camp.foodIds.length) {
       await Food.findByIdAndDelete(camp.foodIds[i++]);
     }
-    await PusherData.findByIdAndDelete(camp.pusherId);
     i = 0;
     while (i < camp.jobIds.length) {
       await JobAssign.findByIdAndDelete(camp.jobIds[i++]);

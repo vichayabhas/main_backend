@@ -28,11 +28,9 @@ import {
   WelfarePack,
 } from "../../models/interface";
 import Part from "../../models/Part";
-import PusherData from "../../models/PusherData";
 import {
   stringToId,
   sendRes,
-  getPusherClient,
   getSystemInfoRaw,
   ifIsPlus,
   ifIsTrue,
@@ -114,7 +112,6 @@ export async function getRegisterDataRaw(
   if (!peeRegisters || !nongRegister) {
     return null;
   }
-  const pusherData = await PusherData.findById(camp.pusherId);
   return {
     partBoardIdString: camp.partBoardId?.toString() || "",
     partMap,
@@ -123,7 +120,6 @@ export async function getRegisterDataRaw(
     camp,
     regisBaans,
     regisParts,
-    pusher: getPusherClient(pusherData),
     systemInfo: getSystemInfoRaw(),
   };
 }

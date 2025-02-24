@@ -17,10 +17,7 @@ import {
   InterTextQuestion,
   ScoreTextQuestions,
   UserAndAllQuestionPack,
-  SendData,
-  ScoreEvent,
 } from "../../models/interface";
-import PusherData from "../../models/PusherData";
 import TextAnswer from "../../models/TextAnswer";
 import TextQuestion from "../../models/TextQuestion";
 import User from "../../models/User";
@@ -30,11 +27,9 @@ import {
   swop,
   stringToId,
   removeDuplicate,
-  getPusherClient,
 } from "../setup";
 import express from "express";
-import { getPusherServer, getAuthTypes } from "./getCampData";
-import Pusher from "pusher";
+import {  getAuthTypes } from "./getCampData";
 
 export async function editQuestion(
   req: express.Request,
@@ -47,8 +42,6 @@ export async function editQuestion(
     sendRes(res, false);
     return;
   }
-  const pusher = await getPusherServer(camp.pusherId);
-  const systemInfo = getSystemInfoRaw();
   if (!user) {
     res.status(403).json({ success: false });
     return;
@@ -93,14 +86,6 @@ export async function editQuestion(
         order,
       });
       choiceQuestionIds = swop(null, newChoice._id, choiceQuestionIds);
-      if (!pusher) {
-        continue;
-      }
-      await pusher.trigger(
-        `${systemInfo.choiceQuestionText}${camp._id}`,
-        systemInfo.newText,
-        newChoice
-      );
     } else {
       const choiceQuestion = await ChoiceQuestion.findById(_id);
       if (!choiceQuestion) {
@@ -138,9 +123,6 @@ export async function editQuestion(
         correct,
         order,
       });
-      if (!pusher) {
-        continue;
-      }
     }
   }
   for (const { _id, question, score, order } of edit.texts) {
@@ -152,14 +134,6 @@ export async function editQuestion(
         order,
       });
       textQuestionIds = swop(null, newText._id, textQuestionIds);
-      if (!pusher) {
-        continue;
-      }
-      pusher.trigger(
-        `${systemInfo.textQuestionText}${camp._id}`,
-        systemInfo.newText,
-        newText
-      );
     } else {
       const textQuestion = await TextQuestion.findById(_id);
       if (!textQuestion) {
@@ -173,9 +147,6 @@ export async function editQuestion(
         continue;
       }
       await textQuestion.updateOne({ question, score, order });
-      if (!pusher) {
-        continue;
-      }
     }
   }
   await camp.updateOne({ textQuestionIds, choiceQuestionIds });
@@ -482,12 +453,10 @@ export async function getAllQuestionRaw(
       });
     }
   }
-  const pusherData = await PusherData.findById(camp.pusherId);
   const buffer: GetAllQuestion = {
     choices,
     texts,
     canAnswerTheQuestion: camp.canAnswerTheQuestion,
-    pusherData: getPusherClient(pusherData),
   };
   return buffer;
 }
@@ -979,7 +948,6 @@ export async function getAllAnswerAndQuestion(
       mainTexts.push(question);
     }
   }
-  const pusherData = await PusherData.findById(camp.pusherId);
   const buffer: GetAllAnswerAndQuestion = {
     nongInterviewAnswers,
     nongPaidAnswers,
@@ -992,7 +960,6 @@ export async function getAllAnswerAndQuestion(
     peeAnswers,
     success: true,
     groupName: camp.groupName,
-    pusherData,
     systemInfo: getSystemInfoRaw(),
     canScoring: camp.lockChangeQuestion && !camp.canAnswerTheQuestion,
   };
@@ -1021,19 +988,5 @@ export async function scoreTextQuestions(
       await TextAnswer.findByIdAndUpdate(id, { score });
     }
   }
-  sendRes(res, true);
-}
-export async function realTimeScoring(
-  req: express.Request,
-  res: express.Response
-) {
-  const buffer: SendData<ScoreEvent> = req.body;
-  const pusher = new Pusher(buffer.pusherData);
-
-  await pusher.trigger(
-    buffer.chanel,
-    buffer.event,
-    JSON.stringify(buffer.data)
-  );
   sendRes(res, true);
 }

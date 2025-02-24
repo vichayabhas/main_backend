@@ -15,9 +15,8 @@ import {
 import Part from "../../models/Part";
 import PeeCamp from "../../models/PeeCamp";
 import PetoCamp from "../../models/PetoCamp";
-import { sendRes, removeDuplicate, swop, getPusherClient } from "../setup";
+import { sendRes, removeDuplicate, swop } from "../setup";
 import express from "express";
-import PusherData from "../../models/PusherData";
 
 export async function createImageAndDescriptionContainer(
   req: express.Request,
@@ -443,10 +442,8 @@ export async function getImageAndDescriptions(
   const imageAndDescryptionContainers = await getImageAndDescriptionsRaw(
     baan.imageAndDescriptionContainerIds
   );
-  const pusherData = await PusherData.findById(camp.pusherId);
   const out: GetImageAndDescriptionsPackForUpdate = {
     imageAndDescryptionContainers,
-    pusherData: getPusherClient(pusherData),
     baan,
     isOverNight: camp.nongSleepModel != "ไม่มีการค้างคืน",
   };

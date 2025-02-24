@@ -11,8 +11,6 @@ import {
   MyMap,
   Size,
   Id,
-  PusherClientData,
-  InterPusherData,
   SystemInfo,
 } from "../models/interface";
 import mongoose from "mongoose";
@@ -297,7 +295,6 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
     canNongSeeAllTrackingSheet,
     canNongAccessDataWithRoleNong,
     lockChangeQuestion,
-    pusherId,
     jobIds,
     canReadTimeOnMirror,
   } = input;
@@ -393,7 +390,6 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
     canNongSeeAllTrackingSheet,
     canNongAccessDataWithRoleNong,
     lockChangeQuestion,
-    pusherId,
     jobIds,
     canReadTimeOnMirror,
   };
@@ -632,14 +628,6 @@ export const dataSize = {
   default: startSize(),
   of: Number,
 } as const;
-export function getPusherClient(
-  data: InterPusherData | null
-): PusherClientData | null {
-  if (!data) {
-    return null;
-  }
-  return { first: data.key, second: data };
-}
 export function getSystemInfoRaw(): SystemInfo {
   const systemMode = getSystemMode() || "";
   const endEmail = getEndEmail() || "student.chula.ac.th";
