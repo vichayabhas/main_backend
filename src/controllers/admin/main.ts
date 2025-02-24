@@ -870,7 +870,7 @@ export async function createBaanByGroup(
       continue;
     }
     const baanId: Id = camp.groupRefMap.get(user.group) as Id;
-    await changeBaanRaw([user._id], baanId, res);
+    await changeBaanRaw([user._id], baanId);
   }
   sendRes(res, true);
 }

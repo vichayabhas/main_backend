@@ -14,6 +14,7 @@ import { getAuthTypes } from "./getCampData";
 import TimeRegister from "../../models/TimeRegister";
 import BaanJob from "../../models/BaanJob";
 import JobAssign from "../../models/JobAssign";
+import { getRegisterDataRaw } from "./authPart";
 
 export async function changeBaan(req: express.Request, res: express.Response) {
   const { userIds, baanId }: { userIds: Id[]; baanId: Id } = req.body;
@@ -36,22 +37,18 @@ export async function changeBaan(req: express.Request, res: express.Response) {
     sendRes(res, false);
     return;
   }
-  await changeBaanRaw(userIds, baanId, res);
+  await changeBaanRaw(userIds, baanId);
+  const newData = await getRegisterDataRaw(camp._id);
+  res.status(200).json(newData);
 }
-export async function changeBaanRaw(
-  userIds: Id[],
-  baanId: Id,
-  res: express.Response
-) {
+export async function changeBaanRaw(userIds: Id[], baanId: Id) {
   const baan = await Baan.findById(baanId);
   if (!baan) {
-    sendRes(res, false);
     return;
   }
   const camp = await Camp.findById(baan.campId);
   const newNongCamp = await NongCamp.findById(baan.nongModelId);
   if (!camp || !newNongCamp) {
-    sendRes(res, false);
     return;
   }
   let i = 0;
@@ -281,12 +278,32 @@ export async function changeBaanRaw(
     peeHaveBottleIds: baan.peeHaveBottleIds,
     peeSleepIds: baan.peeSleepIds,
   });
-  sendRes(res, true);
 }
 export async function changePart(req: express.Request, res: express.Response) {
   const { userIds, partId }: { userIds: Id[]; partId: Id } = req.body;
-  const out = await changePartRaw(userIds, partId);
-  sendRes(res, out);
+  const user = await getUser(req);
+  const part = await Part.findById(partId);
+  if (!part) {
+    sendRes(res, false);
+    return;
+  }
+  const camp: InterCampBack | null = await Camp.findById(part.campId);
+
+  if (!user || !camp) {
+    sendRes(res, false);
+    return;
+  }
+  const auths = await getAuthTypes(user._id, camp._id);
+  if (
+    !auths ||
+    (!auths.includes("ทะเบียน") && !user.authPartIds.includes(camp.partBoardId))
+  ) {
+    sendRes(res, false);
+    return;
+  }
+  await changePartRaw(userIds, partId);
+  const newData = await getRegisterDataRaw(camp._id);
+  res.status(200).json(newData);
 }
 export async function changePartRaw(userIds: Id[], partId: Id) {
   const part = await Part.findById(partId);

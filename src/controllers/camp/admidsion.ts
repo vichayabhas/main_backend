@@ -12,15 +12,12 @@ import PeeCamp from "../../models/PeeCamp";
 import PetoCamp from "../../models/PetoCamp";
 import User from "../../models/User";
 import { answerAllQuestion } from "./questionAndAnswer";
-import { triggerRegister } from "./authPart";
+import { getRegisterDataRaw } from "./authPart";
 export async function interview(req: express.Request, res: express.Response) {
   const { members, campId } = req.body;
-  const i = await interviewRaw(members, campId);
-  if (i == 0) {
-    sendRes(res, false);
-    return;
-  }
-  res.status(200).json({ count: i });
+await interviewRaw(members, campId);
+  const newData=await getRegisterDataRaw(campId)
+  res.status(200).json(newData)
 }
 async function interviewRaw(members: Id[], campId: Id) {
   const camp = await Camp.findById(campId);
@@ -39,8 +36,6 @@ async function interviewRaw(members: Id[], campId: Id) {
     nongPendingIds: camp.nongPendingIds,
     nongInterviewIds: camp.nongInterviewIds,
   });
-  await triggerRegister(camp._id, camp.pusherId);
-  return i;
 }
 async function passRaw(members: Id[], campId: Id) {
   const camp = await Camp.findById(campId);
@@ -63,9 +58,6 @@ async function passRaw(members: Id[], campId: Id) {
     nongInterviewIds: camp.nongInterviewIds,
     //nongPaidIds:camp.nongPaidIds
   });
-  await triggerRegister(camp._id, camp.pusherId);
-
-  return i;
 }
 export async function paid(req: express.Request, res: express.Response) {
   const user = await getUser(req);
@@ -85,8 +77,8 @@ export async function paid(req: express.Request, res: express.Response) {
       nongPaidIds: swop(null, user._id, camp.nongPaidIds),
     });
   }
-  await triggerRegister(camp._id, camp.pusherId);
-  sendRes(res, true);
+  const newData=await getRegisterDataRaw(camp._id)
+  res.status(200).json(newData)
 }
 export async function sure(req: express.Request, res: express.Response) {
   const { members, campId }: { members: Id[]; campId: Id } = req.body;
@@ -102,7 +94,6 @@ export async function sure(req: express.Request, res: express.Response) {
   while (i < members.length) {
     if (!camp.nongPaidIds.includes(stringToId(members[i].toString()))) {
       i++;
-      //console.log('jjjjjjjjjjjjjjjjjjjjjjjj')
       continue;
     }
     camp.nongPassIds.delete(members[i].toString());
@@ -114,11 +105,8 @@ export async function sure(req: express.Request, res: express.Response) {
     nongSureIds,
     nongPassIds: camp.nongPassIds,
   });
-  //console.log(members)
-  //console.log(camp)
-  await triggerRegister(camp._id, camp.pusherId);
-
-  res.status(200).json({ count: i });
+  const newData=await getRegisterDataRaw(camp._id)
+  res.status(200).json(newData)
 }
 export async function pass(req: express.Request, res: express.Response) {
   const { campId, members } = req.body;
@@ -130,12 +118,9 @@ export async function pass(req: express.Request, res: express.Response) {
   if (camp.registerModel !== "all") {
     await interviewRaw(members, campId);
   }
-  const i = await passRaw(members, campId);
-  if (i == 0) {
-    sendRes(res, false);
-    return;
-  }
-  res.status(200).json({ count: i });
+   await passRaw(members, campId);
+   const newData=await getRegisterDataRaw(camp._id)
+   res.status(200).json(newData)
 }
 export async function kickPee(req: express.Request, res: express.Response) {
   // const { campId, members } = req.body;
@@ -171,7 +156,6 @@ export async function kickNong(req: express.Request, res: express.Response) {
     nongPassIds: camp.nongPassIds,
     outRoundIds: camp.outRoundIds,
   });
-  await triggerRegister(camp._id, camp.pusherId);
   sendRes(res, true);
 }
 

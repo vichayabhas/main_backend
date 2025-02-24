@@ -59,7 +59,6 @@ import {
   getPeesFromBaanIdRaw,
   getPeesFromPartIdRaw,
   getPetosFromPartIdRaw,
-  getPusherServer,
 } from "./getCampData";
 import { getHealthIssuePack } from "../randomThing/meal";
 import { getBaanJobsRaw } from "./jobAssign";
@@ -75,7 +74,9 @@ export async function getRegisterData(
   res.status(200).json(out);
 }
 
-async function getRegisterDataRaw(campId: Id): Promise<RegisterData | null> {
+export async function getRegisterDataRaw(
+  campId: Id
+): Promise<RegisterData | null> {
   const camp = await Camp.findById(campId);
   if (!camp) {
     return null;
@@ -184,6 +185,7 @@ async function getAllNongRegisterRaw(campId: Id) {
     }
     pendings.push({ user, localId, link });
   }
+  i = 0;
   while (i < interviewBuffers.length) {
     const { userId, link } = interviewBuffers[i++];
     const localId = camp.nongMapIdGtoL.get(userId)?.toString() as string;
@@ -193,6 +195,7 @@ async function getAllNongRegisterRaw(campId: Id) {
     }
     interviews.push({ user, localId, link });
   }
+  i = 0;
   while (i < passBuffers.length) {
     const { userId, link } = passBuffers[i++];
     const localId = camp.nongMapIdGtoL.get(userId)?.toString() as string;
@@ -202,6 +205,7 @@ async function getAllNongRegisterRaw(campId: Id) {
     }
     passs.push({ user, localId, link });
   }
+  i = 0;
   while (i < paidBuffers.length) {
     const { userId, link } = paidBuffers[i++];
     const localId = camp.nongMapIdGtoL.get(userId)?.toString() as string;
@@ -211,6 +215,7 @@ async function getAllNongRegisterRaw(campId: Id) {
     }
     paids.push({ user, localId, link });
   }
+  i = 0;
   while (i < sureBuffers.length) {
     const { userId, link } = sureBuffers[i++];
     const localId = camp.nongMapIdGtoL.get(userId)?.toString() as string;
@@ -1198,21 +1203,6 @@ export async function getCoopData(req: express.Request, res: express.Response) {
     baanJobs,
   };
   res.status(200).json(buffer);
-}
-export async function triggerRegister(campId: Id, pusherId: Id | null) {
-  const data = getRegisterDataRaw(campId);
-  if (!data) {
-    return;
-  }
-  const pusherServer = await getPusherServer(pusherId);
-  if (!pusherServer) {
-    return;
-  }
-  await pusherServer.trigger(
-    `register${campId}`,
-    getSystemInfoRaw().manageText,
-    data
-  );
 }
 export async function getShowRegisters(
   req: express.Request,

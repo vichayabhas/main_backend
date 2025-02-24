@@ -6,8 +6,6 @@ import ChoiceAnswer from "../../models/ChoiceAnswer";
 import ChoiceQuestion from "../../models/ChoiceQuestion";
 import {
   EditQuestionPack,
-  TriggerChoiceQuestion,
-  TriggerTextQuestion,
   Id,
   GetAllQuestion,
   GetTextQuestion,
@@ -143,27 +141,6 @@ export async function editQuestion(
       if (!pusher) {
         continue;
       }
-      const buffer: TriggerChoiceQuestion = {
-        _id,
-        question,
-        a,
-        b,
-        c,
-        d,
-        e,
-        scoreA,
-        scoreB,
-        scoreC,
-        scoreD,
-        scoreE,
-        correct,
-        order,
-      };
-      await pusher.trigger(
-        `${systemInfo.choiceQuestionText}${camp._id}`,
-        systemInfo.updateText,
-        buffer
-      );
     }
   }
   for (const { _id, question, score, order } of edit.texts) {
@@ -199,17 +176,6 @@ export async function editQuestion(
       if (!pusher) {
         continue;
       }
-      const buffer: TriggerTextQuestion = {
-        _id,
-        question,
-        score,
-        order,
-      };
-      await pusher.trigger(
-        `${systemInfo.textQuestionText}${camp._id}`,
-        systemInfo.updateText,
-        buffer
-      );
     }
   }
   await camp.updateOne({ textQuestionIds, choiceQuestionIds });
