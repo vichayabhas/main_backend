@@ -96,12 +96,6 @@ export async function createPartChat(
   }
   await part.updateOne({ chatIds: swop(null, chat._id, part.chatIds) });
   const showChat = await getShowChatFromChat(chat, "pee");
-  // if (pusherServer)
-  //   await pusherServer.trigger(
-  //     `${getSystemInfoRaw().chatText}${part._id}`,
-  //     getSystemInfoRaw().newText,
-  //     showChat
-  //   );
   res.status(201).json(showChat);
 }
 export async function getShowChatFromChatIds(inputs: Id[], mode: Mode) {
@@ -455,11 +449,6 @@ export async function createNongChat(
     }
   }
   const showChat = await getShowChatFromChat(chat, "pee");
-  // await pusherServer?.trigger(
-  //   `${getSystemInfoRaw().chatText}${campMemberCardHost._id}`,
-  //   getSystemInfoRaw().newText,
-  //   showChat
-  // );
   await campMemberCardHost.updateOne({
     chatIds: swop(null, chat._id, campMemberCardHost.chatIds),
   });
@@ -495,7 +484,6 @@ export async function createPeeBaanChat(
     sendRes(res, false);
     return;
   }
-  // const pusherServer = await getPusherServer(camp.pusherId);
   const chat = await Chat.create({
     message: create.message,
     campModelId: campMemberCardSender.campModelId,
@@ -519,16 +507,6 @@ export async function createPeeBaanChat(
     await campMemberCard.updateOne({
       allChatIds: swop(null, chat._id, campMemberCard.allChatIds),
     });
-    // const user = await User.findById(campMemberCard.userId);
-    // if (!user) {
-    //   continue;
-    // }
-
-    // await pusherServer?.trigger(
-    //   `${getSystemInfoRaw().chatText}Pee${baan._id}`,
-    //   getSystemInfoRaw().newText,
-    //   showChat
-    // );
   }
   const showChat = await getShowChatFromChat(chat, user.mode);
   if (!showChat) {
@@ -554,7 +532,6 @@ export async function createNongBaanChat(
     sendRes(res, false);
     return;
   }
-  // const pusherServer = await getPusherServer(camp.pusherId);
   const campMemberCardSender = await CampMemberCard.findById(
     camp.mapCampMemberCardIdByUserId.get(user._id.toString())
   );
@@ -583,19 +560,6 @@ export async function createNongBaanChat(
       allChatIds: swop(null, chat._id, campMemberCard.allChatIds),
     });
     campMemberCardIds.push(campMemberCard._id);
-    // const user = await User.findById(campMemberCard.userId);
-    // if (!user) {
-    //   continue;
-    // }
-    // const showChat = await getShowChatFromChat(chat, user.mode);
-    // if (!showChat) {
-    //   continue;
-    // }
-    // await pusherServer?.trigger(
-    //   `${getSystemInfoRaw().chatText}${camp._id}${user._id}`,
-    //   getSystemInfoRaw().newText,
-    //   showChat
-    // );
   }
   i = 0;
   while (i < baan.nongCampMemberCardIds.length) {
@@ -609,19 +573,6 @@ export async function createNongBaanChat(
       allChatIds: swop(null, chat._id, campMemberCard.allChatIds),
     });
     campMemberCardIds.push(campMemberCard._id);
-    // const user = await User.findById(campMemberCard.userId);
-    // if (!user) {
-    //   continue;
-    // }
-    // const showChat = await getShowChatFromChat(chat, user.mode);
-    // if (!showChat) {
-    //   continue;
-    // }
-    // await pusherServer?.trigger(
-    //   `${getSystemInfoRaw().chatText}${camp._id}${user._id}`,
-    //   getSystemInfoRaw().newText,
-    //   showChat
-    // );
   }
   await campMemberCardSender.updateOne({
     ownChatIds: swop(null, chat._id, campMemberCardSender.ownChatIds),
@@ -630,13 +581,6 @@ export async function createNongBaanChat(
   await baan.updateOne({ nongChatIds: swop(null, chat._id, baan.nongChatIds) });
 
   const showChat = await getShowChatFromChat(chat, "pee");
-
-  // await pusherServer?.trigger(
-  //   `${getSystemInfoRaw().chatText}Nong${baan._id}`,
-  //   getSystemInfoRaw().newText,
-  //   showChat
-  // );
-  // sendRes(res,true)
   res.status(201).json(showChat);
 }
 export async function getAllChatFromCampId(

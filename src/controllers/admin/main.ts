@@ -69,7 +69,6 @@ import BaanJob from "../../models/BaanJob";
 //*export async function getAllRemainPartName
 //*export async function peeToPeto
 //*export async function afterVisnuToPee
-//*export async function updatePusher
 export async function addBaan(req: express.Request, res: express.Response) {
   const user = await getUser(req);
   const { campId, name } = req.body;

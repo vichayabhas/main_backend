@@ -63,5 +63,4 @@
 //*export async function getPetoCampData
 //*export async function getPartForUpdate
 //*export async function getRegisterData
-//*export async function getPusherData
 //*export async function getCampState
