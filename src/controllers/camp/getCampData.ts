@@ -21,6 +21,7 @@ import {
   BasicPart,
   CampState,
   ShowImageAndDescriptions,
+  GetGroupContainer,
 } from "../../models/interface";
 import NameContainer from "../../models/NameContainer";
 import NongCamp from "../../models/NongCamp";
@@ -43,6 +44,7 @@ import { getAllQuestionRaw } from "./questionAndAnswer";
 import { getImageAndDescriptionsRaw } from "./imageAndDescription";
 import { getBaanJobsRaw, getPartJobsRaw } from "./jobAssign";
 import { getMirrorRaw } from "./mirror";
+import { getGroupContainerRaw } from "./subGroup";
 export async function getBaan(req: express.Request, res: express.Response) {
   try {
     const data = await Baan.findById(req.params.id);
@@ -703,6 +705,16 @@ export async function getNongCampData(
       minute: 0,
     };
   }
+  const defaultGroup = await getGroupContainerRaw(baan.defaultGroupId);
+  const groups: GetGroupContainer[] = [];
+  let i = 0;
+  while (i < baan.groupContainerIds.length) {
+    const group = await getGroupContainerRaw(baan.groupContainerIds[i++]);
+    if (!group) {
+      continue;
+    }
+    groups.push(group);
+  }
   const mirrorData = await getMirrorRaw(baan, campMemberCard, user);
   const buffer: GetNongData = {
     baan,
@@ -729,6 +741,8 @@ export async function getNongCampData(
     user,
     displayOffset,
     mirrorData,
+    defaultGroup,
+    groups,
   };
   res.status(200).json(buffer);
 }
@@ -819,6 +833,16 @@ export async function getPeeCampData(
   const baanJobs = await getBaanJobsRaw(baan.jobIds, user._id);
   const partJobs = await getPartJobsRaw(part.jobIds, user._id);
   const mirrorData = await getMirrorRaw(baan, campMemberCard, user);
+  const defaultGroup = await getGroupContainerRaw(baan.defaultGroupId);
+  const groups: GetGroupContainer[] = [];
+  let i = 0;
+  while (i < baan.groupContainerIds.length) {
+    const group = await getGroupContainerRaw(baan.groupContainerIds[i++]);
+    if (!group) {
+      continue;
+    }
+    groups.push(group);
+  }
   const buffer: GetPeeData = {
     baan,
     camp,
@@ -852,6 +876,8 @@ export async function getPeeCampData(
     baanJobs,
     partJobs,
     mirrorData,
+    defaultGroup,
+    groups,
   };
   res.status(200).json(buffer);
 }

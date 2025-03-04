@@ -160,6 +160,8 @@ export function conBaanBackToFront(input: InterBaanBack): InterBaanFront {
     canReadMirror,
     canWhriteMirror,
     mirrorIds,
+    groupContainerIds,
+    defaultGroupId,
   } = input;
   return {
     name,
@@ -202,6 +204,8 @@ export function conBaanBackToFront(input: InterBaanBack): InterBaanFront {
     canReadMirror,
     canWhriteMirror,
     mirrorIds,
+    defaultGroupId,
+    groupContainerIds,
   };
 }
 export function conCampBackToFront(input: InterCampBack): InterCampFront {

@@ -40,5 +40,6 @@ const PeeCampSchema = new mongoose.Schema({
   mirrorSenderIds: arrayObjectId,
   mirrorReciverIds: arrayObjectId,
   mirrorBaanIds: arrayObjectId,
+  subGroupIds: arrayObjectId,
 });
 export default mongoose.model("CampMemberCard", PeeCampSchema);

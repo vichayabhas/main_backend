@@ -37,6 +37,9 @@ import JobAssign from "../../models/JobAssign";
 import TimeRegister from "../../models/TimeRegister";
 import BaanJob from "../../models/BaanJob";
 import Mirror from "../../models/Mirror";
+import SubGroup from "../../models/SubGroup";
+import GroupContainer from "../../models/GroupContainer";
+import { removeMemberFromSubGroupRaw } from "../camp/subGroup";
 
 export async function forceDeleteCamp(
   req: express.Request,
@@ -201,6 +204,19 @@ async function forceDeleteCampRaw(campId: Id, res: express.Response | null) {
       j = 0;
       while (j < baan.mirrorIds.length) {
         await Mirror.findByIdAndDelete(baan.mirrorIds[j++]);
+      }
+      j = 0;
+      while (j < baan.groupContainerIds.length) {
+        const container = await GroupContainer.findById(
+          baan.groupContainerIds[j++]
+        );
+        if (!container) {
+          continue;
+        }
+        let k = 0;
+        while (k < container.subGroupIds.length) {
+          await SubGroup.findByIdAndDelete(container.subGroupIds[k++]);
+        }
       }
       await baan.deleteOne();
     }
@@ -785,16 +801,7 @@ export async function forceDeleteBaan(
       if (!user) {
         continue;
       }
-      if (baan.peeHaveBottleIds.includes(user._id)) {
-        await part.updateOne({
-          peeHaveBottleIds: swop(user._id, null, part.peeHaveBottleIds),
-        });
-        peeHaveBottleIds = swop(user._id, null, peeHaveBottleIds);
-      }
       const peeCampIds = swop(peeCamp._id, null, user.peeCampIds);
-      const p = swop(user._id, null, part.peeIds);
-      await part.updateOne({ peeIds: p });
-      peeIds = swop(user._id, null, peeIds);
       await user.updateOne({ peeCampIds });
       if (part.auths.length) {
         await user.updateOne({
@@ -1000,6 +1007,16 @@ export async function forceDeleteBaan(
     if (!user || !part) {
       continue;
     }
+    if (baan.peeHaveBottleIds.includes(user._id)) {
+      await part.updateOne({
+        peeHaveBottleIds: swop(user._id, null, part.peeHaveBottleIds),
+      });
+      peeHaveBottleIds = swop(user._id, null, peeHaveBottleIds);
+    }
+
+    const p = swop(user._id, null, part.peeIds);
+    await part.updateOne({ peeIds: p });
+    peeIds = swop(user._id, null, peeIds);
     await user.updateOne({
       campMemberCardIds: swop(campMemberCard._id, null, user.campMemberCardIds),
     });
@@ -1156,6 +1173,19 @@ export async function forceDeleteBaan(
     }
     await job.updateOne({ memberIds: swop(baanJob._id, null, job.memberIds) });
   }
+  i = 0;
+  while (i < baan.groupContainerIds.length) {
+    const container = await GroupContainer.findById(
+      baan.groupContainerIds[i++]
+    );
+    if (!container) {
+      continue;
+    }
+    let j = 0;
+    while (j < container.subGroupIds.length) {
+      await SubGroup.findByIdAndDelete(container.subGroupIds[j++]);
+    }
+  }
   await camp.updateOne({
     nongIds,
     nongShirtSize: camp.nongShirtSize,
@@ -1172,6 +1202,8 @@ export async function forceDeleteBaan(
     nongModelIds: swop(baan.nongModelId as Id, null, camp.nongModelIds),
     nongCampMemberCardHaveHeathIssueIds,
     peeCampMemberCardHaveHeathIssueIds,
+    peeHaveBottleIds,
+    nongHaveBottleIds,
   });
   await CampStyle.findByIdAndDelete(baan.styleId);
   await baan.deleteOne();
@@ -1498,7 +1530,7 @@ async function forceDeletePartRaw(partId: Id) {
         });
       }
     }
-    workItemIds = swop(workItem?._id, null, workItemIds);
+    workItemIds = swop(workItem._id, null, workItemIds);
     await deleteWorkingItemRaw(workItem._id);
   }
   i = 0;
@@ -1517,14 +1549,6 @@ async function forceDeletePartRaw(partId: Id) {
       if (!user) {
         continue;
       }
-      if (part.peeHaveBottleIds.includes(user._id)) {
-        peeHaveBottleIds = swop(user._id, null, peeHaveBottleIds);
-        await baan.updateOne({
-          peeHaveBottleIds: swop(user._id, null, baan.peeHaveBottleIds),
-        });
-      }
-      await baan.updateOne({ peeIds: swop(user._id, null, baan.peeIds) });
-      peeIds = swop(user._id, null, peeIds);
       await user.updateOne({
         peeCampIds: swop(peeCamp._id, null, user.peeCampIds),
       });
@@ -1614,6 +1638,14 @@ async function forceDeletePartRaw(partId: Id) {
     if (!baan) {
       continue;
     }
+    if (part.peeHaveBottleIds.includes(user._id)) {
+      peeHaveBottleIds = swop(user._id, null, peeHaveBottleIds);
+      await baan.updateOne({
+        peeHaveBottleIds: swop(user._id, null, baan.peeHaveBottleIds),
+      });
+    }
+    await baan.updateOne({});
+    peeIds = swop(user._id, null, peeIds);
     if (campMemberCard.sleepAtCamp) {
       peeSleepIds = swop(user._id, null, peeSleepIds);
       await baan.updateOne({
@@ -1626,6 +1658,7 @@ async function forceDeletePartRaw(partId: Id) {
         null,
         part.peeCampMemberCardIds
       ),
+      peeIds: swop(user._id, null, baan.peeIds),
     });
     baan.peeShirtSize.set(
       campMemberCard.size,
@@ -1734,6 +1767,13 @@ async function forceDeletePartRaw(partId: Id) {
         ),
       });
     }
+    j = 0;
+    while (j < campMemberCard.subGroupIds.length) {
+      await removeMemberFromSubGroupRaw(
+        campMemberCard._id,
+        campMemberCard.subGroupIds[j++]
+      );
+    }
     await campMemberCard.deleteOne();
     await baan.updateOne({ peeShirtSize: baan.peeShirtSize });
   }
@@ -1749,7 +1789,7 @@ async function forceDeletePartRaw(partId: Id) {
     partIds: swop(part._id, null, camp.partIds),
     petoModelIds: swop(part.petoModelId as Id, null, camp.petoModelIds),
     petoShirtSize: camp.petoShirtSize,
-    peeShirtSize:camp.peeShirtSize,
+    peeShirtSize: camp.peeShirtSize,
     petoCampMemberCardIds,
     peeCampMemberCardIds,
     peeModelIds,

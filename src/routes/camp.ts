@@ -91,6 +91,15 @@ import {
   updateMirror,
   deleteMirror,
 } from "../controllers/camp/mirror";
+import {
+  createGroupContainer,
+  createSubGroup,
+  updateGroupContainer,
+  updateSubGroup,
+  deleteGroupContainer,
+  deleteSubGroup,
+  getGroupContainerForAdmin,
+} from "../controllers/camp/subGroup";
 
 const router = express.Router();
 
@@ -201,4 +210,15 @@ router.delete("/deletPartJob/params/:id", protect, deletPartJob); //
 router.post("/createMirror/", protect, createMirror); //
 router.put("/updateMirror/", protect, updateMirror); //
 router.delete("/deleteMirror/params/:id", protect, deleteMirror); //
+router.post("/createGroupContainer/", protect, createGroupContainer); //
+router.post("/createSubGroup/", protect, createSubGroup); //
+router.put("/updateGroupContainer/", protect, updateGroupContainer); //
+router.put("/updateSubGroup/", protect, updateSubGroup); //
+router.delete(
+  "/deleteGroupContainer/params/:id",
+  protect,
+  deleteGroupContainer
+); //
+router.delete("/deleteSubGroup/params/:id", protect, deleteSubGroup); //
+router.get("/getGroupContainerForAdmin/params/:id", getGroupContainerForAdmin); //
 export default router;

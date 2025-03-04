@@ -15,6 +15,7 @@ import TimeRegister from "../../models/TimeRegister";
 import BaanJob from "../../models/BaanJob";
 import JobAssign from "../../models/JobAssign";
 import { getRegisterDataRaw } from "./authPart";
+import { removeMemberFromSubGroupRaw } from "./subGroup";
 
 export async function changeBaan(req: express.Request, res: express.Response) {
   const { userIds, baanId }: { userIds: Id[]; baanId: Id } = req.body;
@@ -142,8 +143,17 @@ export async function changeBaanRaw(userIds: Id[], baanId: Id) {
           baan.nongSleepIds.push(user._id);
         }
         newNongCamp.nongIds.push(user._id);
-        await campMemberCard.updateOne({ campModelId: newNongCamp._id });
-
+        let j = 0;
+        while (j < campMemberCard.subGroupIds.length) {
+          await removeMemberFromSubGroupRaw(
+            campMemberCard._id,
+            campMemberCard.subGroupIds[j++]
+          );
+        }
+        await campMemberCard.updateOne({
+          campModelId: newNongCamp._id,
+          subGroupIds: [],
+        });
         break;
       }
       case "pee": {
@@ -248,9 +258,17 @@ export async function changeBaanRaw(userIds: Id[], baanId: Id) {
           });
           await timeRegister.deleteOne();
         }
+        j = 0;
+        while (j < campMemberCard.subGroupIds.length) {
+          await removeMemberFromSubGroupRaw(
+            campMemberCard._id,
+            campMemberCard.subGroupIds[j++]
+          );
+        }
         await campMemberCard.updateOne({
           campModelId: newPeeCamp._id,
           baanJobIds: [],
+          subGroupIds: [],
         });
         break;
       }
@@ -427,7 +445,7 @@ export async function changePartRaw(userIds: Id[], partId: Id) {
         }
         if (part.auths.length) {
           await user.updateOne({
-            authPartIds: swop(null, oldPart._id, user.authPartIds),
+            authPartIds: swop(null, part._id, user.authPartIds),
           });
         }
         newPetoCamp.petoIds.push(user._id);
@@ -516,7 +534,7 @@ export async function changePartRaw(userIds: Id[], partId: Id) {
         }
         if (part.auths.length) {
           await user.updateOne({
-            authPartIds: swop(null, oldPart._id, user.authPartIds),
+            authPartIds: swop(null, part._id, user.authPartIds),
           });
         }
         await newPeeCamp.updateOne({

@@ -94,5 +94,10 @@ const BaanSchema = new mongoose.Schema({
   mirrorIds: arrayObjectId,
   canReadMirror: getDafaultBoolean(false),
   canWhriteMirror: getDafaultBoolean(false),
+  groupContainerIds: arrayObjectId,
+  defaultGroupId: {
+    type: mongoose.Schema.ObjectId,
+    default: null,
+  },
 });
 export default mongoose.model("Baan", BaanSchema);
