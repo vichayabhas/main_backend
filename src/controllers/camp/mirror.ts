@@ -68,7 +68,6 @@ export async function createMirror(
     sendRes(res, false);
     return;
   }
-  console.log(input);
   const mirror = await Mirror.create(input);
   switch (mirror.types) {
     case "baan": {

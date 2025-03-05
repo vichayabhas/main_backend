@@ -775,7 +775,6 @@ export async function registerJob(req: express.Request, res: express.Response) {
       return;
     }
     case "part": {
-      console.log(input);
       while (i < input.addJobIds.length) {
         const job = await JobAssign.findById(input.addJobIds[i++]);
         if (!job || job.types == "baan") {

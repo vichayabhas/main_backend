@@ -100,6 +100,7 @@ import {
   deleteSubGroup,
   getGroupContainerForAdmin,
 } from "../controllers/camp/subGroup";
+//import { registerGroup } from "../controllers/camp/น้องแสน";
 
 const router = express.Router();
 
@@ -221,4 +222,5 @@ router.delete(
 ); //
 router.delete("/deleteSubGroup/params/:id", protect, deleteSubGroup); //
 router.get("/getGroupContainerForAdmin/params/:id", getGroupContainerForAdmin); //
+//router.post('/registerGroup/',protect,registerGroup)
 export default router;

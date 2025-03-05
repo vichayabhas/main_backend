@@ -321,7 +321,7 @@ export async function createSubGroup(
   const subGroupIds = container.subGroupIds;
   if (isMany) {
     let i = start;
-    while (i < start + count + 1) {
+    while (i < start + count) {
       const subGroup = await SubGroup.create({
         containerId: container._id,
         genderType,
