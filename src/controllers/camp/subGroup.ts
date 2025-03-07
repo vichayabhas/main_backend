@@ -10,9 +10,11 @@ import {
   GetGroupContainer,
   GetGroupContainerForAdmin,
   GetSubGroup,
+  GroupContainerPack,
   GroupGenderType,
   GroupRoleType,
   Id,
+  RegisterGroup,
   SubGroupGenderType,
   SubGroupRoleType,
   UpdateGroupContainer,
@@ -840,4 +842,341 @@ export async function getGroupContainerForAdmin(
     camp,
   };
   res.status(200).json(buffer);
+}
+
+export async function registerGroup(
+  req: express.Request,
+  res: express.Response
+) {
+  const input: RegisterGroup = req.body;
+  const user = await getUser(req);
+  const campMemberCard = await CampMemberCard.findById(input.campMemberCardId);
+  const container = await GroupContainer.findById(input.containerId);
+  if (
+    !campMemberCard ||
+    !user ||
+    campMemberCard.userId.toString() != user._id.toString() ||
+    !container
+  ) {
+    sendRes(res, false);
+    return;
+  }
+  const add = await SubGroup.findById(input.addId);
+  const remove = await SubGroup.findById(input.removeId);
+  let { subGroupIds } = campMemberCard;
+  while (true) {
+    if (!add) {
+      if (!remove) {
+        break;
+      } else {
+        if (remove.containerId.toString() != container._id.toString()) {
+          break;
+        }
+        const roleType: SubGroupRoleType = "คละพี่และน้อง";
+        const genderType: SubGroupGenderType = "คละเพศ";
+        if (remove.campMemberCardIds.length == 1) {
+          if (container.roleType == "เลือกพี่หรือน้องตามคนแรก") {
+            if (container.genderType == "เลือกเพศตามคนแรก") {
+              await remove.updateOne({
+                roleType,
+                genderType,
+                campMemberCardIds: swop(
+                  campMemberCard._id,
+                  null,
+                  remove.campMemberCardIds
+                ),
+              });
+            } else {
+              await remove.updateOne({
+                roleType,
+                campMemberCardIds: swop(
+                  campMemberCard._id,
+                  null,
+                  remove.campMemberCardIds
+                ),
+              });
+            }
+          } else {
+            if (container.genderType == "เลือกเพศตามคนแรก") {
+              await remove.updateOne({
+                genderType,
+                campMemberCardIds: swop(
+                  campMemberCard._id,
+                  null,
+                  remove.campMemberCardIds
+                ),
+              });
+            } else {
+              await remove.updateOne({
+                campMemberCardIds: swop(
+                  campMemberCard._id,
+                  null,
+                  remove.campMemberCardIds
+                ),
+              });
+            }
+          }
+        } else {
+          await remove.updateOne({
+            campMemberCardIds: swop(
+              campMemberCard._id,
+              null,
+              remove.campMemberCardIds
+            ),
+          });
+        }
+        await container.updateOne({
+          userIds: swop(user._id, null, container.userIds),
+        });
+        subGroupIds = swop(remove._id, null, campMemberCard.subGroupIds);
+      }
+    } else {
+      if (!remove) {
+        if (
+          add.containerId.toString() != container._id.toString() ||
+          container.userIds.includes(user._id)
+        ) {
+          break;
+        }
+        if (add.limit == add.campMemberCardIds.length) {
+          break;
+        }
+        if (campMemberCard.role == "peto") {
+          break;
+        }
+        if (
+          (add.roleType == "น้องเท่านั้น" && campMemberCard.role == "pee") ||
+          (add.roleType == "พี่เท่านั้น" && campMemberCard.role == "nong")
+        ) {
+          break;
+        }
+        if (
+          (add.genderType == "ชายเท่านั้น" && user.gender == "Female") ||
+          (add.genderType == "หญิงเท่านั้น" && user.gender == "Male")
+        ) {
+          break;
+        }
+        let roleType: SubGroupRoleType;
+        let genderType: SubGroupGenderType;
+        switch (campMemberCard.role) {
+          case "nong": {
+            roleType = "น้องเท่านั้น";
+            break;
+          }
+          case "pee": {
+            roleType = "พี่เท่านั้น";
+            break;
+          }
+        }
+        switch (user.gender) {
+          case "Male": {
+            genderType = "ชายเท่านั้น";
+            break;
+          }
+          case "Female": {
+            genderType = "หญิงเท่านั้น";
+            break;
+          }
+        }
+        if (container.roleType == "เลือกพี่หรือน้องตามคนแรก") {
+          if (container.genderType == "เลือกเพศตามคนแรก") {
+            await add.updateOne({
+              roleType,
+              genderType,
+              campMemberCardIds: swop(
+                null,
+                campMemberCard._id,
+                add.campMemberCardIds
+              ),
+            });
+          } else {
+            await add.updateOne({
+              roleType,
+              campMemberCardIds: swop(
+                null,
+                campMemberCard._id,
+                add.campMemberCardIds
+              ),
+            });
+          }
+        } else {
+          if (container.genderType == "เลือกเพศตามคนแรก") {
+            await add.updateOne({
+              genderType,
+              campMemberCardIds: swop(
+                null,
+                campMemberCard._id,
+                add.campMemberCardIds
+              ),
+            });
+          } else {
+            await add.updateOne({
+              campMemberCardIds: swop(
+                null,
+                campMemberCard._id,
+                add.campMemberCardIds
+              ),
+            });
+          }
+        }
+        await container.updateOne({
+          userIds: swop(null, user._id, container.userIds),
+        });
+        subGroupIds = swop(null, add._id, campMemberCard.subGroupIds);
+      } else {
+        if (
+          remove.containerId.toString() != container._id.toString() ||
+          add.containerId.toString() != container._id.toString() ||
+          add._id.toString() == remove._id.toString()
+        ) {
+          break;
+        }
+        if (add.limit == add.campMemberCardIds.length) {
+          break;
+        }
+        const roleTypeRemove: SubGroupRoleType = "คละพี่และน้อง";
+        const genderTypeRemove: SubGroupGenderType = "คละเพศ";
+        if (remove.campMemberCardIds.length == 1) {
+          if (container.roleType == "เลือกพี่หรือน้องตามคนแรก") {
+            if (container.genderType == "เลือกเพศตามคนแรก") {
+              await remove.updateOne({
+                roleType: roleTypeRemove,
+                genderType: genderTypeRemove,
+                campMemberCardIds: swop(
+                  campMemberCard._id,
+                  null,
+                  remove.campMemberCardIds
+                ),
+              });
+            } else {
+              await remove.updateOne({
+                roleType: roleTypeRemove,
+                campMemberCardIds: swop(
+                  campMemberCard._id,
+                  null,
+                  remove.campMemberCardIds
+                ),
+              });
+            }
+          } else {
+            if (container.genderType == "เลือกเพศตามคนแรก") {
+              await remove.updateOne({
+                genderType: genderTypeRemove,
+                campMemberCardIds: swop(
+                  campMemberCard._id,
+                  null,
+                  remove.campMemberCardIds
+                ),
+              });
+            } else {
+              await remove.updateOne({
+                campMemberCardIds: swop(
+                  campMemberCard._id,
+                  null,
+                  remove.campMemberCardIds
+                ),
+              });
+            }
+          }
+        } else {
+          await remove.updateOne({
+            campMemberCardIds: swop(
+              campMemberCard._id,
+              null,
+              remove.campMemberCardIds
+            ),
+          });
+        }
+        if (campMemberCard.role == "peto") {
+          break;
+        }
+        if (
+          (add.roleType == "น้องเท่านั้น" && campMemberCard.role == "pee") ||
+          (add.roleType == "พี่เท่านั้น" && campMemberCard.role == "nong")
+        ) {
+          break;
+        }
+        if (
+          (add.genderType == "ชายเท่านั้น" && user.gender == "Female") ||
+          (add.genderType == "หญิงเท่านั้น" && user.gender == "Male")
+        ) {
+          break;
+        }
+        let roleType: SubGroupRoleType;
+        let genderType: SubGroupGenderType;
+        switch (campMemberCard.role) {
+          case "nong": {
+            roleType = "น้องเท่านั้น";
+            break;
+          }
+          case "pee": {
+            roleType = "พี่เท่านั้น";
+            break;
+          }
+        }
+        switch (user.gender) {
+          case "Male": {
+            genderType = "ชายเท่านั้น";
+            break;
+          }
+          case "Female": {
+            genderType = "หญิงเท่านั้น";
+            break;
+          }
+        }
+        if (container.roleType == "เลือกพี่หรือน้องตามคนแรก") {
+          if (container.genderType == "เลือกเพศตามคนแรก") {
+            await add.updateOne({
+              roleType,
+              genderType,
+              campMemberCardIds: swop(
+                null,
+                campMemberCard._id,
+                add.campMemberCardIds
+              ),
+            });
+          } else {
+            await add.updateOne({
+              roleType,
+              campMemberCardIds: swop(
+                null,
+                campMemberCard._id,
+                add.campMemberCardIds
+              ),
+            });
+          }
+        } else {
+          if (container.genderType == "เลือกเพศตามคนแรก") {
+            await add.updateOne({
+              genderType,
+              campMemberCardIds: swop(
+                null,
+                campMemberCard._id,
+                add.campMemberCardIds
+              ),
+            });
+          } else {
+            await add.updateOne({
+              campMemberCardIds: swop(
+                null,
+                campMemberCard._id,
+                add.campMemberCardIds
+              ),
+            });
+          }
+        }
+
+        subGroupIds = swop(remove._id, add._id, campMemberCard.subGroupIds);
+      }
+    }
+    break;
+  }
+  await campMemberCard.updateOne({ subGroupIds });
+  const group = await getGroupContainerRaw(container._id);
+  if (!group) {
+    sendRes(res, false);
+    return;
+  }
+  const output: GroupContainerPack = { group, subGroupIds };
+  res.status(200).json(output);
 }

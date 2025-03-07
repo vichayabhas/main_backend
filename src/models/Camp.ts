@@ -197,5 +197,9 @@ const campSchema = new mongoose.Schema({
   lockChangeQuestion: getDafaultBoolean(false),
   jobIds: arrayObjectId,
   canReadTimeOnMirror: getDafaultBoolean(false),
+  nongCall: {
+    type: String,
+    default: "น้องค่าย",
+  },
 });
 export default mongoose.model("Camp", campSchema);

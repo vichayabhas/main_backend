@@ -31,7 +31,6 @@ import Part from "../../models/Part";
 import {
   stringToId,
   sendRes,
-  getSystemInfoRaw,
   ifIsPlus,
   ifIsTrue,
   mapObjectIdToMyMap,
@@ -120,7 +119,6 @@ export async function getRegisterDataRaw(
     camp,
     regisBaans,
     regisParts,
-    systemInfo: getSystemInfoRaw(),
   };
 }
 
@@ -716,6 +714,7 @@ export async function getAllWelfare(
     },
     meals,
     _id: camp._id,
+    nongCall: camp.nongCall,
   };
   res.status(200).json(buffer);
 }
@@ -901,6 +900,7 @@ export async function getAllPlanData(
       peeNumber: peeGirlSleep,
       petoNumber: petoGirlSleep,
     },
+    nongCall: camp.nongCall,
   };
   res.status(200).json(buffer);
 }

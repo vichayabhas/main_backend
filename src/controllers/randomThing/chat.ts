@@ -24,12 +24,7 @@ import PeeCamp from "../../models/PeeCamp";
 import PetoCamp from "../../models/PetoCamp";
 import TimeOffset from "../../models/TimeOffset";
 import User from "../../models/User";
-import {
-  sendRes,
-  swop,
-  getSystemInfoRaw,
-  stringToId,
-} from "../setup";
+import { sendRes, swop, getSystemInfoRaw, stringToId } from "../setup";
 export async function createPartChat(
   req: express.Request,
   res: express.Response
@@ -598,7 +593,6 @@ export async function getAllChatFromCampId(
     sendRes(res, false);
     return;
   }
-  const systemInfo = getSystemInfoRaw();
   if (camp.petoIds.includes(user._id)) {
     const chats = await getShowChatFromChatIds(camp.allPetoChatIds, user.mode);
     const output: ChatReady = {
@@ -610,8 +604,8 @@ export async function getAllChatFromCampId(
       success: true,
       roomName: "รวมทุกแชต",
       userId: user._id,
-      subscribe: `${getSystemInfoRaw().chatText}${camp._id}${user._id}`,
-      systemInfo,
+      subscribe: `${camp._id}${user._id}`,
+      nongCall: camp.nongCall,
     };
     res.status(200).json(output);
   } else {
@@ -635,8 +629,8 @@ export async function getAllChatFromCampId(
       success: true,
       roomName: "รวมทุกแชต",
       userId: user._id,
-      subscribe: `${getSystemInfoRaw().chatText}${camp._id}${user._id}`,
-      systemInfo,
+      subscribe: `${camp._id}${user._id}`,
+      nongCall: camp.nongCall,
     };
     res.status(200).json(output);
   }
@@ -676,8 +670,8 @@ export async function getPartChat(req: express.Request, res: express.Response) {
       ? `ห้องพี่${camp.groupName}คุยกัน ! อย่าหลุดสิ่งที่ไม่อยากให้น้องรู้ในแชตนี้`
       : `ฝ่าย${part.partName}`,
     userId: user._id,
-    subscribe: `${getSystemInfoRaw().chatText}${part._id}`,
-    systemInfo: getSystemInfoRaw(),
+    subscribe: `${part._id}`,
+    nongCall: camp.nongCall,
   };
   res.status(200).json(output);
 }
@@ -703,7 +697,6 @@ export async function getNongBaanChat(
     sendRes(res, false);
     return;
   }
-  const systemInfo = getSystemInfoRaw();
   switch (campMemberCard.role) {
     case "nong": {
       const nongCamp = await NongCamp.findById(campMemberCard.campModelId);
@@ -734,8 +727,8 @@ export async function getNongBaanChat(
         success: true,
         roomName: `ห้อง${camp.groupName}${baan.name}`,
         userId: user._id,
-        subscribe: `${getSystemInfoRaw().chatText}Nong${baan._id}`,
-        systemInfo,
+        subscribe: `Nong${baan._id}`,
+        nongCall: camp.nongCall,
       };
       res.status(200).json(output);
       return;
@@ -767,8 +760,8 @@ export async function getNongBaanChat(
             ? `ห้อง${camp.groupName}${baan.name}ที่มีน้องด้วย`
             : `ห้อง${camp.groupName}${baan.name}`,
         userId: user._id,
-        subscribe: `${getSystemInfoRaw().chatText}Nong`,
-        systemInfo,
+        subscribe: `Nong${baan._id}`,
+        nongCall: camp.nongCall,
       };
       res.status(200).json(output);
       return;
@@ -812,7 +805,6 @@ export async function getPeeBaanChat(
     sendRes(res, false);
     return;
   }
-  const systemInfo = getSystemInfoRaw();
   const output: ChatReady = {
     chats,
     mode: "pee",
@@ -825,8 +817,8 @@ export async function getPeeBaanChat(
     success: true,
     roomName: `ห้อง${camp.groupName}${baan.name}ที่มีแต่พี่`,
     userId: user._id,
-    subscribe: `${getSystemInfoRaw().chatText}Pee${baan._id}`,
-    systemInfo,
+    subscribe: `Pee${baan._id}`,
+    nongCall: camp.nongCall,
   };
   res.status(200).json(output);
 }
@@ -885,8 +877,8 @@ export async function getNongChat(req: express.Request, res: express.Response) {
     success: true,
     roomName: `คุยส่วนตัวกับน้อง${host.nickname} บ้าน${baan.name}`,
     userId: user._id,
-    subscribe: `${getSystemInfoRaw().chatText}${campMemberCard._id}`,
-    systemInfo: getSystemInfoRaw(),
+    subscribe: `${campMemberCard._id}`,
+    nongCall: camp.nongCall,
   };
   res.status(200).json(output);
 }
@@ -946,8 +938,8 @@ export async function getPartPeebaanChat(
         ? `ห้องพี่${camp.groupName}คุยกัน ! อย่าหลุดสิ่งที่ไม่อยากให้น้องรู้ในแชตนี้`
         : `ห้องพี่${camp.groupName}คุยกัน`,
     userId: user._id,
-    subscribe: `${getSystemInfoRaw().chatText}${part._id}`,
-    systemInfo: getSystemInfoRaw(),
+    subscribe: `${part._id}`,
+    nongCall: camp.nongCall,
   };
   res.status(200).json(output);
 }

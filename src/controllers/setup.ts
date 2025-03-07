@@ -301,6 +301,7 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
     lockChangeQuestion,
     jobIds,
     canReadTimeOnMirror,
+    nongCall,
   } = input;
   return {
     partIds,
@@ -396,6 +397,7 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
     lockChangeQuestion,
     jobIds,
     canReadTimeOnMirror,
+    nongCall,
   };
 }
 export function conPartBackToFront(input: InterPartBack): InterPartFront {
@@ -642,14 +644,14 @@ export function getSystemInfoRaw(): SystemInfo {
     endEmail,
     studentIdLength,
     systemMode,
-    peeText: "pee",
-    nongText: "nong",
-    newText: "new",
-    updateText: "update",
-    manageText: "manage",
-    questionText: "question",
-    textQuestionText: "textQuestion",
-    choiceQuestionText: "choiceQuestion",
-    chatText: "chat",
+    // peeText: "pee",
+    // nongText: "nong",
+    // newText: "new",
+    // updateText: "update",
+    // manageText: "manage",
+    // questionText: "question",
+    // textQuestionText: "textQuestion",
+    // choiceQuestionText: "choiceQuestion",
+    // chatText: "chat",
   };
 }

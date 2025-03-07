@@ -23,7 +23,6 @@ import TextQuestion from "../../models/TextQuestion";
 import User from "../../models/User";
 import {
   sendRes,
-  getSystemInfoRaw,
   swop,
   stringToId,
   removeDuplicate,
@@ -960,8 +959,8 @@ export async function getAllAnswerAndQuestion(
     peeAnswers,
     success: true,
     groupName: camp.groupName,
-    systemInfo: getSystemInfoRaw(),
     canScoring: camp.lockChangeQuestion && !camp.canAnswerTheQuestion,
+    nongCall:camp.nongCall
   };
   res.status(200).json(buffer);
 }

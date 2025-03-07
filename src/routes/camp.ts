@@ -99,6 +99,7 @@ import {
   deleteGroupContainer,
   deleteSubGroup,
   getGroupContainerForAdmin,
+  registerGroup,
 } from "../controllers/camp/subGroup";
 //import { registerGroup } from "../controllers/camp/น้องแสน";
 
@@ -222,5 +223,5 @@ router.delete(
 ); //
 router.delete("/deleteSubGroup/params/:id", protect, deleteSubGroup); //
 router.get("/getGroupContainerForAdmin/params/:id", getGroupContainerForAdmin); //
-//router.post('/registerGroup/',protect,registerGroup)
+router.post("/registerGroup/", protect, registerGroup); //
 export default router;

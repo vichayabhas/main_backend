@@ -688,6 +688,7 @@ export async function updateCamp(req: express.Request, res: express.Response) {
     lockChangeQuestion,
     updatePart,
     canReadTimeOnMirror,
+    nongCall,
   }: UpdateCamp = req.body;
   if (camp.nongDataLock != nongDataLock) {
     if (nongDataLock) {
@@ -734,6 +735,7 @@ export async function updateCamp(req: express.Request, res: express.Response) {
     canNongAccessDataWithRoleNong,
     lockChangeQuestion,
     canReadTimeOnMirror,
+    nongCall,
   });
   for (const { id, auths } of updatePart) {
     const part = await Part.findById(id);
