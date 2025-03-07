@@ -7,6 +7,7 @@ import {
   BasicUser,
   CreateGroupContainer,
   CreateSubGroup,
+  CreateSubGroupByAnyone,
   GetGroupContainer,
   GetGroupContainerForAdmin,
   GetSubGroup,
@@ -224,126 +225,68 @@ export async function createSubGroup(
     sendRes(res, false);
     return;
   }
-  if (!container.canAnybodyCreateSubGroup) {
-    const camp = await Camp.findById(baan.campId);
-    if (!camp) {
+  const camp = await Camp.findById(baan.campId);
+  if (!camp) {
+    sendRes(res, false);
+    return;
+  }
+  const campMemberCard = await CampMemberCard.findById(
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+  );
+  if (!campMemberCard) {
+    sendRes(res, false);
+    return;
+  }
+  switch (campMemberCard.role) {
+    case "nong": {
       sendRes(res, false);
       return;
     }
-    const campMemberCard = await CampMemberCard.findById(
-      camp.mapCampMemberCardIdByUserId.get(user._id.toString())
-    );
-    if (!campMemberCard) {
-      sendRes(res, false);
-      return;
-    }
-    switch (campMemberCard.role) {
-      case "nong": {
+    case "pee": {
+      const campModel = await PeeCamp.findById(campMemberCard.campModelId);
+      if (!campModel || campModel.baanId.toString() != baan._id.toString()) {
         sendRes(res, false);
         return;
       }
-      case "pee": {
-        const campModel = await PeeCamp.findById(campMemberCard.campModelId);
-        if (!campModel || campModel.baanId.toString() != baan._id.toString()) {
-          sendRes(res, false);
-          return;
-        }
-        const part = await Part.findById(campModel.partId);
-        if (
-          !part ||
-          (!part.auths.includes("แก้ไขกลุ่มได้") &&
-            !(part._id.toString() == camp.partBoardId?.toString()))
-        ) {
-          sendRes(res, false);
-          return;
-        }
-        break;
+      const part = await Part.findById(campModel.partId);
+      if (
+        !part ||
+        (!part.auths.includes("แก้ไขกลุ่มได้") &&
+          !(part._id.toString() == camp.partBoardId?.toString()))
+      ) {
+        sendRes(res, false);
+        return;
       }
-      case "peto": {
-        const campModel = await PetoCamp.findById(campMemberCard.campModelId);
-        if (!campModel) {
-          sendRes(res, false);
-          return;
-        }
-        const part = await Part.findById(campModel.partId);
-        if (
-          !part ||
-          (!part.auths.includes("แก้ไขกลุ่มได้") &&
-            !(part._id.toString() == camp.partBoardId?.toString()))
-        ) {
-          sendRes(res, false);
-          return;
-        }
-        break;
+      break;
+    }
+    case "peto": {
+      const campModel = await PetoCamp.findById(campMemberCard.campModelId);
+      if (!campModel) {
+        sendRes(res, false);
+        return;
       }
+      const part = await Part.findById(campModel.partId);
+      if (
+        !part ||
+        (!part.auths.includes("แก้ไขกลุ่มได้") &&
+          !(part._id.toString() == camp.partBoardId?.toString()))
+      ) {
+        sendRes(res, false);
+        return;
+      }
+      break;
     }
   }
-  let genderTypeRaw: GroupGenderType | SubGroupGenderType =
-    container.genderType;
-  let roleTypeRaw: GroupRoleType | SubGroupRoleType = container.roleType;
-  if (genderTypeRaw == "เลือกเพศตามคนแรก") {
-    genderTypeRaw = "คละเพศ";
-  }
-  if (roleTypeRaw == "เลือกพี่หรือน้องตามคนแรก") {
-    roleTypeRaw = "คละพี่และน้อง";
-  }
-  if (genderTypeRaw == "กำหนดตอนสร้างกลุ่มย่อย") {
-    if (!gender) {
-      sendRes(res, false);
-      return;
-    }
-    switch (gender) {
-      case "male": {
-        genderTypeRaw = "ชายเท่านั้น";
-        break;
-      }
-      case "female": {
-        genderTypeRaw = "หญิงเท่านั้น";
-      }
-    }
-  }
-  if (roleTypeRaw == "กำหนดตอนสร้างกลุ่มย่อย") {
-    if (!role) {
-      sendRes(res, false);
-      return;
-    }
-    switch (role) {
-      case "nong": {
-        roleTypeRaw = "น้องเท่านั้น";
-        break;
-      }
-      case "pee": {
-        roleTypeRaw = "พี่เท่านั้น";
-        break;
-      }
-    }
-  }
-  const genderType: SubGroupGenderType = genderTypeRaw;
-  const roleType: SubGroupRoleType = roleTypeRaw;
-  const subGroupIds = container.subGroupIds;
-  if (isMany) {
-    let i = start;
-    while (i < start + count) {
-      const subGroup = await SubGroup.create({
-        containerId: container._id,
-        genderType,
-        roleType,
-        limit,
-        name: `${name} ${i++}`,
-      });
-      subGroupIds.push(subGroup._id);
-    }
-  } else {
-    const subGroup = await SubGroup.create({
-      containerId: container._id,
-      genderType,
-      roleType,
-      limit,
-      name,
-    });
-    subGroupIds.push(subGroup._id);
-  }
-  await container.updateOne({ subGroupIds });
+  await createSubGroupRaw({
+    gender,
+    role,
+    isMany,
+    start,
+    count,
+    containerId,
+    limit,
+    name,
+  });
   const groups: GetGroupContainer[] = [];
   let i = 0;
   while (i < baan.groupContainerIds.length) {
@@ -1165,7 +1108,6 @@ export async function registerGroup(
             });
           }
         }
-
         subGroupIds = swop(remove._id, add._id, campMemberCard.subGroupIds);
       }
     }
@@ -1179,4 +1121,137 @@ export async function registerGroup(
   }
   const output: GroupContainerPack = { group, subGroupIds };
   res.status(200).json(output);
+}
+async function createSubGroupRaw(input: CreateSubGroup) {
+  const { gender, role, isMany, start, count, containerId, limit, name } =
+    input;
+  const container = await GroupContainer.findById(containerId);
+  if (!container) {
+    return;
+  }
+  let genderTypeRaw: GroupGenderType | SubGroupGenderType =
+    container.genderType;
+  let roleTypeRaw: GroupRoleType | SubGroupRoleType = container.roleType;
+  if (genderTypeRaw == "เลือกเพศตามคนแรก") {
+    genderTypeRaw = "คละเพศ";
+  }
+  if (roleTypeRaw == "เลือกพี่หรือน้องตามคนแรก") {
+    roleTypeRaw = "คละพี่และน้อง";
+  }
+  if (genderTypeRaw == "กำหนดตอนสร้างกลุ่มย่อย") {
+    if (!gender) {
+      return;
+    }
+    switch (gender) {
+      case "male": {
+        genderTypeRaw = "ชายเท่านั้น";
+        break;
+      }
+      case "female": {
+        genderTypeRaw = "หญิงเท่านั้น";
+      }
+    }
+  }
+  if (roleTypeRaw == "กำหนดตอนสร้างกลุ่มย่อย") {
+    if (!role) {
+      return;
+    }
+    switch (role) {
+      case "nong": {
+        roleTypeRaw = "น้องเท่านั้น";
+        break;
+      }
+      case "pee": {
+        roleTypeRaw = "พี่เท่านั้น";
+        break;
+      }
+    }
+  }
+  const genderType: SubGroupGenderType = genderTypeRaw;
+  const roleType: SubGroupRoleType = roleTypeRaw;
+  const subGroupIds = container.subGroupIds;
+  if (isMany) {
+    let i = start;
+    while (i < start + count) {
+      const subGroup = await SubGroup.create({
+        containerId: container._id,
+        genderType,
+        roleType,
+        limit,
+        name: `${name} ${i++}`,
+      });
+      subGroupIds.push(subGroup._id);
+    }
+  } else {
+    const subGroup = await SubGroup.create({
+      containerId: container._id,
+      genderType,
+      roleType,
+      limit,
+      name,
+    });
+    subGroupIds.push(subGroup._id);
+  }
+  await container.updateOne({ subGroupIds });
+}
+export async function createSubGroupByAnyone(
+  req: express.Request,
+  res: express.Response
+) {
+  const { containerId, limit, gender, role, name }: CreateSubGroupByAnyone =
+    req.body;
+  const user = await getUser(req);
+  const container = await GroupContainer.findById(containerId);
+  if (!container || !container.canAnybodyCreateSubGroup || !user) {
+    sendRes(res, false);
+    return;
+  }
+  const baan = await Baan.findById(container.baanId);
+  if (
+    !baan ||
+    (!baan.nongIds.includes(user._id) && !baan.peeIds.includes(user._id))
+  ) {
+    sendRes(res, false);
+    return;
+  }
+  await createSubGroupRaw({
+    containerId,
+    limit,
+    gender,
+    role,
+    start: 0,
+    count: 0,
+    isMany: false,
+    name,
+  });
+  const group = await getGroupContainerRaw(container._id);
+  res.status(200).json(group);
+}
+export async function updateSubGroupByAnyone(
+  req: express.Request,
+  res: express.Response
+) {
+  const { limit, name, _id }: UpdateSubGroup = req.body;
+  const user = await getUser(req);
+  const subGroup = await SubGroup.findById(_id);
+  if (!subGroup) {
+    sendRes(res, false);
+    return;
+  }
+  const container = await GroupContainer.findById(subGroup.containerId);
+  if (!container || !container.canAnybodyCreateSubGroup || !user) {
+    sendRes(res, false);
+    return;
+  }
+  const baan = await Baan.findById(container.baanId);
+  if (
+    !baan ||
+    (!baan.nongIds.includes(user._id) && !baan.peeIds.includes(user._id))
+  ) {
+    sendRes(res, false);
+    return;
+  }
+  await subGroup.updateOne({ limit, name });
+  const group = await getGroupContainerRaw(container._id);
+  res.status(200).json(group);
 }

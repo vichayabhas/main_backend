@@ -148,11 +148,12 @@ export async function getShowChatFromChatIds(inputs: Id[], mode: Mode) {
         if (!user || !nongCamp) {
           continue;
         }
+        const camp = await Camp.findById(nongCamp.campId);
         const baan = await Baan.findById(nongCamp.baanId);
-        if (!baan) {
+        if (!camp || !baan) {
           continue;
         }
-        partName = "น้องค่าย";
+        partName = camp.nongCall;
         baanName = baan.name;
       }
     }
@@ -993,10 +994,11 @@ export async function getShowChatFromChat(chat: InterChat, mode: Mode) {
         return null;
       }
       const baan = await Baan.findById(nongCamp.baanId);
-      if (!baan) {
+      const camp = await Camp.findById(nongCamp.campId);
+      if (!baan || !camp) {
         return null;
       }
-      partName = "น้องค่าย";
+      partName = camp.nongCall;
       baanName = baan.name;
     }
   }

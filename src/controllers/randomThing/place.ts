@@ -1,8 +1,8 @@
-import express from 'express'
-import Building from '../../models/Building';
-import { InterPlace, ShowPlace } from '../../models/interface';
-import Place from '../../models/Place';
-import { swop, sendRes } from '../setup';
+import express from "express";
+import Building from "../../models/Building";
+import { InterPlace, ShowPlace } from "../../models/interface";
+import Place from "../../models/Place";
+import { swop, sendRes } from "../setup";
 
 export async function getAllBuilding(
   req: express.Request,

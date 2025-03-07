@@ -100,6 +100,8 @@ import {
   deleteSubGroup,
   getGroupContainerForAdmin,
   registerGroup,
+  createSubGroupByAnyone,
+  updateSubGroupByAnyone,
 } from "../controllers/camp/subGroup";
 //import { registerGroup } from "../controllers/camp/น้องแสน";
 
@@ -224,4 +226,6 @@ router.delete(
 router.delete("/deleteSubGroup/params/:id", protect, deleteSubGroup); //
 router.get("/getGroupContainerForAdmin/params/:id", getGroupContainerForAdmin); //
 router.post("/registerGroup/", protect, registerGroup); //
+router.post("/createSubGroupByAnyone/", protect, createSubGroupByAnyone); //
+router.put("/updateSubGroupByAnyone/", protect, updateSubGroupByAnyone); //
 export default router;
