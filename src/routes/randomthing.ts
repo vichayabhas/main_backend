@@ -28,6 +28,7 @@ import {
   getFoods,
   getMeal,
   updateMeal,
+  getMealForUpdate,
 } from "../controllers/randomThing/meal";
 import {
   getAllBuilding,
@@ -74,7 +75,7 @@ router.post("/createNongBaanChat/", protect, createNongBaanChat); //
 router.get("/getPartPeebaanChat/params/:id", protect, pee, getPartPeebaanChat); //
 router.post("/createMeal/", protect, createMeal); //
 router.post("/createFood/", protect, createFood); //
-router.get("/getFoodForUpdate/params/:id", getFoodForUpdate); //
+router.get("/getFoodForUpdate/params/:id", protect, getFoodForUpdate); //
 router.put("/updateFood/", protect, updateFood); //
 router.get("/getMealByUser/params/:id", protect, getMealByUser); //
 router.delete("/deleteFood/params/:id", protect, deleteFood); //
@@ -92,4 +93,5 @@ router.post("/addBaanSong/params/:id", protect, addBaanSong); //
 router.get("/getShowCampSongs/params/:id", protect, getShowCampSongs); //
 router.get("/getShowBaanSongs/params/:id", protect, getShowBaanSongs); //
 router.get("/getAuthSongs/params/:id", protect, getAuthSongs); //
+router.get("/getMealForUpdate/params/:id", protect, getMealForUpdate); //
 export default router;

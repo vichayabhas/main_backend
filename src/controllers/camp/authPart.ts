@@ -1188,6 +1188,8 @@ export async function getCoopData(req: express.Request, res: express.Response) {
     isCoopValid
   );
   const baanJobs = await getBaanJobsRaw(baan.jobIds, null);
+  const nongs = await getNongsFromBaanIdRaw(baan._id);
+  const pees = await getPeesFromBaanIdRaw(baan._id);
   const buffer: GetCoopData = {
     baan,
     camp,
@@ -1197,6 +1199,8 @@ export async function getCoopData(req: express.Request, res: express.Response) {
     nongHealths,
     peeHealths,
     baanJobs,
+    pees,
+    nongs,
   };
   res.status(200).json(buffer);
 }

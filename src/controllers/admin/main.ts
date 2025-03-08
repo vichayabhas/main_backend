@@ -18,6 +18,8 @@ import {
   Id,
   BasicPart,
   AuthType,
+  BasicBaan,
+  GetCampForUpdate,
 } from "../../models/interface";
 import { removeDuplicate, resOk, sendRes, swop } from "../setup";
 import express from "express";
@@ -995,4 +997,55 @@ export async function afterVisnuToPee(
     await users[i++].updateOne({ role: "pee" });
   }
   sendRes(res, true);
+}
+export async function getCampForUpdate(
+  req: express.Request,
+  res: express.Response
+) {
+  const camp = await Camp.findById(req.params.id);
+  if (!camp) {
+    sendRes(res, false);
+    return;
+  }
+  const partNameContainers = await PartNameContainer.find();
+  const partNameIds = partNameContainers.map(
+    (partNameContainer) => partNameContainer._id
+  );
+  const buf = removeDuplicate(partNameIds, camp.partNameIds);
+  let i = 0;
+  const remainPartName: MyMap[] = [];
+  while (i < buf.length) {
+    const partNameContainer = await PartNameContainer.findById(buf[i++]);
+    if (!partNameContainer) {
+      continue;
+    }
+    const { _id: key, name } = partNameContainer;
+    const value = name;
+    remainPartName.push({ key, value });
+  }
+  const parts: BasicPart[] = [];
+  const baans: BasicBaan[] = [];
+  i = 0;
+  while (i < camp.baanIds.length) {
+    const baan = await Baan.findById(camp.baanIds[i++]);
+    if (!baan) {
+      continue;
+    }
+    baans.push(baan);
+  }
+  i = 0;
+  while (i < camp.partIds.length) {
+    const part = await Part.findById(camp.partIds[i++]);
+    if (!part) {
+      continue;
+    }
+    parts.push(part);
+  }
+  const buffer: GetCampForUpdate = {
+    remainPartName,
+    camp,
+    baans,
+    parts,
+  };
+  res.status(200).json(buffer);
 }

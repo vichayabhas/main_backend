@@ -14,6 +14,7 @@ import {
   InterFood,
   GetMeals,
   UpdateMeal,
+  GetMealForUpdate,
 } from "../../models/interface";
 import Meal from "../../models/Meal";
 import User from "../../models/User";
@@ -27,6 +28,7 @@ import {
   stringToId,
 } from "../setup";
 import { isFoodValid } from "../user";
+import TimeOffset from "../../models/TimeOffset";
 
 export async function createMeal(req: express.Request, res: express.Response) {
   const input: CreateMeal = req.body;
@@ -76,18 +78,19 @@ export async function getFoodForUpdate(
   req: express.Request,
   res: express.Response
 ) {
+  const user = await getUser(req);
   const food = await Food.findById(req.params.id);
-  if (!food) {
+  if (!food || !user) {
     sendRes(res, false);
     return;
   }
+  const displayOffset = await TimeOffset.findById(user.displayOffsetId);
   const meal = await Meal.findById(food.mealId);
   const camp = await Camp.findById(food.campId);
-  if (!camp || !meal) {
+  if (!camp || !meal || !displayOffset) {
     sendRes(res, false);
     return;
   }
-
   const nongHealths: HeathIssuePack[] =
     camp.nongDataLock && meal.roles.includes("nong")
       ? await getHealthIssuePack(
@@ -135,6 +138,7 @@ export async function getFoodForUpdate(
     peeCampMemberCardIds,
     petoCampMemberCardIds,
     listPriority,
+    displayOffset,
   };
   res.status(200).json(buffer);
 }
@@ -971,3 +975,47 @@ export async function updateMeal(req: express.Request, res: express.Response) {
   }
   await meal.updateOne({ time: input.time, roles: input.roles });
 }
+export async function getMealForUpdate(
+  req: express.Request,
+  res: express.Response
+) {
+  const meal = await Meal.findById(req.params.id);
+  const user = await getUser(req);
+  if (!user || !meal) {
+    sendRes(res, false);
+    return;
+  }
+  const camp = await Camp.findById(meal.campId);
+  const selectOffset = await TimeOffset.findById(user.selectOffsetId);
+  const displayOffset = await TimeOffset.findById(user.displayOffsetId);
+  if (!selectOffset || !displayOffset || !camp) {
+    sendRes(res, false);
+    return;
+  }
+  const foods: InterFood[] = [];
+  let i = 0;
+  while (i < meal.foodIds.length) {
+    const food = await Food.findById(meal.foodIds[i++]);
+    if (!food) {
+      continue;
+    }
+    foods.push(food);
+  }
+  const buffer: GetMealForUpdate = {
+    foods,
+    meal,
+    camp,
+    displayOffset,
+    selectOffset,
+  };
+  res.status(200).json(buffer);
+}
+/**
+   * export interface GetMealForUpdate {
+     foods: InterFood[];
+     meal: InterMeal;
+     camp: BasicCamp;
+     selectOffset: UpdateTimeOffsetRaw;
+     displayOffset: UpdateTimeOffsetRaw;
+   }
+   */

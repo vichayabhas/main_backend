@@ -8,12 +8,16 @@ import {
   SuccessBase,
   CreateActionPlan,
   UpdateActionPlan,
+  InterPlace,
+  GetActionPlanForEdit,
 } from "../../models/interface";
 import Part from "../../models/Part";
 import Place from "../../models/Place";
 import User from "../../models/User";
 import { sendRes, swop, removeDuplicate } from "../setup";
 import express from "express";
+import { getPeesFromPartIdRaw, getPetosFromPartIdRaw } from "./getCampData";
+import TimeOffset from "../../models/TimeOffset";
 
 export async function getActionPlanByPartId(
   req: express.Request,
@@ -99,29 +103,57 @@ export async function createActionPlan(
   req: express.Request,
   res: express.Response
 ) {
-  const create: CreateActionPlan = req.body;
-  const hospital = await ActionPlan.create(create);
-  const part = await Part.findById(create.partId);
-  const camp = await Camp.findById(part?.campId);
+  const {
+    action,
+    partId,
+    placeIds,
+    start,
+    end,
+    headId,
+    body,
+  }: CreateActionPlan = req.body;
+  const part = await Part.findById(partId);
+  if (!part) {
+    sendRes(res, false);
+    return;
+  }
+  const camp = await Camp.findById(part.campId);
+  if (!camp) {
+    sendRes(res, false);
+    return;
+  }
+  const actionPlan = await ActionPlan.create({
+    action,
+    partId,
+    partName: part.partName,
+    placeIds,
+    start,
+    end,
+    headId,
+    body,
+    campId: camp._id,
+  });
   await part?.updateOne({
-    actionPlanIds: swop(null, hospital._id, part.actionPlanIds),
+    actionPlanIds: swop(null, actionPlan._id, part.actionPlanIds),
   });
   await camp?.updateOne({
-    actionPlanIds: swop(null, hospital._id, camp.actionPlanIds),
+    actionPlanIds: swop(null, actionPlan._id, camp.actionPlanIds),
   });
-  await hospital.updateOne({ partName: part?.partName });
   let i = 0;
-  while (i < hospital.placeIds.length) {
-    const place = await Place.findById(create.placeIds[i++]);
-    const building = await Building.findById(place?.buildingId);
-    await place?.updateOne({
-      actionPlanIds: swop(null, hospital._id, place.actionPlanIds),
+  while (i < actionPlan.placeIds.length) {
+    const place = await Place.findById(placeIds[i++]);
+    if (!place) {
+      continue;
+    }
+    const building = await Building.findById(place.buildingId);
+    await place.updateOne({
+      actionPlanIds: swop(null, actionPlan._id, place.actionPlanIds),
     });
     await building?.updateOne({
-      actionPlanIds: swop(null, hospital._id, building.actionPlanIds),
+      actionPlanIds: swop(null, actionPlan._id, building.actionPlanIds),
     });
   }
-  res.status(200).json(hospital);
+  res.status(200).json(actionPlan);
 }
 export async function updateActionPlan(
   req: express.Request,
@@ -476,4 +508,81 @@ export async function getActionPlanByCampId(
   } catch (err) {
     console.log(err);
   }
+}
+export async function getActionPlanForEdit(
+  req: express.Request,
+  res: express.Response
+) {
+  const user = await getUser(req);
+
+  const actionPlanIn: InterActionPlan | null = await ActionPlan.findById(
+    req.params.id
+  );
+  if (!actionPlanIn || !user) {
+    sendRes(res, false);
+    return;
+  }
+  const { action, partId, placeIds, start, end, headId, body, partName, _id } =
+    actionPlanIn;
+  const head = await User.findById(headId);
+  let i = 0;
+  const placeName: string[] = [];
+  while (i < placeIds.length) {
+    const place = await Place.findById(placeIds[i++]);
+    const building = await Building.findById(place?.buildingId);
+    placeName.push(`${building?.name} ${place?.floor} ${place?.room}`);
+  }
+  const actionPlan: showActionPlan = {
+    action,
+    partId,
+    placeIds,
+    start,
+    end,
+    headId,
+    body,
+    headName: head?.nickname as string,
+    headTel: head?.tel as string,
+    partName,
+    placeName,
+    _id,
+  };
+  const part = await Part.findById(partId);
+  if (!part) {
+    sendRes(res, false);
+    return;
+  }
+
+  const camp = await Camp.findById(part.campId);
+  if (!camp) {
+    sendRes(res, false);
+    return;
+  }
+  if (camp.nongIds.includes(user._id)) {
+    sendRes(res, false);
+    return;
+  }
+  i = 0;
+  const places: InterPlace[] = [];
+  while (i < actionPlan.placeIds.length) {
+    const place = await Place.findById(actionPlan.placeIds[i++]);
+    if (!place) {
+      continue;
+    }
+    places.push(place);
+  }
+  const pees = await getPeesFromPartIdRaw(actionPlan.partId);
+  const petos = await getPetosFromPartIdRaw(actionPlan.partId);
+  const selectOffset = await TimeOffset.findById(user.selectOffsetId);
+  if (!selectOffset) {
+    sendRes(res, false);
+    return;
+  }
+  const buffer: GetActionPlanForEdit = {
+    pees,
+    petos,
+    places,
+    actionPlan,
+    selectOffset,
+  };
+  res.status(200).json(buffer);
 }

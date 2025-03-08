@@ -7,6 +7,7 @@ import {
   updateActionPlan,
   deleteActionPlan,
   getActionPlanByCampId,
+  getActionPlanForEdit,
 } from "../controllers/camp/actionPlan";
 import {
   nongRegister,
@@ -228,4 +229,5 @@ router.get("/getGroupContainerForAdmin/params/:id", getGroupContainerForAdmin); 
 router.post("/registerGroup/", protect, registerGroup); //
 router.post("/createSubGroupByAnyone/", protect, createSubGroupByAnyone); //
 router.put("/updateSubGroupByAnyone/", protect, updateSubGroupByAnyone); //
+router.get("/getActionPlanForEdit/params/:id", protect, getActionPlanForEdit); //
 export default router;
