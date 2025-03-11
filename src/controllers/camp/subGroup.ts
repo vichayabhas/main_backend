@@ -1371,34 +1371,29 @@ export async function autoAddToNearestGroup(
         continue;
       }
       if (subGroup.isWearing) {
-        switch (subGroup.genderType) {
-          case "ชายเท่านั้น": {
-            wearingBoySubGroups.push(subGroup);
-            continue;
-          }
-          case "หญิงเท่านั้น": {
-            wearingGirlSubGroups.push(subGroup);
-            continue;
-          }
-          case "คละเพศ":
-            continue;
-        }
+        ifIsTrue(
+          subGroup.genderType == "ชายเท่านั้น",
+          subGroup,
+          wearingBoySubGroups
+        );
+        ifIsTrue(
+          subGroup.genderType == "หญิงเท่านั้น",
+          subGroup,
+          wearingGirlSubGroups
+        );
       }
       if (!subGroup.campMemberCardIds.length) {
-        switch (subGroup.genderType) {
-          case "คละเพศ": {
-            empthySubGroup.push(subGroup);
-            continue;
-          }
-          case "ชายเท่านั้น": {
-            empthyBoySubGroup.push(subGroup);
-            continue;
-          }
-          case "หญิงเท่านั้น": {
-            empthyGirlSubGroup.push(subGroup);
-            continue;
-          }
-        }
+        ifIsTrue(
+          subGroup.genderType == "ชายเท่านั้น",
+          subGroup,
+          empthyBoySubGroup
+        );
+        ifIsTrue(
+          subGroup.genderType == "หญิงเท่านั้น",
+          subGroup,
+          empthyGirlSubGroup
+        );
+        ifIsTrue(subGroup.genderType == "คละเพศ", subGroup, empthySubGroup);
       }
     }
     i = 0;
@@ -1424,16 +1419,16 @@ export async function autoAddToNearestGroup(
         if (!user) {
           continue;
         }
-        switch (user.gender) {
-          case "Male": {
-            wearingBoyCampMemberCards.push(campMemberCard);
-            continue;
-          }
-          case "Female": {
-            wearingGirlCampMemberCards.push(campMemberCard);
-            continue;
-          }
-        }
+        ifIsTrue(
+          user.gender == "Male",
+          campMemberCard,
+          wearingBoyCampMemberCards
+        );
+        ifIsTrue(
+          user.gender == "Female",
+          campMemberCard,
+          wearingGirlCampMemberCards
+        );
       }
     }
     const bufferBoys: InterCampMemberCard[] = [];
