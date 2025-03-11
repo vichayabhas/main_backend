@@ -12,14 +12,18 @@ import { calculate, sendingEmail, sendRes, swop } from "./setup";
 import express from "express";
 import bcrypt from "bcrypt";
 import {
+  FoodLimit,
   HeathIssueBody,
   HeathIssuePack,
   Id,
+  OwnRegisterCampData,
   Register,
   UpdateTimeOffset,
 } from "../models/interface";
 import jwt from "jsonwebtoken";
 import TimeOffset from "../models/TimeOffset";
+import { revalidateSubGroup } from "./camp/subGroup";
+import SubGroup from "../models/SubGroup";
 //*export async function register
 //*export async function login
 //*export async function getMe
@@ -486,6 +490,10 @@ export async function updateHeath(req: express.Request, res: express.Response) {
             break;
           }
         }
+        let j = 0;
+        while (j < campMemberCard.subGroupIds.length) {
+          await revalidateSubGroup(campMemberCard.subGroupIds[j++]);
+        }
       }
       await heath.updateOne({ campMemberCardIds });
       sendRes(res, true);
@@ -610,6 +618,15 @@ export async function updateHeath(req: express.Request, res: express.Response) {
             break;
           }
         }
+        let j = 0;
+        while (j < campMemberCard.subGroupIds.length) {
+          const foodLimit: FoodLimit = "ไม่มีข้อจำกัดด้านความเชื่อ";
+          await SubGroup.findByIdAndUpdate(campMemberCard.subGroupIds[j++], {
+            isWearing: false,
+            spicy: false,
+            foodLimit,
+          });
+        }
       }
       await user.updateOne({ healthIssueId: null });
       await old.deleteOne();
@@ -709,15 +726,32 @@ export async function updateHeath(req: express.Request, res: express.Response) {
           await campMemberCard.updateOne({ healthIssueId: heath._id });
         }
       }
+      let j = 0;
+      while (j < campMemberCard.subGroupIds.length) {
+        await revalidateSubGroup(campMemberCard.subGroupIds[j++]);
+      }
     }
   } else {
     const heath = await HeathIssue.findByIdAndUpdate(
-      user?.healthIssueId,
+      user.healthIssueId,
       heathIssueBody
     );
     if (!heath) {
       sendRes(res, false);
       return;
+    }
+    let i = 0;
+    while (i < user.campMemberCardIds.length) {
+      const campMemberCard = await CampMemberCard.findById(
+        user.campMemberCardIds[i++]
+      );
+      if (!campMemberCard) {
+        continue;
+      }
+      let j = 0;
+      while (j < campMemberCard.subGroupIds.length) {
+        await revalidateSubGroup(campMemberCard.subGroupIds[j++]);
+      }
     }
     await revalidationHeathIssues([heath._id]);
     res.status(200).json(heath?.toObject());
@@ -1506,4 +1540,80 @@ export function isFoodValid(input: HeathIssuePack): boolean {
     input.heathIssue.foodLimit != "ไม่มีข้อจำกัดด้านความเชื่อ" ||
     input.heathIssue.spicy
   );
+}
+export async function getOwnRegisterCampDatas(
+  req: express.Request,
+  res: express.Response
+) {
+  const user = await User.findById(req.params.id);
+  if (!user) {
+    sendRes(res, false);
+    return;
+  }
+  const outs: OwnRegisterCampData[] = [];
+  let i = 0;
+  while (i < user.campMemberCardIds.length) {
+    const campMemberCard = await CampMemberCard.findById(
+      user.campMemberCardIds[i++]
+    );
+    if (!campMemberCard) {
+      continue;
+    }
+    switch (campMemberCard.role) {
+      case "nong": {
+        const nongCamp = await NongCamp.findById(campMemberCard.campModelId);
+        if (!nongCamp) {
+          continue;
+        }
+        const camp = await Camp.findById(nongCamp.campId);
+        const baan = await Baan.findById(nongCamp.baanId);
+        if (!camp || !baan) {
+          continue;
+        }
+        outs.push({
+          campName: camp.campName,
+          role: camp.nongCall,
+          baan: baan.name,
+          size: campMemberCard.size,
+        });
+        break;
+      }
+      case "pee": {
+        const peeCamp = await PeeCamp.findById(campMemberCard.campModelId);
+        if (!peeCamp) {
+          continue;
+        }
+        const camp = await Camp.findById(peeCamp.campId);
+        const baan = await Baan.findById(peeCamp.baanId);
+        if (!baan || !camp) {
+          continue;
+        }
+        outs.push({
+          campName: camp.campName,
+          role: `พี่${camp.groupName}`,
+          baan: baan.name,
+          size: campMemberCard.size,
+        });
+        break;
+      }
+      case "peto": {
+        const petoCamp = await PetoCamp.findById(campMemberCard.campModelId);
+        if (!petoCamp) {
+          continue;
+        }
+        const camp = await Camp.findById(petoCamp.campId);
+        if (!camp) {
+          continue;
+        }
+        outs.push({
+          campName: camp.campName,
+          role: "พี่ปีโต",
+          baan: "null",
+          size: campMemberCard.size,
+        });
+        break;
+      }
+    }
+  }
+  res.status(200).json(outs);
 }

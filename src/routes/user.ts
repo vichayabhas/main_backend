@@ -21,6 +21,7 @@ import {
   verifyEmail,
   checkPassword,
   bypassRole,
+  getOwnRegisterCampDatas,
 } from "../controllers/user";
 
 const router = express.Router();
@@ -48,4 +49,5 @@ router.post("/signId/", protect, signId); //
 router.post("/verifyEmail/", protect, verifyEmail); //
 router.post("/checkPassword/", protect, checkPassword); //
 router.post("/bypassRole/", protect, bypassRole); //
+router.get("/getOwnRegisterCampDatas/params/:id", getOwnRegisterCampDatas); //
 export default router;

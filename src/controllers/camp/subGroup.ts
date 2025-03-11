@@ -3,18 +3,24 @@ import Baan from "../../models/Baan";
 import Camp from "../../models/Camp";
 import CampMemberCard from "../../models/CampMemberCard";
 import GroupContainer from "../../models/GroupContainer";
+import HeathIssue from "../../models/HeathIssue";
 import {
   BasicUser,
   CreateGroupContainer,
   CreateSubGroup,
   CreateSubGroupByAnyone,
+  FoodLimit,
   GetGroupContainer,
   GetGroupContainerForAdmin,
   GetSubGroup,
   GroupContainerPack,
   GroupGenderType,
   GroupRoleType,
+  HeathIssueBody,
   Id,
+  InterCampMemberCard,
+  InterGroupContainer,
+  InterSubGroup,
   RegisterGroup,
   SubGroupGenderType,
   SubGroupRoleType,
@@ -26,8 +32,9 @@ import PeeCamp from "../../models/PeeCamp";
 import PetoCamp from "../../models/PetoCamp";
 import SubGroup from "../../models/SubGroup";
 import User from "../../models/User";
-import { sendRes, swop } from "../setup";
+import { ifIsTrue, removeDuplicate, sendRes, swop } from "../setup";
 import express from "express";
+import { getAuthTypes } from "./getCampData";
 //*export async function removeMemberFromSubGroupRaw
 //*export async function createGroupContainer
 //*export async function createSubGroup
@@ -332,6 +339,9 @@ export async function getGroupContainerRaw(
       limit,
       genderType,
       _id,
+      isWearing,
+      foodLimit,
+      spicy,
     } = subGroup;
     let j = 0;
     while (j < campMemberCardIds.length) {
@@ -356,7 +366,34 @@ export async function getGroupContainerRaw(
       genderType,
       _id,
       roleType,
+      spicy,
+      isWearing,
+      foodLimit,
     });
+  }
+  const baan = await Baan.findById(baanId);
+  if (!baan) {
+    return null;
+  }
+  const peesThatNotInGroup: BasicUser[] = [];
+  const nongsThatNotInGroup: BasicUser[] = [];
+  const peesThatNotInGroupId = removeDuplicate(baan.peeIds, userIds);
+  const nongsThatNotInGroupId = removeDuplicate(baan.nongIds, userIds);
+  i = 0;
+  while (i < nongsThatNotInGroupId.length) {
+    const user = await User.findById(nongsThatNotInGroupId[i++]);
+    if (!user) {
+      continue;
+    }
+    nongsThatNotInGroup.push(user);
+  }
+  i = 0;
+  while (i < peesThatNotInGroupId.length) {
+    const user = await User.findById(peesThatNotInGroupId[i++]);
+    if (!user) {
+      continue;
+    }
+    peesThatNotInGroup.push(user);
   }
   return {
     subGroups,
@@ -369,6 +406,8 @@ export async function getGroupContainerRaw(
     canAnybodyCreateSubGroup,
     _id,
     userIds,
+    peesThatNotInGroup,
+    nongsThatNotInGroup,
   };
 }
 export async function updateGroupContainer(
@@ -815,59 +854,7 @@ export async function registerGroup(
         if (remove.containerId.toString() != container._id.toString()) {
           break;
         }
-        const roleType: SubGroupRoleType = "คละพี่และน้อง";
-        const genderType: SubGroupGenderType = "คละเพศ";
-        if (remove.campMemberCardIds.length == 1) {
-          if (container.roleType == "เลือกพี่หรือน้องตามคนแรก") {
-            if (container.genderType == "เลือกเพศตามคนแรก") {
-              await remove.updateOne({
-                roleType,
-                genderType,
-                campMemberCardIds: swop(
-                  campMemberCard._id,
-                  null,
-                  remove.campMemberCardIds
-                ),
-              });
-            } else {
-              await remove.updateOne({
-                roleType,
-                campMemberCardIds: swop(
-                  campMemberCard._id,
-                  null,
-                  remove.campMemberCardIds
-                ),
-              });
-            }
-          } else {
-            if (container.genderType == "เลือกเพศตามคนแรก") {
-              await remove.updateOne({
-                genderType,
-                campMemberCardIds: swop(
-                  campMemberCard._id,
-                  null,
-                  remove.campMemberCardIds
-                ),
-              });
-            } else {
-              await remove.updateOne({
-                campMemberCardIds: swop(
-                  campMemberCard._id,
-                  null,
-                  remove.campMemberCardIds
-                ),
-              });
-            }
-          }
-        } else {
-          await remove.updateOne({
-            campMemberCardIds: swop(
-              campMemberCard._id,
-              null,
-              remove.campMemberCardIds
-            ),
-          });
-        }
+        await registerRemoveSubGroupRaw(campMemberCard, container, remove._id);
         await container.updateOne({
           userIds: swop(user._id, null, container.userIds),
         });
@@ -881,87 +868,7 @@ export async function registerGroup(
         ) {
           break;
         }
-        if (add.limit == add.campMemberCardIds.length) {
-          break;
-        }
-        if (campMemberCard.role == "peto") {
-          break;
-        }
-        if (
-          (add.roleType == "น้องเท่านั้น" && campMemberCard.role == "pee") ||
-          (add.roleType == "พี่เท่านั้น" && campMemberCard.role == "nong")
-        ) {
-          break;
-        }
-        if (
-          (add.genderType == "ชายเท่านั้น" && user.gender == "Female") ||
-          (add.genderType == "หญิงเท่านั้น" && user.gender == "Male")
-        ) {
-          break;
-        }
-        let roleType: SubGroupRoleType;
-        let genderType: SubGroupGenderType;
-        switch (campMemberCard.role) {
-          case "nong": {
-            roleType = "น้องเท่านั้น";
-            break;
-          }
-          case "pee": {
-            roleType = "พี่เท่านั้น";
-            break;
-          }
-        }
-        switch (user.gender) {
-          case "Male": {
-            genderType = "ชายเท่านั้น";
-            break;
-          }
-          case "Female": {
-            genderType = "หญิงเท่านั้น";
-            break;
-          }
-        }
-        if (container.roleType == "เลือกพี่หรือน้องตามคนแรก") {
-          if (container.genderType == "เลือกเพศตามคนแรก") {
-            await add.updateOne({
-              roleType,
-              genderType,
-              campMemberCardIds: swop(
-                null,
-                campMemberCard._id,
-                add.campMemberCardIds
-              ),
-            });
-          } else {
-            await add.updateOne({
-              roleType,
-              campMemberCardIds: swop(
-                null,
-                campMemberCard._id,
-                add.campMemberCardIds
-              ),
-            });
-          }
-        } else {
-          if (container.genderType == "เลือกเพศตามคนแรก") {
-            await add.updateOne({
-              genderType,
-              campMemberCardIds: swop(
-                null,
-                campMemberCard._id,
-                add.campMemberCardIds
-              ),
-            });
-          } else {
-            await add.updateOne({
-              campMemberCardIds: swop(
-                null,
-                campMemberCard._id,
-                add.campMemberCardIds
-              ),
-            });
-          }
-        }
+        await registerAddSubGroupRaw(campMemberCard, user, container, add._id);
         await container.updateOne({
           userIds: swop(null, user._id, container.userIds),
         });
@@ -977,137 +884,8 @@ export async function registerGroup(
         if (add.limit == add.campMemberCardIds.length) {
           break;
         }
-        const roleTypeRemove: SubGroupRoleType = "คละพี่และน้อง";
-        const genderTypeRemove: SubGroupGenderType = "คละเพศ";
-        if (remove.campMemberCardIds.length == 1) {
-          if (container.roleType == "เลือกพี่หรือน้องตามคนแรก") {
-            if (container.genderType == "เลือกเพศตามคนแรก") {
-              await remove.updateOne({
-                roleType: roleTypeRemove,
-                genderType: genderTypeRemove,
-                campMemberCardIds: swop(
-                  campMemberCard._id,
-                  null,
-                  remove.campMemberCardIds
-                ),
-              });
-            } else {
-              await remove.updateOne({
-                roleType: roleTypeRemove,
-                campMemberCardIds: swop(
-                  campMemberCard._id,
-                  null,
-                  remove.campMemberCardIds
-                ),
-              });
-            }
-          } else {
-            if (container.genderType == "เลือกเพศตามคนแรก") {
-              await remove.updateOne({
-                genderType: genderTypeRemove,
-                campMemberCardIds: swop(
-                  campMemberCard._id,
-                  null,
-                  remove.campMemberCardIds
-                ),
-              });
-            } else {
-              await remove.updateOne({
-                campMemberCardIds: swop(
-                  campMemberCard._id,
-                  null,
-                  remove.campMemberCardIds
-                ),
-              });
-            }
-          }
-        } else {
-          await remove.updateOne({
-            campMemberCardIds: swop(
-              campMemberCard._id,
-              null,
-              remove.campMemberCardIds
-            ),
-          });
-        }
-        if (campMemberCard.role == "peto") {
-          break;
-        }
-        if (
-          (add.roleType == "น้องเท่านั้น" && campMemberCard.role == "pee") ||
-          (add.roleType == "พี่เท่านั้น" && campMemberCard.role == "nong")
-        ) {
-          break;
-        }
-        if (
-          (add.genderType == "ชายเท่านั้น" && user.gender == "Female") ||
-          (add.genderType == "หญิงเท่านั้น" && user.gender == "Male")
-        ) {
-          break;
-        }
-        let roleType: SubGroupRoleType;
-        let genderType: SubGroupGenderType;
-        switch (campMemberCard.role) {
-          case "nong": {
-            roleType = "น้องเท่านั้น";
-            break;
-          }
-          case "pee": {
-            roleType = "พี่เท่านั้น";
-            break;
-          }
-        }
-        switch (user.gender) {
-          case "Male": {
-            genderType = "ชายเท่านั้น";
-            break;
-          }
-          case "Female": {
-            genderType = "หญิงเท่านั้น";
-            break;
-          }
-        }
-        if (container.roleType == "เลือกพี่หรือน้องตามคนแรก") {
-          if (container.genderType == "เลือกเพศตามคนแรก") {
-            await add.updateOne({
-              roleType,
-              genderType,
-              campMemberCardIds: swop(
-                null,
-                campMemberCard._id,
-                add.campMemberCardIds
-              ),
-            });
-          } else {
-            await add.updateOne({
-              roleType,
-              campMemberCardIds: swop(
-                null,
-                campMemberCard._id,
-                add.campMemberCardIds
-              ),
-            });
-          }
-        } else {
-          if (container.genderType == "เลือกเพศตามคนแรก") {
-            await add.updateOne({
-              genderType,
-              campMemberCardIds: swop(
-                null,
-                campMemberCard._id,
-                add.campMemberCardIds
-              ),
-            });
-          } else {
-            await add.updateOne({
-              campMemberCardIds: swop(
-                null,
-                campMemberCard._id,
-                add.campMemberCardIds
-              ),
-            });
-          }
-        }
+        await registerAddSubGroupRaw(campMemberCard, user, container, add._id);
+        await registerRemoveSubGroupRaw(campMemberCard, container, remove._id);
         subGroupIds = swop(remove._id, add._id, campMemberCard.subGroupIds);
       }
     }
@@ -1254,4 +1032,1297 @@ export async function updateSubGroupByAnyone(
   await subGroup.updateOne({ limit, name });
   const group = await getGroupContainerRaw(container._id);
   res.status(200).json(group);
+}
+async function registerAddSubGroupRaw(
+  campMemberCard: InterCampMemberCard,
+  user: BasicUser,
+  container: InterGroupContainer,
+  addId: Id
+) {
+  const add = await SubGroup.findById(addId);
+  if (campMemberCard.role == "peto" || !add) {
+    return false;
+  }
+  const empthy = add.campMemberCardIds.length == 0;
+  if (
+    (add.roleType == "น้องเท่านั้น" && campMemberCard.role == "pee") ||
+    (add.roleType == "พี่เท่านั้น" && campMemberCard.role == "nong")
+  ) {
+    return false;
+  }
+  if (
+    (add.genderType == "ชายเท่านั้น" && user.gender == "Female") ||
+    (add.genderType == "หญิงเท่านั้น" && user.gender == "Male")
+  ) {
+    return false;
+  }
+  let roleType: SubGroupRoleType;
+  let genderType: SubGroupGenderType;
+  switch (campMemberCard.role) {
+    case "nong": {
+      roleType = "น้องเท่านั้น";
+      break;
+    }
+    case "pee": {
+      roleType = "พี่เท่านั้น";
+      break;
+    }
+  }
+  switch (user.gender) {
+    case "Male": {
+      genderType = "ชายเท่านั้น";
+      break;
+    }
+    case "Female": {
+      genderType = "หญิงเท่านั้น";
+      break;
+    }
+  }
+  let healthIssue: HeathIssueBody | null = await HeathIssue.findById(
+    campMemberCard.healthIssueId
+  );
+  if (!healthIssue) {
+    healthIssue = {
+      isWearing: false,
+      spicy: false,
+      food: "",
+      foodConcern: "",
+      foodLimit: "ไม่มีข้อจำกัดด้านความเชื่อ",
+      medicine: "",
+      chronicDisease: "",
+      extra: "",
+    };
+  }
+  const isWearing = healthIssue.isWearing && (empthy || add.isWearing);
+  const spicy = healthIssue.spicy && (empthy || add.spicy);
+  let foodLimit: FoodLimit;
+  if (healthIssue.foodLimit == add.foodLimit || empthy) {
+    foodLimit = healthIssue.foodLimit;
+  } else {
+    foodLimit = "ไม่มีข้อจำกัดด้านความเชื่อ";
+  }
+  if (container.roleType == "เลือกพี่หรือน้องตามคนแรก") {
+    if (container.genderType == "เลือกเพศตามคนแรก") {
+      await add.updateOne({
+        roleType,
+        genderType,
+        campMemberCardIds: swop(
+          null,
+          campMemberCard._id,
+          add.campMemberCardIds
+        ),
+        spicy,
+        isWearing,
+        foodLimit,
+      });
+    } else {
+      await add.updateOne({
+        roleType,
+        campMemberCardIds: swop(
+          null,
+          campMemberCard._id,
+          add.campMemberCardIds
+        ),
+        spicy,
+        isWearing,
+        foodLimit,
+      });
+    }
+  } else {
+    if (container.genderType == "เลือกเพศตามคนแรก") {
+      await add.updateOne({
+        genderType,
+        campMemberCardIds: swop(
+          null,
+          campMemberCard._id,
+          add.campMemberCardIds
+        ),
+        spicy,
+        isWearing,
+        foodLimit,
+      });
+    } else {
+      await add.updateOne({
+        campMemberCardIds: swop(
+          null,
+          campMemberCard._id,
+          add.campMemberCardIds
+        ),
+        spicy,
+        isWearing,
+        foodLimit,
+      });
+    }
+  }
+  return true;
+}
+async function registerRemoveSubGroupRaw(
+  campMemberCard: InterCampMemberCard,
+  container: InterGroupContainer,
+  removeId: Id
+) {
+  const remove = await SubGroup.findById(removeId);
+  if (!remove) {
+    return;
+  }
+  const roleType: SubGroupRoleType = "คละพี่และน้อง";
+  const genderType: SubGroupGenderType = "คละเพศ";
+  if (remove.campMemberCardIds.length == 1) {
+    if (container.roleType == "เลือกพี่หรือน้องตามคนแรก") {
+      if (container.genderType == "เลือกเพศตามคนแรก") {
+        await remove.updateOne({
+          roleType,
+          genderType,
+          campMemberCardIds: swop(
+            campMemberCard._id,
+            null,
+            remove.campMemberCardIds
+          ),
+        });
+      } else {
+        await remove.updateOne({
+          roleType,
+          campMemberCardIds: swop(
+            campMemberCard._id,
+            null,
+            remove.campMemberCardIds
+          ),
+        });
+      }
+    } else {
+      if (container.genderType == "เลือกเพศตามคนแรก") {
+        await remove.updateOne({
+          genderType,
+          campMemberCardIds: swop(
+            campMemberCard._id,
+            null,
+            remove.campMemberCardIds
+          ),
+        });
+      } else {
+        await remove.updateOne({
+          campMemberCardIds: swop(
+            campMemberCard._id,
+            null,
+            remove.campMemberCardIds
+          ),
+        });
+      }
+    }
+  } else {
+    await remove.updateOne({
+      campMemberCardIds: swop(
+        campMemberCard._id,
+        null,
+        remove.campMemberCardIds
+      ),
+    });
+  }
+  await revalidateSubGroup(remove._id);
+}
+export async function revalidateSubGroup(subGroupId: Id) {
+  const subGroup = await SubGroup.findById(subGroupId);
+  if (!subGroup) {
+    return;
+  }
+  if (!subGroup.campMemberCardIds.length) {
+    const foodLimit: FoodLimit = "ไม่มีข้อจำกัดด้านความเชื่อ";
+    await subGroup.updateOne({ isWearing: false, spicy: false, foodLimit });
+    return;
+  }
+  const firstCampMemberCard = await CampMemberCard.findById(
+    subGroup.campMemberCardIds[0]
+  );
+  if (!firstCampMemberCard) {
+    return;
+  }
+  const firstHealthIsshue = await HeathIssue.findById(
+    firstCampMemberCard.healthIssueId
+  );
+  if (!firstHealthIsshue) {
+    const foodLimit: FoodLimit = "ไม่มีข้อจำกัดด้านความเชื่อ";
+    await subGroup.updateOne({ isWearing: false, spicy: false, foodLimit });
+    return;
+  }
+  let { isWearing, spicy, foodLimit } = firstHealthIsshue;
+  let i = 1;
+  while (i < subGroup.campMemberCardIds.length) {
+    const campMemberCard = await CampMemberCard.findById(
+      subGroup.campMemberCardIds[i++]
+    );
+    if (!campMemberCard) {
+      continue;
+    }
+    const healthIssue = await HeathIssue.findById(campMemberCard.healthIssueId);
+    if (!healthIssue) {
+      const foodLimit: FoodLimit = "ไม่มีข้อจำกัดด้านความเชื่อ";
+      await subGroup.updateOne({ isWearing: false, spicy: false, foodLimit });
+      return;
+    }
+    if (healthIssue.isWearing != isWearing) {
+      isWearing = false;
+    }
+    if (healthIssue.spicy != spicy) {
+      spicy = false;
+    }
+    if (foodLimit != healthIssue.foodLimit) {
+      foodLimit = "ไม่มีข้อจำกัดด้านความเชื่อ";
+    }
+  }
+  await subGroup.updateOne({ isWearing, spicy, foodLimit });
+}
+function recycleSubGroup(inputs: InterSubGroup[], compares: InterSubGroup[]) {
+  return inputs.filter((v) => !compares.includes(v));
+}
+
+function getSuitableSubGroups(inputs: InterSubGroup[], count: number) {
+  const out: InterSubGroup[] = [];
+  inputs.sort((a, b) => b.limit - a.limit);
+  let i = 0;
+  while (i < inputs.length && count >= inputs[i].limit) {
+    out.push(inputs[i]);
+    count = count - inputs[i++].limit;
+  }
+  if (count == 0 || i >= inputs.length) {
+    return out;
+  }
+  while (i < inputs.length && count <= inputs[i].limit) {
+    i++;
+  }
+  out.push(inputs[i - 1]);
+  return out;
+}
+async function addAllToGroup(
+  campMemberCards: InterCampMemberCard[],
+  subGroups: InterSubGroup[],
+  container: InterGroupContainer,
+  userIds: Id[]
+) {
+  let subGroupIndex = 0;
+  let campMemberCardIndex = 0;
+  while (
+    campMemberCardIndex < campMemberCards.length &&
+    subGroupIndex < subGroups.length
+  ) {
+    let runMemberIndex = 0;
+    const subGroup = subGroups[subGroupIndex++];
+    while (
+      runMemberIndex < subGroup.limit &&
+      campMemberCardIndex < campMemberCards.length
+    ) {
+      runMemberIndex++;
+      const campMemberCard = campMemberCards[campMemberCardIndex++];
+      const user = await User.findById(campMemberCard.userId);
+      if (!user) {
+        continue;
+      }
+      await registerAddSubGroupRaw(
+        campMemberCard,
+        user,
+        container,
+        subGroup._id
+      );
+      await CampMemberCard.findByIdAndUpdate(campMemberCard._id, {
+        subGroupIds: swop(null, subGroup._id, campMemberCard.subGroupIds),
+      });
+      userIds = swop(null, user._id, userIds);
+    }
+  }
+  return userIds;
+}
+export async function autoAddToNearestGroup(
+  req: express.Request,
+  res: express.Response
+) {
+  const container = await GroupContainer.findById(req.params.id);
+  const user = await getUser(req);
+  if (!user || !container) {
+    sendRes(res, false);
+    return;
+  }
+  const baan = await Baan.findById(container.baanId);
+  if (!baan) {
+    sendRes(res, false);
+    return;
+  }
+  let userIds = container.userIds;
+  const camp = await Camp.findById(baan.campId);
+  const auth = await getAuthTypes(user._id, baan.campId);
+  if (
+    !auth ||
+    !camp ||
+    (!camp.boardIds.includes(user._id) && !auth.includes("แก้ไขกลุ่มได้"))
+  ) {
+    sendRes(res, false);
+    return;
+  }
+  if (container.genderType != "คละเพศ") {
+    const wearingBoyCampMemberCards: InterCampMemberCard[] = [];
+    const wearingBoySubGroups: InterSubGroup[] = [];
+    const wearingGirlCampMemberCards: InterCampMemberCard[] = [];
+    const wearingGirlSubGroups: InterSubGroup[] = [];
+    const empthySubGroup: InterSubGroup[] = [];
+    const empthyBoySubGroup: InterSubGroup[] = [];
+    const empthyGirlSubGroup: InterSubGroup[] = [];
+    let i = 0;
+    while (i < container.subGroupIds.length) {
+      const subGroup = await SubGroup.findById(container.subGroupIds[i++]);
+      if (!subGroup) {
+        continue;
+      }
+      if (subGroup.isWearing) {
+        switch (subGroup.genderType) {
+          case "ชายเท่านั้น": {
+            wearingBoySubGroups.push(subGroup);
+            continue;
+          }
+          case "หญิงเท่านั้น": {
+            wearingGirlSubGroups.push(subGroup);
+            continue;
+          }
+          case "คละเพศ":
+            continue;
+        }
+      }
+      if (!subGroup.campMemberCardIds.length) {
+        switch (subGroup.genderType) {
+          case "คละเพศ": {
+            empthySubGroup.push(subGroup);
+            continue;
+          }
+          case "ชายเท่านั้น": {
+            empthyBoySubGroup.push(subGroup);
+            continue;
+          }
+          case "หญิงเท่านั้น": {
+            empthyGirlSubGroup.push(subGroup);
+            continue;
+          }
+        }
+      }
+    }
+    i = 0;
+    const memberIds = baan.nongCampMemberCardHaveHeathIssueIds.concat(
+      baan.peeCampMemberCardHaveHeathIssueIds
+    );
+    while (i < memberIds.length) {
+      const campMemberCard = await CampMemberCard.findById(memberIds[i++]);
+      if (!campMemberCard) {
+        continue;
+      }
+      if (userIds.includes(campMemberCard.userId)) {
+        continue;
+      }
+      const healthIssue = await HeathIssue.findById(
+        campMemberCard.healthIssueId
+      );
+      if (!healthIssue) {
+        continue;
+      }
+      if (healthIssue.isWearing) {
+        const user = await User.findById(campMemberCard.userId);
+        if (!user) {
+          continue;
+        }
+        switch (user.gender) {
+          case "Male": {
+            wearingBoyCampMemberCards.push(campMemberCard);
+            continue;
+          }
+          case "Female": {
+            wearingGirlCampMemberCards.push(campMemberCard);
+            continue;
+          }
+        }
+      }
+    }
+    const bufferBoys: InterCampMemberCard[] = [];
+    const bufferGirls: InterCampMemberCard[] = [];
+    let girlIndex = 0;
+    let boyIndex = 0;
+    let bufferBoyIndex = 0;
+    let bufferGirlIndex = 0;
+    i = 0;
+    while (i < wearingBoySubGroups.length) {
+      const bufferLimit = bufferBoys.length;
+      const subGroup = wearingBoySubGroups[i++];
+      let memberInSubGroupIndex = subGroup.campMemberCardIds.length - 1;
+      while (
+        bufferBoyIndex < bufferLimit &&
+        memberInSubGroupIndex < subGroup.campMemberCardIds.length
+      ) {
+        const campMemberCard = bufferBoys[bufferBoyIndex++];
+        const user = await User.findById(campMemberCard.userId);
+        if (!user) {
+          continue;
+        }
+        const success = await registerAddSubGroupRaw(
+          campMemberCard,
+          user,
+          container,
+          subGroup._id
+        );
+        if (success) {
+          memberInSubGroupIndex++;
+          await CampMemberCard.findByIdAndUpdate(campMemberCard._id, {
+            subGroupIds: swop(null, subGroup._id, campMemberCard.subGroupIds),
+          });
+          userIds = swop(null, user._id, userIds);
+        } else {
+          bufferBoys.push(campMemberCard);
+        }
+      }
+      while (
+        boyIndex < wearingBoyCampMemberCards.length &&
+        memberInSubGroupIndex < subGroup.campMemberCardIds.length
+      ) {
+        const campMemberCard = wearingBoyCampMemberCards[boyIndex++];
+        const user = await User.findById(campMemberCard.userId);
+        if (!user) {
+          continue;
+        }
+        const success = await registerAddSubGroupRaw(
+          campMemberCard,
+          user,
+          container,
+          subGroup._id
+        );
+        if (success) {
+          memberInSubGroupIndex++;
+          await CampMemberCard.findByIdAndUpdate(campMemberCard._id, {
+            subGroupIds: swop(null, subGroup._id, campMemberCard.subGroupIds),
+          });
+          userIds = swop(null, user._id, userIds);
+        } else {
+          bufferBoys.push(campMemberCard);
+        }
+      }
+    }
+    i = 0;
+    while (i < wearingGirlSubGroups.length) {
+      const bufferLimit = bufferGirls.length;
+      const subGroup = wearingGirlSubGroups[i++];
+      let memberInSubGroupIndex = subGroup.campMemberCardIds.length - 1;
+      while (
+        bufferGirlIndex < bufferLimit &&
+        memberInSubGroupIndex < subGroup.campMemberCardIds.length
+      ) {
+        const campMemberCard = bufferGirls[bufferGirlIndex++];
+        const user = await User.findById(campMemberCard.userId);
+        if (!user) {
+          continue;
+        }
+        const success = await registerAddSubGroupRaw(
+          campMemberCard,
+          user,
+          container,
+          subGroup._id
+        );
+        if (success) {
+          memberInSubGroupIndex++;
+          await CampMemberCard.findByIdAndUpdate(campMemberCard._id, {
+            subGroupIds: swop(null, subGroup._id, campMemberCard.subGroupIds),
+          });
+          userIds = swop(null, user._id, userIds);
+        } else {
+          bufferGirls.push(campMemberCard);
+        }
+      }
+      while (
+        girlIndex < wearingGirlCampMemberCards.length &&
+        memberInSubGroupIndex < subGroup.campMemberCardIds.length
+      ) {
+        const campMemberCard = wearingGirlCampMemberCards[girlIndex++];
+        const user = await User.findById(campMemberCard.userId);
+        if (!user) {
+          continue;
+        }
+        const success = await registerAddSubGroupRaw(
+          campMemberCard,
+          user,
+          container,
+          subGroup._id
+        );
+        if (success) {
+          memberInSubGroupIndex++;
+          await CampMemberCard.findByIdAndUpdate(campMemberCard._id, {
+            subGroupIds: swop(null, subGroup._id, campMemberCard.subGroupIds),
+          });
+          userIds = swop(null, user._id, userIds);
+        } else {
+          bufferGirls.push(campMemberCard);
+        }
+      }
+    }
+    if (container.genderType == "กำหนดตอนสร้างกลุ่มย่อย") {
+      switch (container.roleType) {
+        case "กำหนดตอนสร้างกลุ่มย่อย": {
+          const nongBoys: InterCampMemberCard[] = [];
+          const nongGirls: InterCampMemberCard[] = [];
+          const peeBoys: InterCampMemberCard[] = [];
+          const peeGirls: InterCampMemberCard[] = [];
+          while (bufferBoyIndex < bufferBoys.length) {
+            const campMemberCard = bufferBoys[bufferBoyIndex++];
+            ifIsTrue(campMemberCard.role == "nong", campMemberCard, nongBoys);
+            ifIsTrue(campMemberCard.role == "pee", campMemberCard, peeBoys);
+          }
+          while (boyIndex < wearingBoyCampMemberCards.length) {
+            const campMemberCard = wearingBoyCampMemberCards[boyIndex++];
+            ifIsTrue(campMemberCard.role == "nong", campMemberCard, nongBoys);
+            ifIsTrue(campMemberCard.role == "pee", campMemberCard, peeBoys);
+          }
+          while (bufferGirlIndex < bufferGirls.length) {
+            const campMemberCard = bufferGirls[bufferGirlIndex++];
+            ifIsTrue(campMemberCard.role == "nong", campMemberCard, nongGirls);
+            ifIsTrue(campMemberCard.role == "pee", campMemberCard, peeGirls);
+          }
+          while (girlIndex < wearingGirlCampMemberCards.length) {
+            const campMemberCard = wearingGirlCampMemberCards[girlIndex++];
+            ifIsTrue(campMemberCard.role == "nong", campMemberCard, nongGirls);
+            ifIsTrue(campMemberCard.role == "pee", campMemberCard, peeGirls);
+          }
+          const nongBoySubGroups: InterSubGroup[] = [];
+          const nongGirlSubGroups: InterSubGroup[] = [];
+          const peeBoySubGroups: InterSubGroup[] = [];
+          const peeGirlSubGroups: InterSubGroup[] = [];
+          for (const subGroup of empthyBoySubGroup) {
+            ifIsTrue(
+              subGroup.roleType == "น้องเท่านั้น",
+              subGroup,
+              nongBoySubGroups
+            );
+            ifIsTrue(
+              subGroup.roleType == "พี่เท่านั้น",
+              subGroup,
+              peeBoySubGroups
+            );
+          }
+          for (const subGroup of empthyGirlSubGroup) {
+            ifIsTrue(
+              subGroup.roleType == "น้องเท่านั้น",
+              subGroup,
+              nongGirlSubGroups
+            );
+            ifIsTrue(
+              subGroup.roleType == "พี่เท่านั้น",
+              subGroup,
+              peeGirlSubGroups
+            );
+          }
+          const nongBoySuitSubGroups: InterSubGroup[] = getSuitableSubGroups(
+            nongBoySubGroups,
+            nongBoys.length
+          );
+          const nongGirlSuitSubGroups: InterSubGroup[] = getSuitableSubGroups(
+            nongGirlSubGroups,
+            nongGirls.length
+          );
+          const peeBoySuitSubGroups: InterSubGroup[] = getSuitableSubGroups(
+            peeBoySubGroups,
+            peeBoys.length
+          );
+          const peeGirlSuitSubGroups: InterSubGroup[] = getSuitableSubGroups(
+            peeGirlSubGroups,
+            peeGirls.length
+          );
+          userIds = await addAllToGroup(
+            peeBoys,
+            peeBoySuitSubGroups,
+            container,
+            userIds
+          );
+          userIds = await addAllToGroup(
+            peeGirls,
+            peeGirlSuitSubGroups,
+            container,
+            userIds
+          );
+          userIds = await addAllToGroup(
+            nongBoys,
+            nongBoySuitSubGroups,
+            container,
+            userIds
+          );
+          userIds = await addAllToGroup(
+            nongGirls,
+            nongGirlSuitSubGroups,
+            container,
+            userIds
+          );
+          break;
+        }
+        case "คละพี่และน้อง": {
+          const boys: InterCampMemberCard[] = [];
+          const girls: InterCampMemberCard[] = [];
+          while (bufferBoyIndex < bufferBoys.length) {
+            const campMemberCard = bufferBoys[bufferBoyIndex++];
+            boys.push(campMemberCard);
+          }
+          while (boyIndex < wearingBoyCampMemberCards.length) {
+            const campMemberCard = wearingBoyCampMemberCards[boyIndex++];
+            boys.push(campMemberCard);
+          }
+          while (bufferGirlIndex < bufferGirls.length) {
+            const campMemberCard = bufferGirls[bufferGirlIndex++];
+            girls.push(campMemberCard);
+          }
+          while (girlIndex < wearingGirlCampMemberCards.length) {
+            const campMemberCard = wearingGirlCampMemberCards[girlIndex++];
+            girls.push(campMemberCard);
+          }
+          const boySubGroups = getSuitableSubGroups(
+            empthyBoySubGroup,
+            boys.length
+          );
+          const girlSubGroup = getSuitableSubGroups(
+            empthyGirlSubGroup,
+            girls.length
+          );
+          userIds = await addAllToGroup(boys, boySubGroups, container, userIds);
+          userIds = await addAllToGroup(
+            girls,
+            girlSubGroup,
+            container,
+            userIds
+          );
+          break;
+        }
+        case "เลือกพี่หรือน้องตามคนแรก": {
+          const nongBoys: InterCampMemberCard[] = [];
+          const nongGirls: InterCampMemberCard[] = [];
+          const peeBoys: InterCampMemberCard[] = [];
+          const peeGirls: InterCampMemberCard[] = [];
+          while (bufferBoyIndex < bufferBoys.length) {
+            const campMemberCard = bufferBoys[bufferBoyIndex++];
+            ifIsTrue(campMemberCard.role == "nong", campMemberCard, nongBoys);
+            ifIsTrue(campMemberCard.role == "pee", campMemberCard, peeBoys);
+          }
+          while (boyIndex < wearingBoyCampMemberCards.length) {
+            const campMemberCard = wearingBoyCampMemberCards[boyIndex++];
+            ifIsTrue(campMemberCard.role == "nong", campMemberCard, nongBoys);
+            ifIsTrue(campMemberCard.role == "pee", campMemberCard, peeBoys);
+          }
+          while (bufferGirlIndex < bufferGirls.length) {
+            const campMemberCard = bufferGirls[bufferGirlIndex++];
+            ifIsTrue(campMemberCard.role == "nong", campMemberCard, nongGirls);
+            ifIsTrue(campMemberCard.role == "pee", campMemberCard, peeGirls);
+          }
+          while (girlIndex < wearingGirlCampMemberCards.length) {
+            const campMemberCard = wearingGirlCampMemberCards[girlIndex++];
+            ifIsTrue(campMemberCard.role == "nong", campMemberCard, nongGirls);
+            ifIsTrue(campMemberCard.role == "pee", campMemberCard, peeGirls);
+          }
+          const nongBoySuitSubGroups = getSuitableSubGroups(
+            empthyBoySubGroup,
+            nongBoys.length
+          );
+          const nongGirlSuitSubGroups = getSuitableSubGroups(
+            empthyGirlSubGroup,
+            nongGirls.length
+          );
+          const boyRemain = recycleSubGroup(
+            empthyBoySubGroup,
+            nongBoySuitSubGroups
+          );
+          const girlRemain = recycleSubGroup(
+            empthyGirlSubGroup,
+            nongGirlSuitSubGroups
+          );
+          const peeBoySuitSubGroups = getSuitableSubGroups(
+            boyRemain,
+            peeBoys.length
+          );
+          const peeGirlSuitSubGroups = getSuitableSubGroups(
+            girlRemain,
+            peeGirls.length
+          );
+          userIds = await addAllToGroup(
+            peeBoys,
+            peeBoySuitSubGroups,
+            container,
+            userIds
+          );
+          userIds = await addAllToGroup(
+            peeGirls,
+            peeGirlSuitSubGroups,
+            container,
+            userIds
+          );
+          userIds = await addAllToGroup(
+            nongBoys,
+            nongBoySuitSubGroups,
+            container,
+            userIds
+          );
+          userIds = await addAllToGroup(
+            nongGirls,
+            nongGirlSuitSubGroups,
+            container,
+            userIds
+          );
+          break;
+        }
+      }
+    } else {
+      switch (container.roleType) {
+        case "กำหนดตอนสร้างกลุ่มย่อย": {
+          const nongBoys: InterCampMemberCard[] = [];
+          const nongGirls: InterCampMemberCard[] = [];
+          const peeBoys: InterCampMemberCard[] = [];
+          const peeGirls: InterCampMemberCard[] = [];
+          while (bufferBoyIndex < bufferBoys.length) {
+            const campMemberCard = bufferBoys[bufferBoyIndex++];
+            ifIsTrue(campMemberCard.role == "nong", campMemberCard, nongBoys);
+            ifIsTrue(campMemberCard.role == "pee", campMemberCard, peeBoys);
+          }
+          while (boyIndex < wearingBoyCampMemberCards.length) {
+            const campMemberCard = wearingBoyCampMemberCards[boyIndex++];
+            ifIsTrue(campMemberCard.role == "nong", campMemberCard, nongBoys);
+            ifIsTrue(campMemberCard.role == "pee", campMemberCard, peeBoys);
+          }
+          while (bufferGirlIndex < bufferGirls.length) {
+            const campMemberCard = bufferGirls[bufferGirlIndex++];
+            ifIsTrue(campMemberCard.role == "nong", campMemberCard, nongGirls);
+            ifIsTrue(campMemberCard.role == "pee", campMemberCard, peeGirls);
+          }
+          while (girlIndex < wearingGirlCampMemberCards.length) {
+            const campMemberCard = wearingGirlCampMemberCards[girlIndex++];
+            ifIsTrue(campMemberCard.role == "nong", campMemberCard, nongGirls);
+            ifIsTrue(campMemberCard.role == "pee", campMemberCard, peeGirls);
+          }
+          const peeSubGroups: InterSubGroup[] = [];
+          const nongSubGroups: InterSubGroup[] = [];
+          for (const subGroup of empthySubGroup) {
+            ifIsTrue(
+              subGroup.roleType == "น้องเท่านั้น",
+              subGroup,
+              nongSubGroups
+            );
+            ifIsTrue(
+              subGroup.roleType == "พี่เท่านั้น",
+              subGroup,
+              peeSubGroups
+            );
+          }
+          const nongGirlSuitSubGroups = getSuitableSubGroups(
+            nongSubGroups,
+            nongGirls.length
+          );
+          const peeGirlSuitSubGroups = getSuitableSubGroups(
+            peeSubGroups,
+            peeGirls.length
+          );
+          const nongRemain = recycleSubGroup(
+            nongSubGroups,
+            nongGirlSuitSubGroups
+          );
+          const peeRemain = recycleSubGroup(peeSubGroups, peeGirlSuitSubGroups);
+          const nongBoySuitSubGroups = getSuitableSubGroups(
+            nongRemain,
+            nongBoys.length
+          );
+          const peeBoySuitSubGroups = getSuitableSubGroups(
+            peeRemain,
+            peeBoys.length
+          );
+          userIds = await addAllToGroup(
+            peeBoys,
+            peeBoySuitSubGroups,
+            container,
+            userIds
+          );
+          userIds = await addAllToGroup(
+            peeGirls,
+            peeGirlSuitSubGroups,
+            container,
+            userIds
+          );
+          userIds = await addAllToGroup(
+            nongBoys,
+            nongBoySuitSubGroups,
+            container,
+            userIds
+          );
+          userIds = await addAllToGroup(
+            nongGirls,
+            nongGirlSuitSubGroups,
+            container,
+            userIds
+          );
+          break;
+        }
+        case "คละพี่และน้อง": {
+          const boys: InterCampMemberCard[] = [];
+          const girls: InterCampMemberCard[] = [];
+          while (bufferBoyIndex < bufferBoys.length) {
+            const campMemberCard = bufferBoys[bufferBoyIndex++];
+            boys.push(campMemberCard);
+          }
+          while (boyIndex < wearingBoyCampMemberCards.length) {
+            const campMemberCard = wearingBoyCampMemberCards[boyIndex++];
+            boys.push(campMemberCard);
+          }
+          while (bufferGirlIndex < bufferGirls.length) {
+            const campMemberCard = bufferGirls[bufferGirlIndex++];
+            girls.push(campMemberCard);
+          }
+          while (girlIndex < wearingGirlCampMemberCards.length) {
+            const campMemberCard = wearingGirlCampMemberCards[girlIndex++];
+            girls.push(campMemberCard);
+          }
+          const girlSubGroup = getSuitableSubGroups(
+            empthySubGroup,
+            girls.length
+          );
+          const remain = recycleSubGroup(empthySubGroup, girlSubGroup);
+          const boySubGroups = getSuitableSubGroups(remain, boys.length);
+          userIds = await addAllToGroup(boys, boySubGroups, container, userIds);
+          userIds = await addAllToGroup(
+            girls,
+            girlSubGroup,
+            container,
+            userIds
+          );
+          break;
+        }
+        case "เลือกพี่หรือน้องตามคนแรก": {
+          const nongBoys: InterCampMemberCard[] = [];
+          const nongGirls: InterCampMemberCard[] = [];
+          const peeBoys: InterCampMemberCard[] = [];
+          const peeGirls: InterCampMemberCard[] = [];
+          while (bufferBoyIndex < bufferBoys.length) {
+            const campMemberCard = bufferBoys[bufferBoyIndex++];
+            ifIsTrue(campMemberCard.role == "nong", campMemberCard, nongBoys);
+            ifIsTrue(campMemberCard.role == "pee", campMemberCard, peeBoys);
+          }
+          while (boyIndex < wearingBoyCampMemberCards.length) {
+            const campMemberCard = wearingBoyCampMemberCards[boyIndex++];
+            ifIsTrue(campMemberCard.role == "nong", campMemberCard, nongBoys);
+            ifIsTrue(campMemberCard.role == "pee", campMemberCard, peeBoys);
+          }
+          while (bufferGirlIndex < bufferGirls.length) {
+            const campMemberCard = bufferGirls[bufferGirlIndex++];
+            ifIsTrue(campMemberCard.role == "nong", campMemberCard, nongGirls);
+            ifIsTrue(campMemberCard.role == "pee", campMemberCard, peeGirls);
+          }
+          while (girlIndex < wearingGirlCampMemberCards.length) {
+            const campMemberCard = wearingGirlCampMemberCards[girlIndex++];
+            ifIsTrue(campMemberCard.role == "nong", campMemberCard, nongGirls);
+            ifIsTrue(campMemberCard.role == "pee", campMemberCard, peeGirls);
+          }
+          const nongGirlSuitSubGroups = getSuitableSubGroups(
+            empthySubGroup,
+            nongGirls.length
+          );
+          const remain1 = recycleSubGroup(
+            empthySubGroup,
+            nongGirlSuitSubGroups
+          );
+          const nongBoySuitSubGroups = getSuitableSubGroups(
+            remain1,
+            nongBoys.length
+          );
+          const remain2 = recycleSubGroup(remain1, nongBoySuitSubGroups);
+          const peeGirlSuitSubGroups = getSuitableSubGroups(
+            remain2,
+            peeGirls.length
+          );
+          const remain3 = recycleSubGroup(remain2, peeGirlSuitSubGroups);
+          const peeBoySuitSubGroups = getSuitableSubGroups(
+            remain3,
+            peeBoys.length
+          );
+          userIds = await addAllToGroup(
+            peeBoys,
+            peeBoySuitSubGroups,
+            container,
+            userIds
+          );
+          userIds = await addAllToGroup(
+            peeGirls,
+            peeGirlSuitSubGroups,
+            container,
+            userIds
+          );
+          userIds = await addAllToGroup(
+            nongBoys,
+            nongBoySuitSubGroups,
+            container,
+            userIds
+          );
+          userIds = await addAllToGroup(
+            nongGirls,
+            nongGirlSuitSubGroups,
+            container,
+            userIds
+          );
+          break;
+        }
+      }
+    }
+  } else {
+    switch (container.roleType) {
+      case "กำหนดตอนสร้างกลุ่มย่อย": {
+        const spicyNongSubGroups: InterSubGroup[] = [];
+        const spicyPeeSubGroups: InterSubGroup[] = [];
+        const spicyPeeCampMemberCards: InterCampMemberCard[] = [];
+        const spicyNongCampMemberCards: InterCampMemberCard[] = [];
+        const empthyNongSubGroups: InterSubGroup[] = [];
+        const empthyPeeSubGroups: InterSubGroup[] = [];
+        let i = 0;
+        while (i < container.subGroupIds.length) {
+          const subGroup = await SubGroup.findById(container.subGroupIds[i++]);
+          if (!subGroup) {
+            continue;
+          }
+          ifIsTrue(
+            subGroup.spicy && subGroup.roleType == "พี่เท่านั้น",
+            subGroup,
+            spicyPeeSubGroups
+          );
+          ifIsTrue(
+            subGroup.spicy && subGroup.roleType == "น้องเท่านั้น",
+            subGroup,
+            spicyNongSubGroups
+          );
+          ifIsTrue(
+            subGroup.campMemberCardIds.length == 0 &&
+              subGroup.roleType == "พี่เท่านั้น",
+            subGroup,
+            empthyPeeSubGroups
+          );
+          ifIsTrue(
+            subGroup.campMemberCardIds.length == 0 &&
+              subGroup.roleType == "น้องเท่านั้น",
+            subGroup,
+            empthyNongSubGroups
+          );
+        }
+        i = 0;
+        while (i < baan.nongCampMemberCardHaveHeathIssueIds.length) {
+          const campMemberCard = await CampMemberCard.findById(
+            baan.nongCampMemberCardHaveHeathIssueIds[i++]
+          );
+          if (!campMemberCard || userIds.includes(campMemberCard.userId)) {
+            continue;
+          }
+          const healthIssue = await HeathIssue.findById(
+            campMemberCard.healthIssueId
+          );
+          if (!healthIssue) {
+            continue;
+          }
+          ifIsTrue(
+            healthIssue.spicy && campMemberCard.role == "nong",
+            campMemberCard,
+            spicyNongCampMemberCards
+          );
+          ifIsTrue(
+            healthIssue.spicy && campMemberCard.role == "pee",
+            campMemberCard,
+            spicyPeeCampMemberCards
+          );
+        }
+        let peeIndex = 0;
+        let nongIndex = 0;
+        i = 0;
+        while (i < spicyPeeSubGroups.length) {
+          const subGroup = spicyPeeSubGroups[i++];
+          let memberInSubGroupIndex = subGroup.campMemberCardIds.length - 1;
+          while (
+            peeIndex < spicyPeeCampMemberCards.length &&
+            memberInSubGroupIndex < subGroup.campMemberCardIds.length
+          ) {
+            const campMemberCard = spicyPeeCampMemberCards[peeIndex++];
+            const user = await User.findById(campMemberCard.userId);
+            if (!user) {
+              continue;
+            }
+            await registerAddSubGroupRaw(
+              campMemberCard,
+              user,
+              container,
+              subGroup._id
+            );
+            memberInSubGroupIndex++;
+            await CampMemberCard.findByIdAndUpdate(campMemberCard._id, {
+              subGroupIds: swop(null, subGroup._id, campMemberCard.subGroupIds),
+            });
+            userIds = swop(null, user._id, userIds);
+          }
+        }
+        i = 0;
+        while (i < spicyNongSubGroups.length) {
+          const subGroup = spicyNongSubGroups[i++];
+          let memberInSubGroupIndex = subGroup.campMemberCardIds.length - 1;
+          while (
+            nongIndex < spicyNongCampMemberCards.length &&
+            memberInSubGroupIndex < subGroup.campMemberCardIds.length
+          ) {
+            const campMemberCard = spicyNongCampMemberCards[nongIndex++];
+            const user = await User.findById(campMemberCard.userId);
+            if (!user) {
+              continue;
+            }
+            await registerAddSubGroupRaw(
+              campMemberCard,
+              user,
+              container,
+              subGroup._id
+            );
+            memberInSubGroupIndex++;
+            await CampMemberCard.findByIdAndUpdate(campMemberCard._id, {
+              subGroupIds: swop(null, subGroup._id, campMemberCard.subGroupIds),
+            });
+            userIds = swop(null, user._id, userIds);
+          }
+        }
+        const nongs: InterCampMemberCard[] = [];
+        const pees: InterCampMemberCard[] = [];
+        while (nongIndex < spicyNongCampMemberCards.length) {
+          nongs.push(spicyNongCampMemberCards[nongIndex++]);
+        }
+        while (peeIndex < spicyPeeCampMemberCards.length) {
+          pees.push(spicyPeeCampMemberCards[peeIndex++]);
+        }
+        const peeSuitSubGroups = getSuitableSubGroups(
+          empthyPeeSubGroups,
+          pees.length
+        );
+        const nongSuitSubGroups = getSuitableSubGroups(
+          empthyNongSubGroups,
+          nongs.length
+        );
+        userIds = await addAllToGroup(
+          pees,
+          peeSuitSubGroups,
+          container,
+          userIds
+        );
+        userIds = await addAllToGroup(
+          nongs,
+          nongSuitSubGroups,
+          container,
+          userIds
+        );
+        break;
+      }
+      case "คละพี่และน้อง": {
+        const spicySubGroups: InterSubGroup[] = [];
+        const spicyCampMemberCards: InterCampMemberCard[] = [];
+        const empthySubGroups: InterSubGroup[] = [];
+        let i = 0;
+        while (i < container.subGroupIds.length) {
+          const subGroup = await SubGroup.findById(container.subGroupIds[i++]);
+          if (!subGroup) {
+            continue;
+          }
+          ifIsTrue(subGroup.spicy, subGroup, spicySubGroups);
+          ifIsTrue(
+            !subGroup.campMemberCardIds.length,
+            subGroup,
+            empthySubGroups
+          );
+        }
+        i = 0;
+        const memberIds = baan.nongCampMemberCardHaveHeathIssueIds.concat(
+          baan.peeCampMemberCardHaveHeathIssueIds
+        );
+        while (i < memberIds.length) {
+          const campMemberCard = await CampMemberCard.findById(memberIds[i++]);
+          if (!campMemberCard || userIds.includes(campMemberCard.userId)) {
+            continue;
+          }
+          const healthIssue = await HeathIssue.findById(
+            campMemberCard.healthIssueId
+          );
+          if (!healthIssue) {
+            continue;
+          }
+          ifIsTrue(healthIssue.spicy, campMemberCard, spicyCampMemberCards);
+        }
+        let index = 0;
+        i = 0;
+        while (i < spicySubGroups.length) {
+          const subGroup = spicySubGroups[i++];
+          let memberInSubGroupIndex = subGroup.campMemberCardIds.length - 1;
+          while (
+            index < spicyCampMemberCards.length &&
+            memberInSubGroupIndex < subGroup.campMemberCardIds.length
+          ) {
+            const campMemberCard = spicyCampMemberCards[index++];
+            const user = await User.findById(campMemberCard.userId);
+            if (!user) {
+              continue;
+            }
+            await registerAddSubGroupRaw(
+              campMemberCard,
+              user,
+              container,
+              subGroup._id
+            );
+            memberInSubGroupIndex++;
+            await CampMemberCard.findByIdAndUpdate(campMemberCard._id, {
+              subGroupIds: swop(null, subGroup._id, campMemberCard.subGroupIds),
+            });
+            userIds = swop(null, user._id, userIds);
+          }
+        }
+        const remainCampMemberCards: InterCampMemberCard[] = [];
+        while (index < spicyCampMemberCards.length) {
+          remainCampMemberCards.push(spicyCampMemberCards[index++]);
+        }
+        const suitSubGroup = getSuitableSubGroups(
+          empthySubGroups,
+          remainCampMemberCards.length
+        );
+        userIds = await addAllToGroup(
+          remainCampMemberCards,
+          suitSubGroup,
+          container,
+          userIds
+        );
+        break;
+      }
+      case "เลือกพี่หรือน้องตามคนแรก": {
+        const spicyNongSubGroups: InterSubGroup[] = [];
+        const spicyPeeSubGroups: InterSubGroup[] = [];
+        const spicyPeeCampMemberCards: InterCampMemberCard[] = [];
+        const spicyNongCampMemberCards: InterCampMemberCard[] = [];
+        const empthySubGroups: InterSubGroup[] = [];
+        let i = 0;
+        while (i < container.subGroupIds.length) {
+          const subGroup = await SubGroup.findById(container.subGroupIds[i++]);
+          if (!subGroup) {
+            continue;
+          }
+          ifIsTrue(
+            subGroup.spicy && subGroup.roleType == "พี่เท่านั้น",
+            subGroup,
+            spicyPeeSubGroups
+          );
+          ifIsTrue(
+            subGroup.spicy && subGroup.roleType == "น้องเท่านั้น",
+            subGroup,
+            spicyNongSubGroups
+          );
+          ifIsTrue(
+            subGroup.campMemberCardIds.length == 0 &&
+              subGroup.roleType == "พี่เท่านั้น",
+            subGroup,
+            empthySubGroups
+          );
+        }
+        i = 0;
+        while (i < baan.nongCampMemberCardHaveHeathIssueIds.length) {
+          const campMemberCard = await CampMemberCard.findById(
+            baan.nongCampMemberCardHaveHeathIssueIds[i++]
+          );
+          if (!campMemberCard || userIds.includes(campMemberCard.userId)) {
+            continue;
+          }
+          const healthIssue = await HeathIssue.findById(
+            campMemberCard.healthIssueId
+          );
+          if (!healthIssue) {
+            continue;
+          }
+          ifIsTrue(
+            healthIssue.spicy && campMemberCard.role == "nong",
+            campMemberCard,
+            spicyNongCampMemberCards
+          );
+          ifIsTrue(
+            healthIssue.spicy && campMemberCard.role == "pee",
+            campMemberCard,
+            spicyPeeCampMemberCards
+          );
+        }
+        let peeIndex = 0;
+        let nongIndex = 0;
+        i = 0;
+        while (i < spicyPeeSubGroups.length) {
+          const subGroup = spicyPeeSubGroups[i++];
+          let memberInSubGroupIndex = subGroup.campMemberCardIds.length - 1;
+          while (
+            peeIndex < spicyPeeCampMemberCards.length &&
+            memberInSubGroupIndex < subGroup.campMemberCardIds.length
+          ) {
+            const campMemberCard = spicyPeeCampMemberCards[peeIndex++];
+            const user = await User.findById(campMemberCard.userId);
+            if (!user) {
+              continue;
+            }
+            await registerAddSubGroupRaw(
+              campMemberCard,
+              user,
+              container,
+              subGroup._id
+            );
+            memberInSubGroupIndex++;
+            await CampMemberCard.findByIdAndUpdate(campMemberCard._id, {
+              subGroupIds: swop(null, subGroup._id, campMemberCard.subGroupIds),
+            });
+            userIds = swop(null, user._id, userIds);
+          }
+        }
+        i = 0;
+        while (i < spicyNongSubGroups.length) {
+          const subGroup = spicyNongSubGroups[i++];
+          let memberInSubGroupIndex = subGroup.campMemberCardIds.length - 1;
+          while (
+            nongIndex < spicyNongCampMemberCards.length &&
+            memberInSubGroupIndex < subGroup.campMemberCardIds.length
+          ) {
+            const campMemberCard = spicyNongCampMemberCards[nongIndex++];
+            const user = await User.findById(campMemberCard.userId);
+            if (!user) {
+              continue;
+            }
+            await registerAddSubGroupRaw(
+              campMemberCard,
+              user,
+              container,
+              subGroup._id
+            );
+            memberInSubGroupIndex++;
+            await CampMemberCard.findByIdAndUpdate(campMemberCard._id, {
+              subGroupIds: swop(null, subGroup._id, campMemberCard.subGroupIds),
+            });
+            userIds = swop(null, user._id, userIds);
+          }
+        }
+        const nongs: InterCampMemberCard[] = [];
+        const pees: InterCampMemberCard[] = [];
+        while (nongIndex < spicyNongCampMemberCards.length) {
+          nongs.push(spicyNongCampMemberCards[nongIndex++]);
+        }
+        while (peeIndex < spicyPeeCampMemberCards.length) {
+          pees.push(spicyPeeCampMemberCards[peeIndex++]);
+        }
+        const nongSuitSubGroups = getSuitableSubGroups(
+          empthySubGroups,
+          nongs.length
+        );
+        const remain = recycleSubGroup(empthySubGroups, nongSuitSubGroups);
+        const peeSuitSubGroups = getSuitableSubGroups(remain, pees.length);
+
+        userIds = await addAllToGroup(
+          pees,
+          peeSuitSubGroups,
+          container,
+          userIds
+        );
+        userIds = await addAllToGroup(
+          nongs,
+          nongSuitSubGroups,
+          container,
+          userIds
+        );
+        break;
+      }
+    }
+  }
+  await container.updateOne({ userIds });
+  sendRes(res, true);
 }

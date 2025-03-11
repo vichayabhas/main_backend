@@ -15,9 +15,9 @@ import { answerAllQuestion } from "./questionAndAnswer";
 import { getRegisterDataRaw } from "./authPart";
 export async function interview(req: express.Request, res: express.Response) {
   const { members, campId } = req.body;
-await interviewRaw(members, campId);
-  const newData=await getRegisterDataRaw(campId)
-  res.status(200).json(newData)
+  await interviewRaw(members, campId);
+  const newData = await getRegisterDataRaw(campId);
+  res.status(200).json(newData);
 }
 async function interviewRaw(members: Id[], campId: Id) {
   const camp = await Camp.findById(campId);
@@ -77,8 +77,8 @@ export async function paid(req: express.Request, res: express.Response) {
       nongPaidIds: swop(null, user._id, camp.nongPaidIds),
     });
   }
-  const newData=await getRegisterDataRaw(camp._id)
-  res.status(200).json(newData)
+  const newData = await getRegisterDataRaw(camp._id);
+  res.status(200).json(newData);
 }
 export async function sure(req: express.Request, res: express.Response) {
   const { members, campId }: { members: Id[]; campId: Id } = req.body;
@@ -105,8 +105,8 @@ export async function sure(req: express.Request, res: express.Response) {
     nongSureIds,
     nongPassIds: camp.nongPassIds,
   });
-  const newData=await getRegisterDataRaw(camp._id)
-  res.status(200).json(newData)
+  const newData = await getRegisterDataRaw(camp._id);
+  res.status(200).json(newData);
 }
 export async function pass(req: express.Request, res: express.Response) {
   const { campId, members } = req.body;
@@ -118,9 +118,9 @@ export async function pass(req: express.Request, res: express.Response) {
   if (camp.registerModel !== "all") {
     await interviewRaw(members, campId);
   }
-   await passRaw(members, campId);
-   const newData=await getRegisterDataRaw(camp._id)
-   res.status(200).json(newData)
+  await passRaw(members, campId);
+  const newData = await getRegisterDataRaw(camp._id);
+  res.status(200).json(newData);
 }
 export async function kickPee(req: express.Request, res: express.Response) {
   // const { campId, members } = req.body;
@@ -272,7 +272,7 @@ export async function addNong(req: express.Request, res: express.Response) {
     }
     size.forEach((v, k) => {
       camp.nongShirtSize.set(k, (camp.nongShirtSize.get(k) as number) + v);
-      baan.nongShirtSize.set(k, (camp.nongShirtSize.get(k) as number) + v);
+      baan.nongShirtSize.set(k, (baan.nongShirtSize.get(k) as number) + v);
     });
     await camp.updateOne({
       nongSureIds: newNongPassIds,
