@@ -45,6 +45,28 @@ import { getImageAndDescriptionsRaw } from "./imageAndDescription";
 import { getBaanJobsRaw, getPartJobsRaw } from "./jobAssign";
 import { getMirrorRaw } from "./mirror";
 import { getGroupContainerRaw } from "./subGroup";
+export async function getShowPlaceRaw(
+  placeId: Id | null
+): Promise<ShowPlace | null> {
+  if (placeId) {
+    const place = await Place.findById(placeId);
+    if (!place) {
+      return null;
+    }
+    const building = await Building.findById(place.buildingId);
+    if (!building) {
+      return null;
+    }
+    return {
+      _id: place._id,
+      buildingName: building.name,
+      floor: place.floor,
+      room: place.room,
+    };
+  } else {
+    return null;
+  }
+}
 export async function getBaan(req: express.Request, res: express.Response) {
   try {
     const data = await Baan.findById(req.params.id);
@@ -507,7 +529,7 @@ export async function getPetosFromPartIdRaw(partId: Id) {
   }
   return out;
 }
-async function getMealsByHealthIssue(
+export async function getMealsByHealthIssue(
   healthIssue: HeathIssueBody | null,
   mealIds: Id[],
   campMemberCard: InterCampMemberCard
@@ -664,29 +686,9 @@ export async function getNongCampData(
     sendRes(res, false);
     return;
   }
-  async function getShowPlace(placeId: Id | null): Promise<ShowPlace | null> {
-    if (placeId) {
-      const place = await Place.findById(placeId);
-      if (!place) {
-        return null;
-      }
-      const building = await Building.findById(place.buildingId);
-      if (!building) {
-        return null;
-      }
-      return {
-        _id: place._id,
-        buildingName: building.name,
-        floor: place.floor,
-        room: place.room,
-      };
-    } else {
-      return null;
-    }
-  }
-  const boy: ShowPlace | null = await getShowPlace(baan.boySleepPlaceId);
-  const girl: ShowPlace | null = await getShowPlace(baan.girlSleepPlaceId);
-  const normal: ShowPlace | null = await getShowPlace(baan.normalPlaceId);
+  const boy: ShowPlace | null = await getShowPlaceRaw(baan.boySleepPlaceId);
+  const girl: ShowPlace | null = await getShowPlaceRaw(baan.girlSleepPlaceId);
+  const normal: ShowPlace | null = await getShowPlaceRaw(baan.normalPlaceId);
   const healthIssue = await HeathIssue.findById(campMemberCard.healthIssueId);
   const meals = await getMealsByHealthIssue(
     healthIssue,
@@ -774,30 +776,11 @@ export async function getPeeCampData(
     sendRes(res, false);
     return;
   }
-  async function getShowPlace(placeId: Id | null): Promise<ShowPlace | null> {
-    if (placeId) {
-      const place = await Place.findById(placeId);
-      if (!place) {
-        return null;
-      }
-      const building = await Building.findById(place.buildingId);
-      if (!building) {
-        return null;
-      }
-      return {
-        _id: place._id,
-        buildingName: building.name,
-        floor: place.floor,
-        room: place.room,
-      };
-    } else {
-      return null;
-    }
-  }
-  const boy: ShowPlace | null = await getShowPlace(baan.boySleepPlaceId);
-  const girl: ShowPlace | null = await getShowPlace(baan.girlSleepPlaceId);
-  const normal: ShowPlace | null = await getShowPlace(baan.normalPlaceId);
-  const partPlace = await getShowPlace(part.placeId);
+
+  const boy: ShowPlace | null = await getShowPlaceRaw(baan.boySleepPlaceId);
+  const girl: ShowPlace | null = await getShowPlaceRaw(baan.girlSleepPlaceId);
+  const normal: ShowPlace | null = await getShowPlaceRaw(baan.normalPlaceId);
+  const partPlace = await getShowPlaceRaw(part.placeId);
   const healthIssue = await HeathIssue.findById(campMemberCard.healthIssueId);
   const meals = await getMealsByHealthIssue(
     healthIssue,
@@ -908,7 +891,9 @@ export async function getPetoCampData(
     sendRes(res, false);
     return;
   }
-  async function getShowPlace(placeId: Id | null): Promise<ShowPlace | null> {
+  async function getShowPlaceRaw(
+    placeId: Id | null
+  ): Promise<ShowPlace | null> {
     if (placeId) {
       const place = await Place.findById(placeId);
       if (!place) {
@@ -928,7 +913,7 @@ export async function getPetoCampData(
       return null;
     }
   }
-  const partPlace = await getShowPlace(part.placeId);
+  const partPlace = await getShowPlaceRaw(part.placeId);
   const healthIssue = await HeathIssue.findById(campMemberCard.healthIssueId);
   const meals = await getMealsByHealthIssue(
     healthIssue,

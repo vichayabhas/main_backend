@@ -600,13 +600,12 @@ export async function getAllChatFromCampId(
       chats,
       mode: getModeBySituation(user.mode, "peto", true),
       sendType: null,
-      groupName: camp.groupName,
       timeOffset,
       success: true,
       roomName: "รวมทุกแชต",
       userId: user._id,
       subscribe: `${camp._id}${user._id}`,
-      nongCall: camp.nongCall,
+      camp,
     };
     res.status(200).json(output);
   } else {
@@ -625,13 +624,12 @@ export async function getAllChatFromCampId(
       chats,
       mode: getModeBySituation(user.mode, campMemberCard.role, true),
       sendType: null,
-      groupName: camp.groupName,
       timeOffset,
       success: true,
       roomName: "รวมทุกแชต",
       userId: user._id,
       subscribe: `${camp._id}${user._id}`,
-      nongCall: camp.nongCall,
+      camp,
     };
     res.status(200).json(output);
   }
@@ -664,7 +662,6 @@ export async function getPartChat(req: express.Request, res: express.Response) {
       roomType: "คุยกันในฝ่าย",
       id: part._id,
     },
-    groupName: camp.groupName,
     timeOffset,
     success: true,
     roomName: part._id.equals(camp.partPeeBaanId)
@@ -672,7 +669,7 @@ export async function getPartChat(req: express.Request, res: express.Response) {
       : `ฝ่าย${part.partName}`,
     userId: user._id,
     subscribe: `${part._id}`,
-    nongCall: camp.nongCall,
+    camp,
   };
   res.status(200).json(output);
 }
@@ -723,13 +720,12 @@ export async function getNongBaanChat(
               roomType: "คุยกันในบ้าน",
             }
           : null,
-        groupName: camp.groupName,
         timeOffset,
         success: true,
         roomName: `ห้อง${camp.groupName}${baan.name}`,
         userId: user._id,
         subscribe: `Nong${baan._id}`,
-        nongCall: camp.nongCall,
+        camp,
       };
       res.status(200).json(output);
       return;
@@ -753,7 +749,6 @@ export async function getNongBaanChat(
           id: baan._id,
           roomType: "คุยกันในบ้าน",
         },
-        groupName: camp.groupName,
         timeOffset,
         success: true,
         roomName:
@@ -762,7 +757,7 @@ export async function getNongBaanChat(
             : `ห้อง${camp.groupName}${baan.name}`,
         userId: user._id,
         subscribe: `Nong${baan._id}`,
-        nongCall: camp.nongCall,
+        camp,
       };
       res.status(200).json(output);
       return;
@@ -813,13 +808,12 @@ export async function getPeeBaanChat(
       id: baan._id,
       roomType: "พี่คุยกันในบ้าน",
     },
-    groupName: camp.groupName,
     timeOffset,
     success: true,
     roomName: `ห้อง${camp.groupName}${baan.name}ที่มีแต่พี่`,
     userId: user._id,
+    camp,
     subscribe: `Pee${baan._id}`,
-    nongCall: camp.nongCall,
   };
   res.status(200).json(output);
 }
@@ -873,13 +867,12 @@ export async function getNongChat(req: express.Request, res: express.Response) {
       id: campMemberCard._id,
       roomType: "น้องคุยส่วนตัวกับพี่",
     },
-    groupName: camp.groupName,
     timeOffset,
     success: true,
     roomName: `คุยส่วนตัวกับน้อง${host.nickname} บ้าน${baan.name}`,
     userId: user._id,
     subscribe: `${campMemberCard._id}`,
-    nongCall: camp.nongCall,
+    camp,
   };
   res.status(200).json(output);
 }
@@ -931,7 +924,6 @@ export async function getPartPeebaanChat(
       roomType: "คุยกันในฝ่าย",
       id: part._id,
     },
-    groupName: camp.groupName,
     timeOffset,
     success: true,
     roomName:
@@ -940,7 +932,7 @@ export async function getPartPeebaanChat(
         : `ห้องพี่${camp.groupName}คุยกัน`,
     userId: user._id,
     subscribe: `${part._id}`,
-    nongCall: camp.nongCall,
+    camp,
   };
   res.status(200).json(output);
 }

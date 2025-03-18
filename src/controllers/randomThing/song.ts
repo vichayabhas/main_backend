@@ -790,10 +790,10 @@ export async function getShowBaanSongs(
   }
   const buffer: ShowCampSongReady = {
     showCampSongs: outputs,
-    groupName: camp.groupName,
-    baanName: baan.name,
     songIds: baan.songIds,
     _id: baan._id,
+    baan,
+    camp,
     userLikeSongIds: user.likeSongIds,
   };
   res.status(200).json(buffer);

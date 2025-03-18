@@ -26,6 +26,9 @@ import {
   ShowRegister,
   UpdateAllPlanData,
   WelfarePack,
+  UpdateBaanOut,
+  UpdatePartOut,
+  PlanUpdateOut,
 } from "../../models/interface";
 import Part from "../../models/Part";
 import {
@@ -37,6 +40,7 @@ import {
   sizeMapToJson,
   startJsonSize,
   swop,
+  isIdEqual,
 } from "../setup";
 import User from "../../models/User";
 import { getUser } from "../../middleware/auth";
@@ -650,11 +654,8 @@ export async function getAllWelfare(
   }
   const name = camp.campName;
   const buffer: CampWelfarePack = {
-    isHavePeto:
-      camp.memberStructure == "nong->highSchool,pee->1year,peto->2upYear",
     partWelfares,
     baanWelfares,
-    groupName: camp.groupName,
     campWelfare: {
       nongSize: sizeMapToJson(camp.nongShirtSize),
       peeSize: sizeMapToJson(camp.peeShirtSize),
@@ -713,8 +714,7 @@ export async function getAllWelfare(
       petoNumber: campPetoIsWearings,
     },
     meals,
-    _id: camp._id,
-    nongCall: camp.nongCall,
+    camp,
   };
   res.status(200).json(buffer);
 }
@@ -789,10 +789,8 @@ export async function getAllPlanData(
     baanDatas.push({
       boy,
       girl,
-      name: baan.name,
       normal,
-      fullName: baan.fullName,
-      _id: baan._id,
+      baan,
     });
     baanBoySleeps.push({
       nongNumber: nongBoys.length,
@@ -876,12 +874,6 @@ export async function getAllPlanData(
   const buffer: GetAllPlanData = {
     partDatas,
     baanDatas,
-    name,
-    _id: camp._id,
-    groupName: camp.groupName,
-    isOverNightCamp: camp.nongSleepModel != "ไม่มีการค้างคืน",
-    isHavePeto:
-      camp.memberStructure == "nong->highSchool,pee->1year,peto->2upYear",
     baanSleepDatas,
     partSleepDatas,
     baanBoySleeps,
@@ -900,7 +892,7 @@ export async function getAllPlanData(
       peeNumber: peeGirlSleep,
       petoNumber: petoGirlSleep,
     },
-    nongCall: camp.nongCall,
+    camp,
   };
   res.status(200).json(buffer);
 }
@@ -921,6 +913,10 @@ export async function planUpdateCamp(
     return;
   }
   let i = 0;
+  const baanDatas: GetBaansForPlan[] = [];
+  const partDatas: GetPartForPlan[] = [];
+  const baanTriggers: UpdateBaanOut[] = [];
+  const partTriggers: UpdatePartOut[] = [];
   while (i < update.baanDatas.length) {
     const updateBaan = update.baanDatas[i++];
     const baan = await Baan.findById(updateBaan._id);
@@ -935,7 +931,18 @@ export async function planUpdateCamp(
       canReadMirror,
       canWhriteMirror,
     } = baan;
-    await updateBaanRaw({
+    const boy = await Place.findById(updateBaan.boyId);
+    const girl = await Place.findById(updateBaan.girlId);
+    const normal = await Place.findById(updateBaan.normalId);
+    baanDatas.push({ boy, girl, normal, baan });
+    if (
+      isIdEqual(baan.boySleepPlaceId, updateBaan.boyId) &&
+      isIdEqual(baan.girlSleepPlaceId, updateBaan.girlId) &&
+      isIdEqual(baan.normalPlaceId, updateBaan.normalId)
+    ) {
+      continue;
+    }
+    const data = await updateBaanRaw({
       baanId: baan._id,
       boySleepPlaceId: updateBaan.boyId,
       girlSleepPlaceId: updateBaan.girlId,
@@ -947,6 +954,10 @@ export async function planUpdateCamp(
       canReadMirror,
       canWhriteMirror,
     });
+    if (!data) {
+      continue;
+    }
+    baanTriggers.push(data);
   }
   i = 0;
   while (i < update.partDatas.length) {
@@ -956,6 +967,11 @@ export async function planUpdateCamp(
       continue;
     }
     const newPlace = await Place.findById(updatePart.placeId);
+    const { _id } = part;
+    partDatas.push({ _id, place: newPlace, name: part.partName });
+    if (isIdEqual(updatePart.placeId, part.placeId)) {
+      continue;
+    }
     if (newPlace) {
       const newBuilding = await Building.findById(newPlace.buildingId);
       if (newBuilding) {
@@ -980,8 +996,20 @@ export async function planUpdateCamp(
       }
     }
     await part.updateOne({ placeId: newPlace ? newPlace._id : null });
+    partTriggers.push({ place: newPlace, _id });
   }
-  sendRes(res, true);
+  const { boyZoneLadyZoneState } = update;
+  await camp.updateOne({ boyZoneLadyZoneState });
+  const buffer: PlanUpdateOut = {
+    partTriggers,
+    baanTriggers,
+    planTrigger: {
+      baanDatas,
+      partDatas,
+      boyZoneLadyZoneState,
+    },
+  };
+  res.status(200).json(buffer);
 }
 export async function plusActionPlan(
   req: express.Request,
@@ -1064,17 +1092,15 @@ export async function getHealthIssueForAct(
     partHealthIssuePacks.push(welfarePart);
   }
   const buffer: CampHealthIssuePack = {
-    isHavePeto:
-      camp.memberStructure == "nong->highSchool,pee->1year,peto->2upYear",
     baanHealthIssuePacks,
     partHealthIssuePacks,
-    groupName: camp.groupName,
     campHealthIssuePack: {
       nongHealths,
       peeHealths,
       petoHealths,
       name: camp.campName,
     },
+    camp,
   };
   res.status(200).json(buffer);
 }
@@ -1151,17 +1177,15 @@ export async function getMedicalHealthIssue(
     partHealthIssuePacks.push(welfarePart);
   }
   const buffer: CampHealthIssuePack = {
-    isHavePeto:
-      camp.memberStructure == "nong->highSchool,pee->1year,peto->2upYear",
     baanHealthIssuePacks,
     partHealthIssuePacks,
-    groupName: camp.groupName,
     campHealthIssuePack: {
       nongHealths,
       peeHealths,
       petoHealths,
       name: camp.campName,
     },
+    camp,
   };
   res.status(200).json(buffer);
 }

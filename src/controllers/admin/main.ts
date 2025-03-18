@@ -20,6 +20,9 @@ import {
   AuthType,
   BasicBaan,
   GetCampForUpdate,
+  UpdateBaanOut,
+  UpdatePartOut,
+  UpdateCampOut,
 } from "../../models/interface";
 import { removeDuplicate, resOk, sendRes, swop } from "../setup";
 import express from "express";
@@ -272,9 +275,11 @@ export async function updateBaan(req: express.Request, res: express.Response) {
     return;
   }
   const s = await updateBaanRaw(update);
-  sendRes(res, s);
+  res.status(200).json(s);
 }
-export async function updateBaanRaw(update: UpdateBaan) {
+export async function updateBaanRaw(
+  update: UpdateBaan
+): Promise<UpdateBaanOut | null> {
   try {
     const {
       name,
@@ -290,7 +295,7 @@ export async function updateBaanRaw(update: UpdateBaan) {
     } = update;
     const baan = await Baan.findById(baanId);
     if (!baan) {
-      return false;
+      return null;
     }
     const boyNewP = await Place.findById(boySleepPlaceId);
     const girlNewP = await Place.findById(girlSleepPlaceId);
@@ -375,10 +380,14 @@ export async function updateBaanRaw(update: UpdateBaan) {
       canReadMirror,
       canWhriteMirror,
     });
-    return true;
+    const data = await Baan.findById(baan._id);
+    if (!data) {
+      return null;
+    }
+    return { baan: data, boy: boyNewP, girl: girlNewP, normal: normalNewP };
   } catch (err) {
     console.log(err);
-    return false;
+    return null;
   }
 }
 export async function updatePart(req: express.Request, res: express.Response) {
@@ -432,7 +441,11 @@ export async function updatePart(req: express.Request, res: express.Response) {
       }
     }
     await part.updateOne({ placeId });
-    sendRes(res, true);
+    const buffer: UpdatePartOut = {
+      place: newPlace,
+      _id: part._id,
+    };
+    res.status(200).json(buffer);
   } catch {
     res.status(400).json({ success: false });
   }
@@ -796,7 +809,24 @@ export async function updateCamp(req: express.Request, res: express.Response) {
       }
     }
   }
-  res.status(200).json(camp);
+  const data = await Camp.findById(camp._id);
+  if(!data){
+  sendRes(res,false)
+  return
+  }
+  let i=0
+  const parts:BasicPart[]=[]
+  while(i<data.partIds.length){
+    const part=await Part.findById(data.partIds[i++])
+    if(!part){
+      continue
+    }
+    parts.push(part)
+  }
+  const buffer:UpdateCampOut={
+    parts,camp:data
+  }
+  res.status(200).json(buffer);
 }
 export async function getCampNames(
   req: express.Request,

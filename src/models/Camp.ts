@@ -11,6 +11,7 @@ import {
   dataString,
   getDafaultBoolean,
 } from "../controllers/setup";
+import { boyZoneLadyZoneStates } from "./interface";
 
 const campSchema = new mongoose.Schema({
   nameId: dataId,
@@ -200,6 +201,11 @@ const campSchema = new mongoose.Schema({
   nongCall: {
     type: String,
     default: "น้องค่าย",
+  },
+  boyZoneLadyZoneState: {
+    type: String,
+    default: "ปิดสมบูรณ์",
+    enum: boyZoneLadyZoneStates,
   },
 });
 export default mongoose.model("Camp", campSchema);

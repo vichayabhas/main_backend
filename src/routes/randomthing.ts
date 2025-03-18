@@ -38,6 +38,7 @@ import {
   createPlace,
   getBuilding,
   getShowPlace,
+  getAllPlaceDataSetups,
 } from "../controllers/randomThing/place";
 import {
   getMenuSongs,
@@ -94,4 +95,5 @@ router.get("/getShowCampSongs/params/:id", protect, getShowCampSongs); //
 router.get("/getShowBaanSongs/params/:id", protect, getShowBaanSongs); //
 router.get("/getAuthSongs/params/:id", protect, getAuthSongs); //
 router.get("/getMealForUpdate/params/:id", protect, getMealForUpdate); //
+router.get("/getAllPlaceDataSetups/", getAllPlaceDataSetups); //
 export default router;

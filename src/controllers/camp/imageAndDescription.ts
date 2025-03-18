@@ -113,14 +113,18 @@ export async function createImageAndDescriptionContainer(
     childIds.push(child._id);
   }
   await container.updateOne({ childIds });
+  const imageAndDescriptionContainerIds = swop(
+    null,
+    container._id,
+    baan.imageAndDescriptionContainerIds
+  );
   await baan.updateOne({
-    imageAndDescriptionContainerIds: swop(
-      null,
-      container._id,
-      baan.imageAndDescriptionContainerIds
-    ),
+    imageAndDescriptionContainerIds,
   });
-  sendRes(res, true);
+  const imageAndDescriptionContainers = await getImageAndDescriptionsRaw(
+    imageAndDescriptionContainerIds
+  );
+  res.status(200).json(imageAndDescriptionContainers);
 }
 export async function getImageAndDescriptionsRaw(
   imageAndDescriptionContainerIds: Id[]
@@ -261,6 +265,10 @@ export async function editImageAndDescription(
     await ImageAndDescription.findByIdAndDelete(removeIds[i++]);
   }
   await container.updateOne({ types, name, childIds: ids });
+  const data = await getImageAndDescriptionsRaw(
+    baan.imageAndDescriptionContainerIds
+  );
+  res.status(200).json(data);
 }
 export async function deleteImageAndDescryption(
   req: express.Request,
@@ -348,15 +356,17 @@ export async function deleteImageAndDescryption(
   while (i < container.childIds.length) {
     await ImageAndDescription.findByIdAndDelete(container.childIds[i++]);
   }
+  const imageAndDescriptionContainerIds = swop(
+    container._id,
+    null,
+    baan.imageAndDescriptionContainerIds
+  );
   await baan.updateOne({
-    imageAndDescriptionContainerIds: swop(
-      container._id,
-      null,
-      baan.imageAndDescriptionContainerIds
-    ),
+    imageAndDescriptionContainerIds,
   });
   await container.deleteOne();
-  sendRes(res, true);
+  const data=await getImageAndDescriptionsRaw(imageAndDescriptionContainerIds)
+  res.status(200).json(data)
 }
 export async function getImageAndDescriptions(
   req: express.Request,

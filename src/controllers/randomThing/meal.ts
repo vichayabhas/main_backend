@@ -15,21 +15,63 @@ import {
   GetMeals,
   UpdateMeal,
   GetMealForUpdate,
+  InterMeal,
+  FoodLimit,
+  foodLimits,
+  TriggerCampMemberCard,
+  BasicCamp,
+  UpdateMealOut,
+  UpdateFoodOut,
+  CreateMealOut,
+  CreateFoodOut,
 } from "../../models/interface";
 import Meal from "../../models/Meal";
 import User from "../../models/User";
-import { getAuthTypes } from "../camp/getCampData";
-import {
-  sendRes,
-  swop,
-  resOk,
-  ifIsTrue,
-  removeDuplicate,
-  stringToId,
-} from "../setup";
+import { getAuthTypes, getMealsByHealthIssue } from "../camp/getCampData";
+import { sendRes, swop, ifIsTrue, removeDuplicate, stringToId } from "../setup";
 import { isFoodValid } from "../user";
 import TimeOffset from "../../models/TimeOffset";
 
+async function getMealTrigger(
+  mealIds: Id[],
+  campMemberCardIds1: Id[],
+  campMemberCardIds2: Id[],
+  campMemberCardIds3: Id[],
+  inputs: TriggerCampMemberCard[]
+): Promise<TriggerCampMemberCard[]> {
+  const outputs = inputs;
+  const campMemberCardIds = campMemberCardIds1.concat(
+    campMemberCardIds2,
+    campMemberCardIds3
+  );
+  let i = 0;
+  while (i < campMemberCardIds.length) {
+    const campMemberCard = await CampMemberCard.findById(
+      campMemberCardIds[i++]
+    );
+    if (!campMemberCard) {
+      continue;
+    }
+    const healthIssue = await HeathIssue.findById(campMemberCard.healthIssueId);
+    const meals = await getMealsByHealthIssue(
+      healthIssue,
+      mealIds,
+      campMemberCard
+    );
+    outputs.push({ meals, campMemberCardId: campMemberCard._id });
+  }
+  return outputs;
+}
+async function getMealTriggerByCampRaw(camp: BasicCamp) {
+  const outputs = await getMealTrigger(
+    camp.mealIds,
+    camp.nongCampMemberCardIds,
+    camp.peeCampMemberCardIds,
+    camp.petoCampMemberCardIds,
+    []
+  );
+  return outputs;
+}
 export async function createMeal(req: express.Request, res: express.Response) {
   const input: CreateMeal = req.body;
   const user = await getUser(req);
@@ -48,8 +90,20 @@ export async function createMeal(req: express.Request, res: express.Response) {
     return;
   }
   const meal = await Meal.create(input);
-  await camp.updateOne({ mealIds: swop(null, meal._id, camp.mealIds) });
-  res.status(201).json(resOk);
+  const mealIds = swop(null, meal._id, camp.mealIds);
+  await camp.updateOne({ mealIds });
+  const meals: InterMeal[] = [];
+  let i = 0;
+  while (i < mealIds.length) {
+    const meal = await Meal.findById(mealIds[i++]);
+    if (!meal) {
+      continue;
+    }
+    meals.push(meal);
+  }
+  const triggers = await getMealTriggerByCampRaw(camp);
+  const buffer: CreateMealOut = { meals, triggers };
+  res.status(201).json(buffer);
 }
 export async function createFood(req: express.Request, res: express.Response) {
   const input: CreateFood = req.body;
@@ -70,9 +124,21 @@ export async function createFood(req: express.Request, res: express.Response) {
     return;
   }
   const food = await Food.create(input);
+  const foodIds = swop(null, food._id, meal.foodIds);
   await camp.updateOne({ foodIds: swop(null, food._id, camp.foodIds) });
-  await meal.updateOne({ foodIds: swop(null, food._id, meal.foodIds) });
-  res.status(201).json(resOk);
+  await meal.updateOne({ foodIds });
+  const foods: InterFood[] = [];
+  let i = 0;
+  while (i < foodIds.length) {
+    const food = await Food.findById(foodIds[i++]);
+    if (!food) {
+      continue;
+    }
+    foods.push(food);
+  }
+  const triggers = await getMealTriggerByCampRaw(camp);
+  const buffer: CreateFoodOut = { foods, triggers };
+  res.status(201).json(buffer);
 }
 export async function getFoodForUpdate(
   req: express.Request,
@@ -438,7 +504,17 @@ export async function updateFood(req: express.Request, res: express.Response) {
         });
       }
     }
-    const { name, lists } = input;
+    const { name, lists, isSpicy, listPriority } = input;
+    i = 0;
+    const changeList: FoodLimit[] = [];
+    while (i < foodLimits.length) {
+      const foodLimit = foodLimits[i++];
+      if (lists.includes(foodLimit) == food.lists.includes(foodLimit)) {
+        changeList.push(foodLimit);
+      }
+    }
+    const changeListPiority = food.listPriority == listPriority;
+    const changeSpicy = food.isSpicy == isSpicy;
     await food.updateOne({
       nongCampMemberCardIds,
       nongIds,
@@ -451,7 +527,108 @@ export async function updateFood(req: express.Request, res: express.Response) {
       petoHeathIssueIds,
       name,
       lists,
+      listPriority,
+      isSpicy,
     });
+    const triggers: TriggerCampMemberCard[] = [];
+    const nongChangeCampMemberCardIds = addNong.concat(removeNong);
+    const peeChangeCampMemberCardIds = addPee.concat(removePee);
+    const petoChangeCampMemberCardIds = addPeto.concat(removePeto);
+    if (changeListPiority || !listPriority) {
+      const nongHealthCampMemberCardIds = removeDuplicate(
+        camp.nongCampMemberCardHaveHeathIssueIds,
+        nongChangeCampMemberCardIds
+      );
+      const peeHealthCampMemberCardIds = removeDuplicate(
+        camp.peeCampMemberCardHaveHeathIssueIds,
+        peeChangeCampMemberCardIds
+      );
+      const petoHealthCampMemberCardIds = removeDuplicate(
+        camp.petoCampMemberCardHaveHeathIssueIds,
+        petoChangeCampMemberCardIds
+      );
+      const healthCampMemberCardIds = nongHealthCampMemberCardIds.concat(
+        peeHealthCampMemberCardIds,
+        petoHealthCampMemberCardIds
+      );
+      i = 0;
+      if (changeListPiority) {
+        while (i < healthCampMemberCardIds.length) {
+          const healthCampMemberCard = await CampMemberCard.findById(
+            healthCampMemberCardIds[i++]
+          );
+          if (!healthCampMemberCard) {
+            continue;
+          }
+          const healthIssue = await HeathIssue.findById(
+            healthCampMemberCard.healthIssueId
+          );
+          if (!healthIssue) {
+            continue;
+          }
+          if (
+            (!healthIssue.spicy || (!changeSpicy && !input.isSpicy)) &&
+            !changeList.includes(healthIssue.foodLimit) &&
+            !input.lists.includes(healthIssue.foodLimit)
+          ) {
+            continue;
+          }
+          const meals = await getMealsByHealthIssue(
+            healthIssue,
+            camp.mealIds,
+            healthCampMemberCard
+          );
+          triggers.push({
+            meals,
+            campMemberCardId: healthCampMemberCard._id,
+          });
+        }
+      } else {
+        while (i < healthCampMemberCardIds.length) {
+          const healthCampMemberCard = await CampMemberCard.findById(
+            healthCampMemberCardIds[i++]
+          );
+          if (!healthCampMemberCard) {
+            continue;
+          }
+          const healthIssue = await HeathIssue.findById(
+            healthCampMemberCard.healthIssueId
+          );
+          if (!healthIssue) {
+            continue;
+          }
+          if (
+            (!healthIssue.spicy || !changeSpicy) &&
+            !changeList.includes(healthIssue.foodLimit)
+          ) {
+            continue;
+          }
+          const meals = await getMealsByHealthIssue(
+            healthIssue,
+            camp.mealIds,
+            healthCampMemberCard
+          );
+          triggers.push({
+            meals,
+            campMemberCardId: healthCampMemberCard._id,
+          });
+        }
+      }
+      await getMealTrigger(
+        camp.mealIds,
+        nongChangeCampMemberCardIds,
+        peeChangeCampMemberCardIds,
+        petoChangeCampMemberCardIds,
+        triggers
+      );
+    }
+    const data = await Food.findById(food._id);
+    if (!data) {
+      sendRes(res, false);
+      return;
+    }
+    const buffer: UpdateFoodOut = { food: data, triggers };
+    res.status(200).json(buffer);
   } else {
     let nongCampMemberCardIds: Id[] = [];
     let nongIds: Id[] = [];
@@ -651,7 +828,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
         });
       }
     }
-    const { name, isWhiteList, lists } = input;
+    const { name, isWhiteList, lists, listPriority } = input;
     await food.updateOne({
       nongCampMemberCardIds,
       nongIds,
@@ -665,9 +842,11 @@ export async function updateFood(req: express.Request, res: express.Response) {
       name,
       isWhiteList,
       lists,
+      listPriority,
     });
+    const triggerOuts = await getMealTriggerByCampRaw(camp);
+    res.status(200).json(triggerOuts);
   }
-  sendRes(res, true);
 }
 export async function getMealByUser(
   req: express.Request,
@@ -974,6 +1153,14 @@ export async function updateMeal(req: express.Request, res: express.Response) {
     return;
   }
   await meal.updateOne({ time: input.time, roles: input.roles });
+  const data = await Meal.findById(meal._id);
+  if (!data) {
+    sendRes(res, false);
+    return;
+  }
+  const triggers = await getMealTriggerByCampRaw(camp);
+  const buffer: UpdateMealOut = { meal: data, triggers };
+  res.status(200).json(buffer);
 }
 export async function getMealForUpdate(
   req: express.Request,

@@ -302,6 +302,7 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
     jobIds,
     canReadTimeOnMirror,
     nongCall,
+    boyZoneLadyZoneState,
   } = input;
   return {
     partIds,
@@ -398,6 +399,7 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
     jobIds,
     canReadTimeOnMirror,
     nongCall,
+    boyZoneLadyZoneState,
   };
 }
 export function conPartBackToFront(input: InterPartBack): InterPartFront {
@@ -654,4 +656,13 @@ export function getSystemInfoRaw(): SystemInfo {
     // choiceQuestionText: "choiceQuestion",
     // chatText: "chat",
   };
+}
+export function isIdEqual(input1: Id | null, input2: Id | null) {
+  if (!input1 && !input2) {
+    return true;
+  }
+  if (!input1 || !input2) {
+    return false;
+  }
+  return input1.toString() == input2.toString();
 }

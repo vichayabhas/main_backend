@@ -958,9 +958,7 @@ export async function getAllAnswerAndQuestion(
     mainTexts,
     peeAnswers,
     success: true,
-    groupName: camp.groupName,
-    canScoring: camp.lockChangeQuestion && !camp.canAnswerTheQuestion,
-    nongCall:camp.nongCall
+    camp
   };
   res.status(200).json(buffer);
 }

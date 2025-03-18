@@ -1,6 +1,10 @@
 import express from "express";
 import Building from "../../models/Building";
-import { InterPlace, ShowPlace } from "../../models/interface";
+import {
+  GetAllPlaceDataSetup,
+  InterPlace,
+  ShowPlace,
+} from "../../models/interface";
 import Place from "../../models/Place";
 import { swop, sendRes } from "../setup";
 
@@ -103,4 +107,49 @@ export async function getShowPlace(
     room: place.room,
   };
   res.status(200).json(showPlace);
+}
+export async function getAllPlaceDataSetups(
+  req: express.Request,
+  res: express.Response
+) {
+  const buildings = await Building.find();
+  const data: GetAllPlaceDataSetup[] = [];
+  let i = 0;
+  while (i < buildings.length) {
+    const {
+      _id,
+      name,
+      normalBaanIds,
+      boySleepBaanIds,
+      girlSleepBaanIds,
+      partIds,
+      placeIds,
+      actionPlanIds,
+      fridayActIds,
+      lostAndFoundIds,
+    } = buildings[i++];
+    let j = 0;
+    const places: InterPlace[] = [];
+    while (j < placeIds.length) {
+      const place = await Place.findById(placeIds[j++]);
+      if (!place) {
+        continue;
+      }
+      places.push(place);
+    }
+    data.push({
+      partIds,
+      placeIds,
+      places,
+      _id,
+      name,
+      normalBaanIds,
+      boySleepBaanIds,
+      girlSleepBaanIds,
+      actionPlanIds,
+      fridayActIds,
+      lostAndFoundIds,
+    });
+  }
+  res.status(200).json(data);
 }

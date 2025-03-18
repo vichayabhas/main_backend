@@ -1,2 +1,11 @@
 mirror 
 file system
+
+
+สั่งของในค่าย
+
+socket list
+
+tracking sheet
+action plan
+song
