@@ -88,11 +88,6 @@ import {
   deletPartJob,
 } from "../controllers/camp/jobAssign";
 import {
-  createMirror,
-  updateMirror,
-  deleteMirror,
-} from "../controllers/camp/mirror";
-import {
   createGroupContainer,
   createSubGroup,
   updateGroupContainer,
@@ -104,6 +99,14 @@ import {
   createSubGroupByAnyone,
   updateSubGroupByAnyone,
 } from "../controllers/camp/subGroup";
+import {
+  createMirrorUser,
+  updateMirrorUser,
+  deleteMirrorUser,
+  createMirrorBaan,
+  updateMirrorBaan,
+  deleteMirrorBaan,
+} from "../controllers/camp/mirror";
 //import { registerGroup } from "../controllers/camp/น้องแสน";
 
 const router = express.Router();
@@ -212,9 +215,6 @@ router.put("/updateJobAssign", protect, updateJobAssign); //
 router.post("/registerJob", protect, registerJob); //
 router.delete("/deleteBaanJob/params/:id", protect, deleteBaanJob); //
 router.delete("/deletPartJob/params/:id", protect, deletPartJob); //
-router.post("/createMirror/", protect, createMirror); //
-router.put("/updateMirror/", protect, updateMirror); //
-router.delete("/deleteMirror/params/:id", protect, deleteMirror); //
 router.post("/createGroupContainer/", protect, createGroupContainer); //
 router.post("/createSubGroup/", protect, createSubGroup); //
 router.put("/updateGroupContainer/", protect, updateGroupContainer); //
@@ -230,4 +230,10 @@ router.post("/registerGroup/", protect, registerGroup); //
 router.post("/createSubGroupByAnyone/", protect, createSubGroupByAnyone); //
 router.put("/updateSubGroupByAnyone/", protect, updateSubGroupByAnyone); //
 router.get("/getActionPlanForEdit/params/:id", protect, getActionPlanForEdit); //
+router.post("/createMirrorUser/", protect, createMirrorUser); //
+router.put("/updateMirrorUser/", protect, updateMirrorUser); //
+router.delete("/deleteMirrorUser/params/:id", protect, deleteMirrorUser); //
+router.post("/createMirrorBaan/", protect, createMirrorBaan); //
+router.put("/updateMirrorBaan/", protect, updateMirrorBaan); //
+router.delete("/deleteMirrorBaan/params/:id", protect, deleteMirrorBaan); //
 export default router;

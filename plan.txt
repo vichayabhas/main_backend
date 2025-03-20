@@ -1,4 +1,3 @@
-mirror 
 file system
 
 
@@ -6,6 +5,3 @@ file system
 
 socket list
 
-tracking sheet
-action plan
-song

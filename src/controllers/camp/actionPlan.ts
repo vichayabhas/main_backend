@@ -3,13 +3,15 @@ import ActionPlan from "../../models/ActionPlan";
 import Building from "../../models/Building";
 import Camp from "../../models/Camp";
 import {
-  showActionPlan,
+  ShowActionPlan,
   InterActionPlan,
   SuccessBase,
   CreateActionPlan,
   UpdateActionPlan,
   InterPlace,
   GetActionPlanForEdit,
+  Id,
+  TriggerActionPlan,
 } from "../../models/interface";
 import Part from "../../models/Part";
 import Place from "../../models/Place";
@@ -25,7 +27,7 @@ export async function getActionPlanByPartId(
 ) {
   try {
     const part = await Part.findById(req.params.id);
-    const data: showActionPlan[] = [];
+    const data: ShowActionPlan[] = [];
     const user = await getUser(req);
     if (!part) {
       sendRes(res, false);
@@ -90,7 +92,7 @@ export async function getActionPlanByPartId(
       });
     }
     data.sort((a, b) => a.start.getTime() - b.start.getTime());
-    const buffer: SuccessBase<showActionPlan[]> = {
+    const buffer: SuccessBase<ShowActionPlan[]> = {
       data,
       success: true,
     };
@@ -153,7 +155,8 @@ export async function createActionPlan(
       actionPlanIds: swop(null, actionPlan._id, building.actionPlanIds),
     });
   }
-  res.status(200).json(actionPlan);
+  const data = await getTriggerActionPlan(actionPlan.partId);
+  res.status(200).json(data);
 }
 export async function updateActionPlan(
   req: express.Request,
@@ -202,7 +205,8 @@ export async function updateActionPlan(
       });
     }
     await actionPlan.updateOne(update);
-    sendRes(res, true);
+    const data = await getTriggerActionPlan(actionPlan.partId);
+  res.status(200).json(data);
   } catch {
     res.status(400).json({
       success: false,
@@ -245,10 +249,8 @@ export async function deleteActionPlan(
     }
 
     await hospital?.deleteOne();
-    res.status(200).json({
-      success: true,
-      data: {},
-    });
+    const data = await getTriggerActionPlan(hospital.partId);
+  res.status(200).json(data);
   } catch {
     res.status(400).json({
       success: false,
@@ -260,7 +262,7 @@ export async function getActionPlans(
   res: express.Response
 ) {
   try {
-    const data: showActionPlan[] = [];
+    const data: ShowActionPlan[] = [];
     const user = await getUser(req);
     if (!user) {
       sendRes(res, false);
@@ -374,7 +376,7 @@ export async function getActionPlans(
       }
     }
     data.sort((a, b) => a.start.getTime() - b.start.getTime());
-    const buffer: SuccessBase<showActionPlan[]> = { data, success: true };
+    const buffer: SuccessBase<ShowActionPlan[]> = { data, success: true };
     res.status(200).json(buffer);
   } catch {
     res.status(400).json({
@@ -414,7 +416,7 @@ export async function getActionPlan(
       const building = await Building.findById(place?.buildingId);
       placeName.push(`${building?.name} ${place?.floor} ${place?.room}`);
     }
-    const show: showActionPlan = {
+    const show: ShowActionPlan = {
       action,
       partId,
       placeIds,
@@ -440,7 +442,7 @@ export async function getActionPlanByCampId(
 ) {
   try {
     const camp = await Camp.findById(req.params.id);
-    const data: showActionPlan[] = [];
+    const data: ShowActionPlan[] = [];
     const user = await getUser(req);
     if (
       !camp ||
@@ -500,7 +502,7 @@ export async function getActionPlanByCampId(
       });
     }
     data.sort((a, b) => a.start.getTime() - b.start.getTime());
-    const buffer: SuccessBase<showActionPlan[]> = {
+    const buffer: SuccessBase<ShowActionPlan[]> = {
       data,
       success: true,
     };
@@ -532,7 +534,7 @@ export async function getActionPlanForEdit(
     const building = await Building.findById(place?.buildingId);
     placeName.push(`${building?.name} ${place?.floor} ${place?.room}`);
   }
-  const actionPlan: showActionPlan = {
+  const actionPlan: ShowActionPlan = {
     action,
     partId,
     placeIds,
@@ -585,4 +587,109 @@ export async function getActionPlanForEdit(
     selectOffset,
   };
   res.status(200).json(buffer);
+}
+async function getTriggerActionPlan(
+  partId: Id
+): Promise<TriggerActionPlan | null> {
+  const part = await Part.findById(partId);
+  if (!part) {
+    return null;
+  }
+  const camp = await Camp.findById(part.campId);
+  if (!camp) {
+    return null;
+  }
+  const forParts: ShowActionPlan[] = [];
+  const forCamps: ShowActionPlan[] = [];
+  let i = 0;
+  while (i < part.actionPlanIds.length) {
+    const actionPlan = await ActionPlan.findById(part.actionPlanIds[i++]);
+    if (!actionPlan) {
+      continue;
+    }
+    const {
+      action,
+      partId,
+      placeIds,
+      start,
+      end,
+      headId,
+      body,
+      partName,
+      _id,
+    } = actionPlan;
+    const user = await User.findById(headId);
+    if (!user) {
+      continue;
+    }
+    let j = 0;
+    const placeName: string[] = [];
+    while (j < placeIds.length) {
+      const place = await Place.findById(placeIds[j++]);
+      const building = await Building.findById(place?.buildingId);
+      placeName.push(`${building?.name} ${place?.floor} ${place?.room}`);
+    }
+    forParts.push({
+      action,
+      partId,
+      placeIds,
+      start,
+      end,
+      headId,
+      body,
+      headName: user.nickname,
+      headTel: user.tel,
+      partName,
+      placeName,
+      _id,
+    });
+  }
+  forParts.sort((a, b) => a.start.getTime() - b.start.getTime());
+  i = 0;
+  while (i < camp.actionPlanIds.length) {
+    const actionPlan: InterActionPlan | null = await ActionPlan.findById(
+      camp.actionPlanIds[i++]
+    );
+    if (!actionPlan) {
+      continue;
+    }
+    const {
+      action,
+      partId,
+      placeIds,
+      start,
+      end,
+      headId,
+      body,
+      partName,
+      _id,
+    } = actionPlan;
+    const user = await User.findById(headId);
+    if (!user) {
+      continue;
+    }
+    let j = 0;
+    const placeName: string[] = [];
+    while (j < placeIds.length) {
+      const place = await Place.findById(placeIds[j++]);
+      const building = await Building.findById(place?.buildingId);
+      placeName.push(`${building?.name} ${place?.floor} ${place?.room}`);
+    }
+    forCamps.push({
+      action,
+      partId,
+      placeIds,
+      start,
+      end,
+      headId,
+      body,
+      headName: user.nickname,
+      headTel: user.tel,
+      partName,
+      placeName,
+      _id,
+    });
+  }
+  forCamps.sort((a, b) => a.start.getTime() - b.start.getTime());
+  return { forCamps, forParts, partId: part._id, campId: camp._id };
 }

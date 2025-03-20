@@ -4,12 +4,13 @@ import {
   InterWorkingItem,
   SuccessBase,
   CreateWorkingItem,
+  TriggerWorkingItem,
+  Id,
 } from "../../models/interface";
 import Part from "../../models/Part";
 import WorkItem from "../../models/WorkItem";
 import { deleteWorkingItemRaw } from "../admin/main";
-import { sendRes, swop, stringToId } from "../setup";
-import bcrypt from "bcrypt";
+import { sendRes, swop } from "../setup";
 import express from "express";
 
 export async function getWorkingItemByPartId(
@@ -57,7 +58,7 @@ export async function getWorkingItemByPartId(
         password,
         partName,
       } = workItem;
-      const isMatch = await bcrypt.compare(user.linkHash, password);
+      const isMatch = user.linkHash == password;
       if (isMatch) {
         data.push({
           link,
@@ -99,26 +100,37 @@ export async function createWorkingItem(
   req: express.Request,
   res: express.Response
 ) {
-  const create: CreateWorkingItem = req.body;
-  const hospital = await WorkItem.create(create);
+  const { name, link, partId, fromId, password }: CreateWorkingItem = req.body;
   const user = await getUser(req);
-  const part = await Part.findById(create.partId);
+  const part = await Part.findById(partId);
+  if (!part || !user) {
+    sendRes(res, false);
+    return;
+  }
+  const workItem = await WorkItem.create({
+    partName: part.partName,
+    name,
+    link,
+    fromId,
+    partId,
+    password,
+    createBy: user._id,
+  });
   const camp = await Camp.findById(part?.campId);
   await part?.updateOne({
-    workItemIds: swop(null, hospital._id, part.workItemIds),
+    workItemIds: swop(null, workItem._id, part.workItemIds),
   });
   await camp?.updateOne({
-    workItemIds: swop(null, hospital._id, camp.workItemIds),
+    workItemIds: swop(null, workItem._id, camp.workItemIds),
   });
-  await hospital.updateOne({ partName: part?.partName });
-  if (create.fromId) {
-    const from = await WorkItem.findById(create.fromId);
+  if (fromId) {
+    const from = await WorkItem.findById(fromId);
     await from?.updateOne({
-      linkOutIds: swop(null, hospital._id, from.linkOutIds),
+      linkOutIds: swop(null, workItem._id, from.linkOutIds),
     });
   }
-  await hospital.updateOne({ createBy: user?._id, partName: part?.partName });
-  res.status(200).json(hospital);
+  const data = await getTriggerWorkItem(partId);
+  res.status(200).json(data);
 }
 export async function updateWorkingItem(
   req: express.Request,
@@ -137,7 +149,8 @@ export async function updateWorkingItem(
       sendRes(res, false);
       return;
     }
-    res.status(200).json(hospital);
+    const data = await getTriggerWorkItem(hospital.partId);
+    res.status(200).json(data);
   } catch {
     res.status(400).json({
       success: false,
@@ -149,11 +162,14 @@ export async function deleteWorkingItem(
   res: express.Response
 ) {
   try {
-    await deleteWorkingItemRaw(stringToId(req.params.id));
-    res.status(200).json({
-      success: true,
-      data: {},
-    });
+    const workItem = await WorkItem.findById(req.params.id);
+    if (!workItem) {
+      sendRes(res, false);
+      return;
+    }
+    await deleteWorkingItemRaw(workItem._id);
+    const data = await getTriggerWorkItem(workItem.partId);
+    res.status(200).json(data);
   } catch {
     res.status(400).json({
       success: false,
@@ -216,7 +232,7 @@ export async function getWorkingItems(
             password,
             partName,
           } = workItem;
-          const isMatch = await bcrypt.compare(user.linkHash, password);
+          const isMatch = user.linkHash == password;
           if (isMatch) {
             data.push({
               link,
@@ -284,7 +300,7 @@ export async function getWorkingItem(
       password,
       partName,
     } = workItem;
-    const isMatch = await bcrypt.compare(user.linkHash, password);
+    const isMatch = user.linkHash == password;
     if (isMatch) {
       data = {
         link,
@@ -358,7 +374,7 @@ export async function getWorkingItemByCampId(
         password,
         partName,
       } = workItem;
-      const isMatch = await bcrypt.compare(user.linkHash, password);
+      const isMatch = user.linkHash == password;
       if (isMatch) {
         data.push({
           link,
@@ -395,4 +411,35 @@ export async function getWorkingItemByCampId(
   } catch (err) {
     console.log(err);
   }
+}
+async function getTriggerWorkItem(
+  partId: Id
+): Promise<TriggerWorkingItem | null> {
+  const part = await Part.findById(partId);
+  if (!part) {
+    return null;
+  }
+  const camp = await Camp.findById(part.campId);
+  if (!camp) {
+    return null;
+  }
+  const forParts: InterWorkingItem[] = [];
+  const forCamps: InterWorkingItem[] = [];
+  let i = 0;
+  while (i < part.workItemIds.length) {
+    const workItem = await WorkItem.findById(part.workItemIds[i++]);
+    if (!workItem) {
+      continue;
+    }
+    forParts.push(workItem);
+  }
+  i = 0;
+  while (i < camp.workItemIds.length) {
+    const workItem = await WorkItem.findById(camp.workItemIds[i++]);
+    if (!workItem) {
+      continue;
+    }
+    forCamps.push(workItem);
+  }
+  return { forCamps, forParts, partId: part._id, campId: camp._id };
 }

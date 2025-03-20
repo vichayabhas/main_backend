@@ -16,13 +16,31 @@ import {
   ShowSong,
   ShowSongPage,
   UpdateSongPage,
+  UpdateSongPageOut,
+  UpdateSongs,
 } from "../../models/interface";
 import Part from "../../models/Part";
 import PeeCamp from "../../models/PeeCamp";
 import Song from "../../models/Song";
 import User from "../../models/User";
 import { getAuthTypes } from "../camp/getCampData";
-import { sendRes, removeDuplicate, swop, stringToId, resOk } from "../setup";
+import { sendRes, removeDuplicate, swop, stringToId } from "../setup";
+// export async function addLikeSong
+// async function addLikeSongRaw
+// async function getAllSong
+// async function getUserLikeSong
+// export async function addBaanSong
+// async function addBaanSongRaw
+// async function getShowSongRaw
+// export async function getMenuSongs
+// export async function createSong
+// export async function getShowSong
+// export async function addCampSong
+// async function addCampSongRaw
+// export async function updateSongPage
+// export async function getShowCampSongs
+// export async function getShowBaanSongs
+// export async function getAuthSongs
 export async function addLikeSong(req: express.Request, res: express.Response) {
   const { songIds }: { songIds: Id[] } = req.body;
   const user = await getUser(req);
@@ -107,21 +125,21 @@ export async function addBaanSong(req: express.Request, res: express.Response) {
 async function addBaanSongRaw(baanId: Id, songIds: Id[], userId: Id) {
   const baan = await Baan.findById(baanId);
   if (!baan) {
-    return;
+    return null;
   }
   const camp = await Camp.findById(baan.campId);
   if (!camp) {
-    return;
+    return null;
   }
   const campMemberCard = await CampMemberCard.findById(
     camp.mapCampMemberCardIdByUserId.get(userId.toString())
   );
   if (!campMemberCard) {
-    return;
+    return null;
   }
   const auths = await getAuthTypes(userId, camp._id);
   if (!auths) {
-    return;
+    return null;
   }
   switch (campMemberCard.role) {
     case "nong":
@@ -129,11 +147,11 @@ async function addBaanSongRaw(baanId: Id, songIds: Id[], userId: Id) {
     case "pee": {
       const peeCamp = await PeeCamp.findById(campMemberCard.campModelId);
       if (!peeCamp) {
-        return;
+        return null;
       }
       const part = await Part.findById(peeCamp.partId);
       if (!part) {
-        return;
+        return null;
       }
       if (
         part._id.toString() == camp.partBoardId?.toString() ||
@@ -142,17 +160,17 @@ async function addBaanSongRaw(baanId: Id, songIds: Id[], userId: Id) {
       ) {
         break;
       } else {
-        return;
+        return null;
       }
     }
     case "peto": {
       const peeCamp = await PeeCamp.findById(campMemberCard.campModelId);
       if (!peeCamp) {
-        return;
+        return null;
       }
       const part = await Part.findById(peeCamp.partId);
       if (!part) {
-        return;
+        return null;
       }
       if (
         part._id.toString() == camp.partBoardId?.toString() ||
@@ -161,12 +179,15 @@ async function addBaanSongRaw(baanId: Id, songIds: Id[], userId: Id) {
       ) {
         break;
       } else {
-        return;
+        return null;
       }
     }
   }
   const add = removeDuplicate(songIds, baan.songIds);
   const remove = removeDuplicate(baan.songIds, songIds);
+  if (add.length == 0 && remove.length == 0) {
+    return null;
+  }
   let likeSongIds = baan.songIds;
   let i = 0;
   while (i < add.length) {
@@ -191,6 +212,7 @@ async function addBaanSongRaw(baanId: Id, songIds: Id[], userId: Id) {
     });
   }
   await baan.updateOne({ songIds: likeSongIds });
+  return likeSongIds;
 }
 
 async function getShowSongRaw(
@@ -445,8 +467,8 @@ export async function getMenuSongs(
   }
 }
 export async function createSong(req: express.Request, res: express.Response) {
-  await Song.create(req.body);
-  res.status(201).json(resOk);
+  const song = await Song.create(req.body);
+  res.status(201).json(song);
 }
 export async function getShowSong(req: express.Request, res: express.Response) {
   const song = await Song.findById(req.params.id);
@@ -610,20 +632,23 @@ async function addCampSongRaw(campId: Id, songIds: Id[], userId: Id) {
   const camp = await Camp.findById(campId);
   const user = await User.findById(userId);
   if (!camp || !user) {
-    return;
+    return null;
   }
   const auths = await getAuthTypes(user._id, camp._id);
   if (!auths) {
-    return;
+    return null;
   }
   if (
     !auths.includes("pr/studio") &&
     user.authPartIds.includes(camp.partBoardId as Id)
   ) {
-    return;
+    return null;
   }
   const add = removeDuplicate(songIds, camp.songIds);
   const remove = removeDuplicate(camp.songIds, songIds);
+  if (add.length == 0 && remove.length == 0) {
+    return null;
+  }
   let likeSongIds = camp.songIds;
   let i = 0;
   while (i < add.length) {
@@ -648,6 +673,7 @@ async function addCampSongRaw(campId: Id, songIds: Id[], userId: Id) {
     });
   }
   await camp.updateOne({ songIds: likeSongIds });
+  return likeSongIds;
 }
 export async function updateSongPage(
   req: express.Request,
@@ -660,17 +686,28 @@ export async function updateSongPage(
     return;
   }
   let i = 0;
+  const camps: UpdateSongs[] = [];
+  const baans: UpdateSongs[] = [];
   while (i < input.baans.length) {
     const baan = input.baans[i++];
-    await addBaanSongRaw(baan._id, baan.songIds, user._id);
+    const songIds = await addBaanSongRaw(baan._id, baan.songIds, user._id);
+    if (!songIds) {
+      continue;
+    }
+    baans.push({ songIds, _id: baan._id });
   }
   i = 0;
   while (i < input.camps.length) {
     const camp = input.camps[i++];
-    await addCampSongRaw(camp._id, camp.songIds, user._id);
+    const songIds = await addCampSongRaw(camp._id, camp.songIds, user._id);
+    if (!songIds) {
+      continue;
+    }
+    camps.push({ songIds, _id: camp._id });
   }
+  const buffer: UpdateSongPageOut = { camps, baans };
   await addLikeSongRaw(user._id, input.userLikeSongIds);
-  sendRes(res, true);
+  res.status(200).json(buffer);
 }
 export async function getShowCampSongs(
   req: express.Request,
@@ -766,9 +803,9 @@ export async function getShowBaanSongs(
       }
       baanNames.push(`${camp.groupName}${baan.name} จากค่าย ${camp.campName}`);
     }
-    i = 0;
-    while (i < campIds.length) {
-      const camp = await Camp.findById(campIds[i++]);
+    j = 0;
+    while (j < campIds.length) {
+      const camp = await Camp.findById(campIds[j++]);
       if (!camp) {
         continue;
       }
