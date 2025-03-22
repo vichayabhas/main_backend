@@ -45,6 +45,7 @@ import { getImageAndDescriptionsRaw } from "./imageAndDescription";
 import { getBaanJobsRaw, getPartJobsRaw } from "./jobAssign";
 import { getMirrorRaw } from "./mirror";
 import { getGroupContainerRaw } from "./subGroup";
+import { getItemsRaw, getOrdersRaw } from "./order";
 export async function getShowPlaceRaw(
   placeId: Id | null
 ): Promise<ShowPlace | null> {
@@ -718,6 +719,9 @@ export async function getNongCampData(
     groups.push(group);
   }
   const mirrorData = await getMirrorRaw(baan, campMemberCard, user);
+  const items = await getItemsRaw(camp.itemIds);
+  const campMemberCardOrders = await getOrdersRaw(campMemberCard.orderIds);
+  const baanOrders = await getOrdersRaw(baan.orderIds);
   const buffer: GetNongData = {
     baan,
     camp,
@@ -745,6 +749,9 @@ export async function getNongCampData(
     mirrorData,
     defaultGroup,
     groups,
+    items,
+    campMemberCardOrders,
+    baanOrders,
   };
   res.status(200).json(buffer);
 }
@@ -826,6 +833,10 @@ export async function getPeeCampData(
     }
     groups.push(group);
   }
+  const items = await getItemsRaw(camp.itemIds);
+  const campMemberCardOrders = await getOrdersRaw(campMemberCard.orderIds);
+  const partOrders = await getOrdersRaw(part.orderIds);
+  const baanOrders = await getOrdersRaw(baan.orderIds);
   const buffer: GetPeeData = {
     baan,
     camp,
@@ -861,6 +872,10 @@ export async function getPeeCampData(
     mirrorData,
     defaultGroup,
     groups,
+    items,
+    baanOrders,
+    partOrders,
+    campMemberCardOrders,
   };
   res.status(200).json(buffer);
 }
@@ -943,6 +958,9 @@ export async function getPetoCampData(
     };
   }
   const partJobs = await getPartJobsRaw(part.jobIds, user._id);
+  const items = await getItemsRaw(camp.itemIds);
+  const campMemberCardOrders = await getOrdersRaw(campMemberCard.orderIds);
+  const partOrders = await getOrdersRaw(part.orderIds);
   const buffer: GetPetoData = {
     camp,
     part,
@@ -967,6 +985,9 @@ export async function getPetoCampData(
     petos,
     pees,
     partJobs,
+    items,
+    partOrders,
+    campMemberCardOrders,
   };
   res.status(200).json(buffer);
 }

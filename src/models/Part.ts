@@ -48,5 +48,6 @@ const PartSchema = new mongoose.Schema({
     default: [],
   },
   jobIds: arrayObjectId,
+  orderIds: arrayObjectId,
 });
 export default mongoose.model("Part", PartSchema);

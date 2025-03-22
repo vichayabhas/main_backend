@@ -40,6 +40,8 @@ import Mirror from "../../models/Mirror";
 import SubGroup from "../../models/SubGroup";
 import GroupContainer from "../../models/GroupContainer";
 import { removeMemberFromSubGroupRaw } from "../camp/subGroup";
+import Item from "../../models/Item";
+import Order from "../../models/Order";
 
 export async function forceDeleteCamp(
   req: express.Request,
@@ -565,6 +567,14 @@ async function forceDeleteCampRaw(campId: Id, res: express.Response | null) {
     while (i < camp.jobIds.length) {
       await JobAssign.findByIdAndDelete(camp.jobIds[i++]);
     }
+    i = 0;
+    while (i < camp.itemIds.length) {
+      await Item.findByIdAndDelete(camp.itemIds[i++]);
+    }
+    i = 0;
+    while (i < camp.orderIds.length) {
+      await Order.findByIdAndDelete(camp.orderIds[i++]);
+    }
     await camp.deleteOne();
     res?.status(200).json({ success: true });
   } catch {
@@ -675,6 +685,8 @@ export async function forceDeleteBaan(
     camp.nongCampMemberCardHaveHeathIssueIds;
   let peeCampMemberCardHaveHeathIssueIds =
     camp.peeCampMemberCardHaveHeathIssueIds;
+  let campOrderIds = camp.orderIds;
+  let baanOrderIds = baan.orderIds;
   let i = 0;
   if (camp.nongDataLock) {
     while (i < baan.nongCampMemberCardHaveHeathIssueIds.length) {
@@ -890,6 +902,7 @@ export async function forceDeleteBaan(
     });
     await mirror.deleteOne();
   }
+
   i = 0;
   while (i < baan.nongCampMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
@@ -986,6 +999,26 @@ export async function forceDeleteBaan(
           otherCampMemberCard.mirrorReciverIds
         ),
       });
+    }
+    j = 0;
+    while (j < campMemberCard.orderIds.length) {
+      const order = await Order.findById(campMemberCard.orderIds[j++]);
+      if (!order) {
+        continue;
+      }
+      campOrderIds = swop(order._id, null, campOrderIds);
+      if (order.fromId.toString() == baan._id.toString()) {
+        baanOrderIds = swop(order._id, null, baanOrderIds);
+      } else {
+        const baanOrder = await Baan.findById(order.fromId);
+        if (!baanOrder) {
+          continue;
+        }
+        await baanOrder.updateOne({
+          orderIds: swop(order._id, null, baanOrder.orderIds),
+        });
+      }
+      await order.deleteOne();
     }
     await removeAnswer(user._id, camp._id);
     await campMemberCard.deleteOne();
@@ -1138,6 +1171,41 @@ export async function forceDeleteBaan(
         ),
       });
     }
+    j = 0;
+    while (j < campMemberCard.orderIds.length) {
+      const order = await Order.findById(campMemberCard.orderIds[j++]);
+      if (!order) {
+        continue;
+      }
+      campOrderIds = swop(order._id, null, campOrderIds);
+      switch (order.types) {
+        case "part": {
+          const partOrder = await Part.findById(order.fromId);
+          if (!partOrder) {
+            continue;
+          }
+          await partOrder.updateOne({
+            orderIds: swop(order._id, null, part.orderIds),
+          });
+          break;
+        }
+        case "baan": {
+          if (order.fromId.toString() == baan._id.toString()) {
+            baanOrderIds = swop(order._id, null, baanOrderIds);
+          } else {
+            const baanOrder = await Baan.findById(order.fromId);
+            if (!baanOrder) {
+              continue;
+            }
+            await baanOrder.updateOne({
+              orderIds: swop(order._id, null, baanOrder.orderIds),
+            });
+          }
+          break;
+        }
+      }
+      await order.deleteOne();
+    }
     await CampMemberCard.findByIdAndDelete(campMemberCard._id);
   }
   i = 0;
@@ -1186,6 +1254,24 @@ export async function forceDeleteBaan(
       await SubGroup.findByIdAndDelete(container.subGroupIds[j++]);
     }
   }
+  i = 0;
+  while (i < baanOrderIds.length) {
+    const order = await Order.findById(baanOrderIds[i++]);
+    if (!order) {
+      continue;
+    }
+    const campMemberCard = await CampMemberCard.findById(
+      order.campMemberCardId
+    );
+    if (!campMemberCard) {
+      continue;
+    }
+    campOrderIds = swop(order._id, null, campOrderIds);
+    await campMemberCard.updateOne({
+      orderIds: swop(order._id, null, campMemberCard.orderIds),
+    });
+    await order.deleteOne();
+  }
   await camp.updateOne({
     nongIds,
     nongShirtSize: camp.nongShirtSize,
@@ -1204,6 +1290,7 @@ export async function forceDeleteBaan(
     peeCampMemberCardHaveHeathIssueIds,
     peeHaveBottleIds,
     nongHaveBottleIds,
+    orderIds: campOrderIds,
   });
   await CampStyle.findByIdAndDelete(baan.styleId);
   await baan.deleteOne();
@@ -1380,6 +1467,8 @@ async function forceDeletePartRaw(partId: Id) {
     camp.peeCampMemberCardHaveHeathIssueIds;
   let petoCampMemberCardHaveHeathIssueIds =
     camp.petoCampMemberCardHaveHeathIssueIds;
+  let campOrderIds = camp.orderIds;
+  let partOrderIds = part.orderIds;
   let i = 0;
   while (i < part.peeCampMemberCardHaveHeathIssueIds.length) {
     const campMemberCard = await CampMemberCard.findById(
@@ -1609,6 +1698,26 @@ async function forceDeletePartRaw(partId: Id) {
     while (j < campMemberCard.partJobIds.length) {
       await TimeRegister.findByIdAndDelete(campMemberCard.partJobIds[j++]);
     }
+    j = 0;
+    while (j < campMemberCard.orderIds.length) {
+      const order = await Order.findById(campMemberCard.orderIds[j++]);
+      if (!order) {
+        continue;
+      }
+      campOrderIds = swop(order._id, null, campOrderIds);
+      if (order.fromId.toString() == part._id.toString()) {
+        partOrderIds = swop(order._id, null, partOrderIds);
+      } else {
+        const partOrder = await Part.findById(order.fromId);
+        if (!partOrder) {
+          continue;
+        }
+        await partOrder.updateOne({
+          orderIds: swop(order._id, null, partOrder.orderIds),
+        });
+      }
+      await order.deleteOne();
+    }
     campMemberCard?.deleteOne();
     if (camp.peeAnswerIds.includes(user._id)) {
       await removeAnswer(user._id, camp._id);
@@ -1774,6 +1883,40 @@ async function forceDeletePartRaw(partId: Id) {
         campMemberCard.subGroupIds[j++]
       );
     }
+    j = 0;
+    while (j < campMemberCard.orderIds.length) {
+      const order = await Order.findById(campMemberCard.orderIds[j++]);
+      if (!order) {
+        continue;
+      }
+      campOrderIds = swop(order._id, null, campOrderIds);
+      switch (order.types) {
+        case "part": {
+          if (order.fromId.toString() == part._id.toString()) {
+            partOrderIds = swop(order._id, null, partOrderIds);
+          } else {
+            const partOrder = await Part.findById(order.fromId);
+            if (!partOrder) {
+              continue;
+            }
+            await partOrder.updateOne({
+              orderIds: swop(order._id, null, partOrder.orderIds),
+            });
+          }
+          break;
+        }
+        case "baan": {
+          const baanOrder = await Baan.findById(order.fromId);
+          if (!baanOrder) {
+            continue;
+          }
+          await baanOrder.updateOne({
+            orderIds: swop(order._id, null, baanOrder.orderIds),
+          });
+        }
+      }
+      await order.deleteOne();
+    }
     await campMemberCard.deleteOne();
     await baan.updateOne({ peeShirtSize: baan.peeShirtSize });
   }
@@ -1784,6 +1927,24 @@ async function forceDeletePartRaw(partId: Id) {
   i = 0;
   while (i < part.jobIds.length) {
     await JobAssign.findByIdAndDelete(part.jobIds[i++]);
+  }
+  i = 0;
+  while (i < partOrderIds.length) {
+    const order = await Order.findById(partOrderIds[i++]);
+    if (!order) {
+      continue;
+    }
+    const campMemberCard = await CampMemberCard.findById(
+      order.campMemberCardId
+    );
+    if (!campMemberCard) {
+      continue;
+    }
+    campOrderIds = swop(order._id, null, campOrderIds);
+    await campMemberCard.updateOne({
+      orderIds: swop(order._id, null, campMemberCard.orderIds),
+    });
+    await order.deleteOne();
   }
   await camp.updateOne({
     partIds: swop(part._id, null, camp.partIds),
@@ -1805,6 +1966,7 @@ async function forceDeletePartRaw(partId: Id) {
     petoHaveBottleIds,
     peeCampMemberCardHaveHeathIssueIds,
     petoCampMemberCardHaveHeathIssueIds,
+    orderIds: campOrderIds,
   });
   if (part.auths.length) {
     let j = 0;

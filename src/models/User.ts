@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
-import { arrayObjectId, dataString, getDafaultBoolean } from "../controllers/setup";
+import { arrayObjectId, dataString, getDefaultBoolean } from "../controllers/setup";
 export const buf: string = process.env.JWT_SECECRET || "asdfjkl;;lkjfdsa";
 const UserSchema = new mongoose.Schema({
   name: dataString,
@@ -117,7 +117,7 @@ const UserSchema = new mongoose.Schema({
     default: "null",
   },
   citizenId: dataString,
-  likeToSleepAtCamp: getDafaultBoolean(true),
+  likeToSleepAtCamp: getDefaultBoolean(true),
   authPartIds: arrayObjectId,
   selectOffsetId: {
     type: mongoose.Schema.ObjectId,
@@ -125,7 +125,6 @@ const UserSchema = new mongoose.Schema({
   displayOffsetId: {
     type: mongoose.Schema.ObjectId,
   },
-  chatIds: arrayObjectId,
   nongAnswerPackIds: arrayObjectId,
   peeAnswerPackIds: arrayObjectId,
 });

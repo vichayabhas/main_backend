@@ -704,6 +704,7 @@ export async function updateCamp(req: express.Request, res: express.Response) {
     updatePart,
     canReadTimeOnMirror,
     nongCall,
+    canNongSeeBaanOrder,
   }: UpdateCamp = req.body;
   if (camp.nongDataLock != nongDataLock) {
     if (nongDataLock) {
@@ -751,6 +752,7 @@ export async function updateCamp(req: express.Request, res: express.Response) {
     lockChangeQuestion,
     canReadTimeOnMirror,
     nongCall,
+    canNongSeeBaanOrder,
   });
   for (const { id, auths } of updatePart) {
     const part = await Part.findById(id);
@@ -810,22 +812,23 @@ export async function updateCamp(req: express.Request, res: express.Response) {
     }
   }
   const data = await Camp.findById(camp._id);
-  if(!data){
-  sendRes(res,false)
-  return
+  if (!data) {
+    sendRes(res, false);
+    return;
   }
-  let i=0
-  const parts:BasicPart[]=[]
-  while(i<data.partIds.length){
-    const part=await Part.findById(data.partIds[i++])
-    if(!part){
-      continue
+  let i = 0;
+  const parts: BasicPart[] = [];
+  while (i < data.partIds.length) {
+    const part = await Part.findById(data.partIds[i++]);
+    if (!part) {
+      continue;
     }
-    parts.push(part)
+    parts.push(part);
   }
-  const buffer:UpdateCampOut={
-    parts,camp:data
-  }
+  const buffer: UpdateCampOut = {
+    parts,
+    camp: data,
+  };
   res.status(200).json(buffer);
 }
 export async function getCampNames(

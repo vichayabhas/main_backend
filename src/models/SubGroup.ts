@@ -4,7 +4,7 @@ import {
   dataId,
   dataNumberReq,
   dataString,
-  getDafaultBoolean,
+  getDefaultBoolean,
 } from "../controllers/setup";
 import {
   foodLimits,
@@ -27,8 +27,8 @@ const groupContainerSchema = new mongoose.Schema({
   limit: dataNumberReq,
   name: dataString,
   campMemberCardIds: arrayObjectId,
-  isWearing: getDafaultBoolean(false),
-  spicy: getDafaultBoolean(false),
+  isWearing: getDefaultBoolean(false),
+  spicy: getDefaultBoolean(false),
   foodLimit: {
     type: String,
     enum: foodLimits,

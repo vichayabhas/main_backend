@@ -3,7 +3,7 @@ import {
   arrayObjectId,
   dataId,
   dataNumber,
-  getDafaultBoolean,
+  getDefaultBoolean,
 } from "../controllers/setup";
 const PeeCampSchema = new mongoose.Schema({
   userId: dataId,
@@ -24,8 +24,8 @@ const PeeCampSchema = new mongoose.Schema({
     default: "baan",
   },
   received: dataNumber,
-  haveBottle: getDafaultBoolean(false),
-  sleepAtCamp: getDafaultBoolean(false),
+  haveBottle: getDefaultBoolean(false),
+  sleepAtCamp: getDefaultBoolean(false),
   chatIds: arrayObjectId,
   allChatIds: arrayObjectId,
   ownChatIds: arrayObjectId,
@@ -41,5 +41,6 @@ const PeeCampSchema = new mongoose.Schema({
   mirrorReciverIds: arrayObjectId,
   mirrorBaanIds: arrayObjectId,
   subGroupIds: arrayObjectId,
+  orderIds: arrayObjectId,
 });
 export default mongoose.model("CampMemberCard", PeeCampSchema);

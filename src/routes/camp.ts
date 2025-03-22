@@ -107,6 +107,15 @@ import {
   updateMirrorBaan,
   deleteMirrorBaan,
 } from "../controllers/camp/mirror";
+import {
+  createItem,
+  createOrder,
+  updateItem,
+  deleteItem,
+  deleteOrder,
+  getOrderForAdmin,
+  completeOrder,
+} from "../controllers/camp/order";
 //import { registerGroup } from "../controllers/camp/น้องแสน";
 
 const router = express.Router();
@@ -236,4 +245,11 @@ router.delete("/deleteMirrorUser/params/:id", protect, deleteMirrorUser); //
 router.post("/createMirrorBaan/", protect, createMirrorBaan); //
 router.put("/updateMirrorBaan/", protect, updateMirrorBaan); //
 router.delete("/deleteMirrorBaan/params/:id", protect, deleteMirrorBaan); //
+router.post("/createItem/", protect, createItem); //
+router.post("/createOrder/", protect, createOrder); //
+router.put("/updateItem/", protect, updateItem); //
+router.delete("/deleteItem/params/:id", protect, deleteItem); //
+router.delete("/deleteOrder/params/:id", protect, deleteOrder); //
+router.get("/getOrderForAdmin/params/:id", protect, getOrderForAdmin); //
+router.put("/completeOrder/params/:id", protect, completeOrder); //
 export default router;

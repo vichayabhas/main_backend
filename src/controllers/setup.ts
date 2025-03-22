@@ -303,6 +303,7 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
     canReadTimeOnMirror,
     nongCall,
     boyZoneLadyZoneState,
+    canNongSeeBaanOrder,
   } = input;
   return {
     partIds,
@@ -400,6 +401,7 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
     canReadTimeOnMirror,
     nongCall,
     boyZoneLadyZoneState,
+    canNongSeeBaanOrder,
   };
 }
 export function conPartBackToFront(input: InterPartBack): InterPartFront {
@@ -606,7 +608,7 @@ export const dataNumberReq = {
   type: Number,
   default: 0,
 } as const;
-export function getDafaultBoolean(init: boolean) {
+export function getDefaultBoolean(init: boolean) {
   return {
     type: Boolean,
     default: init,
