@@ -4,7 +4,9 @@ import {
   CreateJobAssign,
   GetJob,
   Id,
+  InterTimeRegister,
   RegisterJob,
+  TriggerJob,
   UpdateJobAssign,
 } from "../../models/interface";
 import { getUser } from "../../middleware/auth";
@@ -135,7 +137,17 @@ export async function createJob(req: express.Request, res: express.Response) {
       }
       await job.updateOne({ memberIds });
       await camp.updateOne({ jobIds: swop(null, job._id, camp.jobIds) });
-      sendRes(res, true);
+      i = 0;
+      const outputs: TriggerJob[] = [];
+      while (i < camp.baanIds.length) {
+        const baan = await Baan.findById(camp.baanIds[i++]);
+        if (!baan) {
+          continue;
+        }
+        const jobs = await getBaanJobsRaw(baan.jobIds, null);
+        outputs.push({ jobs, event: "updateBaanJob", roomId: baan._id });
+      }
+      res.status(200).json(outputs);
       return;
     }
     case "part": {
@@ -219,7 +231,15 @@ export async function createJob(req: express.Request, res: express.Response) {
         sum: sumMod,
       };
       const job = await JobAssign.create(buffer);
-      await part.updateOne({ jobIds: swop(null, job._id, part.jobIds) });
+      const jobIds = swop(null, job._id, part.jobIds);
+      await part.updateOne({ jobIds });
+      const jobs = await getPartJobsRaw(jobIds, null);
+      const out: TriggerJob = {
+        jobs,
+        event: "updatePartJob",
+        roomId: part._id,
+      };
+      res.status(200).json([out]);
     }
   }
 }
@@ -249,6 +269,7 @@ export async function getBaanJobsRaw(
     const maleRaws: BasicUserWithTime[] = [];
     const femaleRaws: BasicUserWithTime[] = [];
     const allRaws: BasicUserWithTime[] = [];
+    const timeRegisters: InterTimeRegister[] = [];
     let timeRegisterId: Id | null = null;
     let j = 0;
     while (j < baanJob.memberIds.length) {
@@ -262,6 +283,7 @@ export async function getBaanJobsRaw(
       if (!campMemberCard) {
         continue;
       }
+      timeRegisters.push(timeRegister);
       const user = await User.findById(campMemberCard.userId);
       if (!user) {
         continue;
@@ -389,13 +411,14 @@ export async function getBaanJobsRaw(
       sum,
       reqType,
       timeRegisterId,
+      timeRegisters,
     });
   }
   return out;
 }
 export async function getPartJobsRaw(
   jobIds: Id[],
-  userId: Id
+  userId: Id | null
 ): Promise<GetJob[]> {
   interface BasicUserWithTime {
     user: BasicUser;
@@ -415,6 +438,7 @@ export async function getPartJobsRaw(
     const maleRaws: BasicUserWithTime[] = [];
     const femaleRaws: BasicUserWithTime[] = [];
     const allRaws: BasicUserWithTime[] = [];
+    const timeRegisters: InterTimeRegister[] = [];
     let timeRegisterId: Id | null = null;
     let j = 0;
     while (j < job.memberIds.length) {
@@ -432,7 +456,8 @@ export async function getPartJobsRaw(
       if (!user) {
         continue;
       }
-      if (user._id.toString() == userId.toString()) {
+      timeRegisters.push(timeRegister);
+      if (user._id.toString() == userId?.toString()) {
         timeRegisterId = timeRegister._id;
       }
       allRaws.push({ user, time: timeRegister.time });
@@ -555,6 +580,7 @@ export async function getPartJobsRaw(
       sum,
       reqType,
       timeRegisterId,
+      timeRegisters,
     });
   }
   return out;
@@ -642,7 +668,18 @@ export async function updateJobAssign(
         sum = male + female;
       }
       await job.updateOne({ name, male, female, sum, reqType });
-      break;
+      let i = 0;
+      const outputs: TriggerJob[] = [];
+      while (i < camp.baanIds.length) {
+        const baan = await Baan.findById(camp.baanIds[i++]);
+        if (!baan) {
+          continue;
+        }
+        const jobs = await getBaanJobsRaw(baan.jobIds, null);
+        outputs.push({ jobs, event: "updateBaanJob", roomId: baan._id });
+      }
+      res.status(200).json(outputs);
+      return;
     }
     case "part": {
       const job = await JobAssign.findById(_id);
@@ -704,10 +741,16 @@ export async function updateJobAssign(
         sum = male + female;
       }
       await job.updateOne({ name, male, female, sum, reqType });
+      const jobs = await getPartJobsRaw(part.jobIds, null);
+      const out: TriggerJob = {
+        jobs,
+        event: "updatePartJob",
+        roomId: part._id,
+      };
+      res.status(200).json([out]);
       break;
     }
   }
-  sendRes(res, true);
 }
 export async function registerJob(req: express.Request, res: express.Response) {
   const input: RegisterJob = req.body;
@@ -728,6 +771,11 @@ export async function registerJob(req: express.Request, res: express.Response) {
   const successIds: Id[] = [];
   switch (input.types) {
     case "baan": {
+      const baan = await Baan.findById(input.fromId);
+      if (!baan) {
+        sendRes(res, false);
+        return;
+      }
       while (i < input.addJobIds.length) {
         const baanJob = await BaanJob.findById(input.addJobIds[i++]);
         if (!baanJob) {
@@ -771,10 +819,21 @@ export async function registerJob(req: express.Request, res: express.Response) {
         await timeRegister.deleteOne();
       }
       await campMemberCard.updateOne({ baanJobIds });
-      sendRes(res, true);
+      const jobs = await getBaanJobsRaw(baan.jobIds, null);
+      const out: TriggerJob = {
+        jobs,
+        event: "updateBaanJob",
+        roomId: baan._id,
+      };
+      res.status(200).json(out);
       return;
     }
     case "part": {
+      const part = await Part.findById(input.fromId);
+      if (!part) {
+        sendRes(res, false);
+        return;
+      }
       while (i < input.addJobIds.length) {
         const job = await JobAssign.findById(input.addJobIds[i++]);
         if (!job || job.types == "baan") {
@@ -814,7 +873,13 @@ export async function registerJob(req: express.Request, res: express.Response) {
         await timeRegister.deleteOne();
       }
       await campMemberCard.updateOne({ partJobIds });
-      sendRes(res, true);
+      const jobs = await getPartJobsRaw(part.jobIds, null);
+      const out: TriggerJob = {
+        jobs,
+        event: "updatePartJob",
+        roomId: part._id,
+      };
+      res.status(200).json(out);
       return;
     }
   }
@@ -918,7 +983,17 @@ export async function deleteBaanJob(
   }
   await camp.updateOne({ jobIds: swop(job._id, null, camp.jobIds) });
   await job.deleteOne();
-  sendRes(res, true);
+  i = 0;
+  const outputs: TriggerJob[] = [];
+  while (i < camp.baanIds.length) {
+    const baan = await Baan.findById(camp.baanIds[i++]);
+    if (!baan) {
+      continue;
+    }
+    const jobs = await getBaanJobsRaw(baan.jobIds, null);
+    outputs.push({ jobs, event: "updateBaanJob", roomId: baan._id });
+  }
+  res.status(200).json(outputs);
 }
 export async function deletPartJob(
   req: express.Request,
@@ -994,7 +1069,14 @@ export async function deletPartJob(
     });
     await timeRegister.deleteOne();
   }
-  await part.updateOne({ jobIds: swop(job._id, null, part.jobIds) });
+  const jobIds = swop(job._id, null, part.jobIds);
+  await part.updateOne({ jobIds });
   await job.deleteOne();
-  sendRes(res, true);
+  const jobs = await getPartJobsRaw(jobIds, null);
+  const out: TriggerJob = {
+    jobs,
+    event: "updatePartJob",
+    roomId: part._id,
+  };
+  res.status(200).json(out);
 }
