@@ -1,7 +1,11 @@
 import mongoose from "mongoose";
-import { arrayObjectId, dataString } from "../controllers/setup";
+import { arrayObjectId } from "../controllers/setup";
 const PeeCampSchema = new mongoose.Schema({
-  name: dataString,
+  name: {
+    type: String,
+    required: true,
+    unique: true,
+  },
   placeIds: arrayObjectId,
   actionPlanIds: arrayObjectId,
   fridayActIds: arrayObjectId,
