@@ -23,6 +23,7 @@ import {
   UpdateBaanOut,
   UpdatePartOut,
   UpdateCampOut,
+  GetAdminData,
 } from "../../models/interface";
 import { removeDuplicate, resOk, sendRes, swop } from "../setup";
 import express from "express";
@@ -1079,6 +1080,21 @@ export async function getCampForUpdate(
     camp,
     baans,
     parts,
+  };
+  res.status(200).json(buffer);
+}
+export async function getAdminData(
+  req: express.Request,
+  res: express.Response
+) {
+  const campNameContainers = await NameContainer.find();
+  const partNameContainers = await PartNameContainer.find();
+  let users = await User.find();
+  users = users.filter((v) => v.role != "nong");
+  const buffer: GetAdminData = {
+    campNameContainers,
+    partNameContainers,
+    users,
   };
   res.status(200).json(buffer);
 }

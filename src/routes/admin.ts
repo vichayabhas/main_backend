@@ -18,6 +18,7 @@ import {
   afterVisnuToPee,
   peeToPeto,
   getCampForUpdate,
+  getAdminData,
 } from "../controllers/admin/main";
 import { protect, admin, pee } from "../middleware/auth";
 
@@ -43,4 +44,5 @@ router.delete("/saveDeleteCamp/params/:id", protect, saveDeleteCamp); //
 router.post("/afterVisnuToPee/", protect, admin, afterVisnuToPee); //
 router.post("/peeToPeto/", protect, admin, peeToPeto); //
 router.get("/getCampForUpdate/params/:id", getCampForUpdate); //
+router.get("/getAdminData/", getAdminData); //
 export default router;
