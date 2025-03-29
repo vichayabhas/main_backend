@@ -231,8 +231,15 @@ export async function createOrder(req: express.Request, res: express.Response) {
 }
 export async function updateItem(req: express.Request, res: express.Response) {
   const user = await getUser(req);
-  const { _id, name, canNongOrder, imageLink, remain, canNongSee }: UpdateItem =
-    req.body;
+  const {
+    _id,
+    name,
+    canNongOrder,
+    imageLink,
+    remain,
+    canNongSee,
+    canNongSeeOrder,
+  }: UpdateItem = req.body;
   const item = await Item.findById(_id);
   if (!item || !user) {
     sendRes(res, false);
@@ -248,7 +255,14 @@ export async function updateItem(req: express.Request, res: express.Response) {
     sendRes(res, false);
     return;
   }
-  await item.updateOne({ name, canNongOrder, canNongSee, imageLink, remain });
+  await item.updateOne({
+    name,
+    canNongOrder,
+    canNongSee,
+    imageLink,
+    remain,
+    canNongSeeOrder,
+  });
   const data = await getItemsRaw(camp.itemIds);
   res.status(200).json(data);
 }

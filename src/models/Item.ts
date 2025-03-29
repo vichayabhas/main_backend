@@ -18,5 +18,6 @@ const schema = new mongoose.Schema({
     default: null,
   },
   canNongSee: getDefaultBoolean(false),
+  canNongSeeOrder: getDefaultBoolean(false),
 });
 export default mongoose.model("Item", schema);
