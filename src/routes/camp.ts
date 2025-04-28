@@ -76,7 +76,7 @@ import {
 import { protect, pee } from "../middleware/auth";
 import {
   createImageAndDescriptionContainer,
-  deleteImageAndDescryption,
+  deleteImageAndDescription,
   editImageAndDescription,
   getImageAndDescriptions,
 } from "../controllers/camp/imageAndDescription";
@@ -85,7 +85,7 @@ import {
   updateJobAssign,
   registerJob,
   deleteBaanJob,
-  deletPartJob,
+  deletePartJob,
 } from "../controllers/camp/jobAssign";
 import {
   createGroupContainer,
@@ -210,9 +210,9 @@ router.post(
 ); //
 router.put("/editImageAndDescription/", protect, editImageAndDescription); //
 router.delete(
-  "/deleteImageAndDescryption/params/:id",
+  "/deleteImageAndDescription/params/:id",
   protect,
-  deleteImageAndDescryption
+  deleteImageAndDescription
 ); //
 router.get(
   "/getImageAndDescriptions/params/:id",
@@ -223,7 +223,7 @@ router.post("/createJob", protect, createJob); //
 router.put("/updateJobAssign", protect, updateJobAssign); //
 router.post("/registerJob", protect, registerJob); //
 router.delete("/deleteBaanJob/params/:id", protect, deleteBaanJob); //
-router.delete("/deletPartJob/params/:id", protect, deletPartJob); //
+router.delete("/deletePartJob/params/:id", protect, deletePartJob); //
 router.post("/createGroupContainer/", protect, createGroupContainer); //
 router.post("/createSubGroup/", protect, createSubGroup); //
 router.put("/updateGroupContainer/", protect, updateGroupContainer); //

@@ -33,7 +33,7 @@ const PeeCampSchema = new mongoose.Schema({
   map5: dataMapString,
   mapArrayStringNumberByName: dataMapString,
   mapMapNumberByName: dataMapString,
-  varibleNames: {
+  valuableNames: {
     type: [String],
     default: [
       "arrayString1",

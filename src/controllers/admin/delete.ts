@@ -42,6 +42,8 @@ import GroupContainer from "../../models/GroupContainer";
 import { removeMemberFromSubGroupRaw } from "../camp/subGroup";
 import Item from "../../models/Item";
 import Order from "../../models/Order";
+import CampScore from "../../models/CampScore";
+import ScoreContainer from "../../models/ScoreContainer";
 
 export async function forceDeleteCamp(
   req: express.Request,
@@ -575,6 +577,21 @@ async function forceDeleteCampRaw(campId: Id, res: express.Response | null) {
     while (i < camp.orderIds.length) {
       await Order.findByIdAndDelete(camp.orderIds[i++]);
     }
+    i = 0;
+    while (i < camp.scoreIds.length) {
+      const score = await CampScore.findById(camp.scoreIds[i++]);
+      if (!score) {
+        continue;
+      }
+      const container = await ScoreContainer.findById(score.containerId);
+      if (!container) {
+        continue;
+      }
+      await container.updateOne({
+        campScoreIds: swop(score._id, null, container.campScoreIds),
+      });
+      await score.deleteOne();
+    }
     await camp.deleteOne();
     res?.status(200).json({ success: true });
   } catch {
@@ -950,7 +967,7 @@ export async function forceDeleteBaan(
       if (!mirror) {
         continue;
       }
-      const receiverBaan = await Baan.findById(mirror.reciverId);
+      const receiverBaan = await Baan.findById(mirror.receiverId);
       if (!receiverBaan) {
         continue;
       }
@@ -959,9 +976,9 @@ export async function forceDeleteBaan(
       });
     }
     j = 0;
-    while (j < campMemberCard.mirrorReciverIds.length) {
+    while (j < campMemberCard.mirrorReceiverIds.length) {
       const mirror = await Mirror.findById(
-        campMemberCard.mirrorReciverIds[j++]
+        campMemberCard.mirrorReceiverIds[j++]
       );
       if (!mirror) {
         continue;
@@ -987,7 +1004,7 @@ export async function forceDeleteBaan(
         continue;
       }
       const otherCampMemberCard = await CampMemberCard.findById(
-        mirror.reciverId
+        mirror.receiverId
       );
       if (!otherCampMemberCard) {
         continue;
@@ -996,7 +1013,7 @@ export async function forceDeleteBaan(
         mirrorReciverIds: swop(
           mirror._id,
           null,
-          otherCampMemberCard.mirrorReciverIds
+          otherCampMemberCard.mirrorReceiverIds
         ),
       });
     }
@@ -1121,7 +1138,7 @@ export async function forceDeleteBaan(
       if (!mirror) {
         continue;
       }
-      const receiverBaan = await Baan.findById(mirror.reciverId);
+      const receiverBaan = await Baan.findById(mirror.receiverId);
       if (!receiverBaan) {
         continue;
       }
@@ -1130,9 +1147,9 @@ export async function forceDeleteBaan(
       });
     }
     j = 0;
-    while (j < campMemberCard.mirrorReciverIds.length) {
+    while (j < campMemberCard.mirrorReceiverIds.length) {
       const mirror = await Mirror.findById(
-        campMemberCard.mirrorReciverIds[j++]
+        campMemberCard.mirrorReceiverIds[j++]
       );
       if (!mirror) {
         continue;
@@ -1158,7 +1175,7 @@ export async function forceDeleteBaan(
         continue;
       }
       const otherCampMemberCard = await CampMemberCard.findById(
-        mirror.reciverId
+        mirror.receiverId
       );
       if (!otherCampMemberCard) {
         continue;
@@ -1167,7 +1184,7 @@ export async function forceDeleteBaan(
         mirrorReciverIds: swop(
           mirror._id,
           null,
-          otherCampMemberCard.mirrorReciverIds
+          otherCampMemberCard.mirrorReceiverIds
         ),
       });
     }
@@ -1826,7 +1843,7 @@ async function forceDeletePartRaw(partId: Id) {
       if (!mirror) {
         continue;
       }
-      const receiverBaan = await Baan.findById(mirror.reciverId);
+      const receiverBaan = await Baan.findById(mirror.receiverId);
       if (!receiverBaan) {
         continue;
       }
@@ -1835,9 +1852,9 @@ async function forceDeletePartRaw(partId: Id) {
       });
     }
     j = 0;
-    while (j < campMemberCard.mirrorReciverIds.length) {
+    while (j < campMemberCard.mirrorReceiverIds.length) {
       const mirror = await Mirror.findById(
-        campMemberCard.mirrorReciverIds[j++]
+        campMemberCard.mirrorReceiverIds[j++]
       );
       if (!mirror) {
         continue;
@@ -1863,7 +1880,7 @@ async function forceDeletePartRaw(partId: Id) {
         continue;
       }
       const otherCampMemberCard = await CampMemberCard.findById(
-        mirror.reciverId
+        mirror.receiverId
       );
       if (!otherCampMemberCard) {
         continue;
@@ -1872,7 +1889,7 @@ async function forceDeletePartRaw(partId: Id) {
         mirrorReciverIds: swop(
           mirror._id,
           null,
-          otherCampMemberCard.mirrorReciverIds
+          otherCampMemberCard.mirrorReceiverIds
         ),
       });
     }

@@ -995,7 +995,7 @@ export async function deleteBaanJob(
   }
   res.status(200).json(outputs);
 }
-export async function deletPartJob(
+export async function deletePartJob(
   req: express.Request,
   res: express.Response
 ) {

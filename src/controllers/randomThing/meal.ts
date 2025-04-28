@@ -513,7 +513,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
         changeList.push(foodLimit);
       }
     }
-    const changeListPiority = food.listPriority == listPriority;
+    const changeListPriority = food.listPriority == listPriority;
     const changeSpicy = food.isSpicy == isSpicy;
     await food.updateOne({
       nongCampMemberCardIds,
@@ -534,7 +534,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
     const nongChangeCampMemberCardIds = addNong.concat(removeNong);
     const peeChangeCampMemberCardIds = addPee.concat(removePee);
     const petoChangeCampMemberCardIds = addPeto.concat(removePeto);
-    if (changeListPiority || !listPriority) {
+    if (changeListPriority || !listPriority) {
       const nongHealthCampMemberCardIds = removeDuplicate(
         camp.nongCampMemberCardHaveHeathIssueIds,
         nongChangeCampMemberCardIds
@@ -552,7 +552,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
         petoHealthCampMemberCardIds
       );
       i = 0;
-      if (changeListPiority) {
+      if (changeListPriority) {
         while (i < healthCampMemberCardIds.length) {
           const healthCampMemberCard = await CampMemberCard.findById(
             healthCampMemberCardIds[i++]

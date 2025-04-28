@@ -38,7 +38,7 @@ const PeeCampSchema = new mongoose.Schema({
   baanJobIds: arrayObjectId,
   partJobIds: arrayObjectId,
   mirrorSenderIds: arrayObjectId,
-  mirrorReciverIds: arrayObjectId,
+  mirrorReceiverIds: arrayObjectId,
   mirrorBaanIds: arrayObjectId,
   subGroupIds: arrayObjectId,
   orderIds: arrayObjectId,

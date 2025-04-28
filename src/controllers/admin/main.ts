@@ -136,7 +136,7 @@ export async function addBaanRaw(
       baanId: baan._id,
       partId,
     });
-    setDefalse(peeCamp._id);
+    setDefault(peeCamp._id);
     baan.peeModelIds.push(peeCamp._id);
     await part?.updateOne({
       peeModelIds: swop(null, peeCamp._id, part.peeModelIds),
@@ -233,7 +233,7 @@ async function addPartRaw(
     });
     camp.peeModelIds.push(peeCamp._id);
     part.peeModelIds.push(peeCamp._id);
-    setDefalse(peeCamp.id);
+    setDefault(peeCamp.id);
     baan.mapPeeCampIdByPartId.set(part._id.toString(), peeCamp._id);
     part.mapPeeCampIdByBaanId.set(baanId.toString(), peeCamp._id);
     await baan?.updateOne({ mapPeeCampIdByPartId: baan.mapPeeCampIdByPartId });
@@ -292,7 +292,7 @@ export async function updateBaanRaw(
       normalPlaceId,
       nongSendMessage,
       canReadMirror,
-      canWhriteMirror,
+      canWriteMirror,
     } = update;
     const baan = await Baan.findById(baanId);
     if (!baan) {
@@ -379,7 +379,7 @@ export async function updateBaanRaw(
       normalPlaceId: normalNewP ? normalNewP._id : null,
       nongSendMessage,
       canReadMirror,
-      canWhriteMirror,
+      canWriteMirror,
     });
     const data = await Baan.findById(baan._id);
     if (!data) {
@@ -451,7 +451,7 @@ export async function updatePart(req: express.Request, res: express.Response) {
     res.status(400).json({ success: false });
   }
 }
-async function setDefalse(peeCampId: Id) {
+async function setDefault(peeCampId: Id) {
   // const name = [
   //   "arrayString1",
   //   "arrayString2",

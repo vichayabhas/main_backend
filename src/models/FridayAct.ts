@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const fridayActSchema = new mongoose.Schema({
   company: {
     type: String,
-    require: [true, "Plese fill company"],
+    require: [true, "Please fill company"],
   },
   date: {
     type: Date,

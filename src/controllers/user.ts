@@ -49,11 +49,34 @@ import SubGroup from "../models/SubGroup";
 //*export async function bypassRole
 export async function register(req: express.Request, res: express.Response) {
   try {
-    const buf: Register = req.body;
-    const user = await User.create(buf);
-    const select = await TimeOffset.create({ userId: user._id });
-    const display = await TimeOffset.create({ userId: user._id });
-    await user.updateOne({
+    const {
+      name,
+      lastname,
+      nickname,
+      email,
+      password,
+      gender,
+      shirtSize,
+      haveBottle,
+      tel,
+      citizenId,
+      likeToSleepAtCamp,
+    }: //private
+    Register = req.body;
+    const select = await TimeOffset.create({});
+    const display = await TimeOffset.create({});
+    const user = await User.create({
+      name,
+      nickname,
+      lastname,
+      likeToSleepAtCamp,
+      citizenId,
+      gender,
+      password,
+      email,
+      shirtSize,
+      haveBottle,
+      tel,
       displayOffsetId: display._id,
       selectOffsetId: select._id,
     });

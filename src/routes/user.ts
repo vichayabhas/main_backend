@@ -27,6 +27,11 @@ import {
 const router = express.Router();
 
 import { protect, pee } from "../middleware/auth";
+import {
+  getUniversityStaffMe,
+  universityStaffLogin,
+  universityStaffRegister,
+} from "../controllers/UniversityStaff";
 
 router.post("/register", register); //
 router.post("/login", login); //
@@ -50,4 +55,7 @@ router.post("/verifyEmail/", protect, verifyEmail); //
 router.post("/checkPassword/", protect, checkPassword); //
 router.post("/bypassRole/", protect, bypassRole); //
 router.get("/getOwnRegisterCampDatas/params/:id", getOwnRegisterCampDatas); //
+router.post("/universityStaffRegister/", universityStaffRegister); //
+router.post("/universityStaffLogin/", universityStaffLogin); //
+router.get("/getUniversityStaffMe/", getUniversityStaffMe); //
 export default router;

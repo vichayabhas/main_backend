@@ -5,7 +5,7 @@ import {
   dataNumberReq,
   dataString,
 } from "../controllers/setup";
-import { jobGenderRequies } from "./interface";
+import { jobGenderRequires } from "./interface";
 const LostAndFoundSchema = new mongoose.Schema({
   types: {
     type: String,
@@ -17,7 +17,7 @@ const LostAndFoundSchema = new mongoose.Schema({
   reqType: {
     type: String,
     required: true,
-    enum: jobGenderRequies,
+    enum: jobGenderRequires,
   },
   memberIds: arrayObjectId,
   male: dataNumberReq,

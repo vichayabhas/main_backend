@@ -929,7 +929,7 @@ export async function planUpdateCamp(
       fullName,
       nongSendMessage,
       canReadMirror,
-      canWhriteMirror,
+      canWriteMirror,
     } = baan;
     const boy = await Place.findById(updateBaan.boyId);
     const girl = await Place.findById(updateBaan.girlId);
@@ -952,7 +952,7 @@ export async function planUpdateCamp(
       link,
       fullName,
       canReadMirror,
-      canWhriteMirror,
+      canWriteMirror,
     });
     if (!data) {
       continue;

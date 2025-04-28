@@ -1043,7 +1043,7 @@ async function registerAddSubGroupRaw(
   if (campMemberCard.role == "peto" || !add) {
     return false;
   }
-  const empthy = add.campMemberCardIds.length == 0;
+  const empty = add.campMemberCardIds.length == 0;
   if (
     (add.roleType == "น้องเท่านั้น" && campMemberCard.role == "pee") ||
     (add.roleType == "พี่เท่านั้น" && campMemberCard.role == "nong")
@@ -1093,10 +1093,10 @@ async function registerAddSubGroupRaw(
       extra: "",
     };
   }
-  const isWearing = healthIssue.isWearing && (empthy || add.isWearing);
-  const spicy = healthIssue.spicy && (empthy || add.spicy);
+  const isWearing = healthIssue.isWearing && (empty || add.isWearing);
+  const spicy = healthIssue.spicy && (empty || add.spicy);
   let foodLimit: FoodLimit;
-  if (healthIssue.foodLimit == add.foodLimit || empthy) {
+  if (healthIssue.foodLimit == add.foodLimit || empty) {
     foodLimit = healthIssue.foodLimit;
   } else {
     foodLimit = "ไม่มีข้อจำกัดด้านความเชื่อ";
@@ -1236,15 +1236,15 @@ export async function revalidateSubGroup(subGroupId: Id) {
   if (!firstCampMemberCard) {
     return;
   }
-  const firstHealthIsshue = await HeathIssue.findById(
+  const firstHealthIssue = await HeathIssue.findById(
     firstCampMemberCard.healthIssueId
   );
-  if (!firstHealthIsshue) {
+  if (!firstHealthIssue) {
     const foodLimit: FoodLimit = "ไม่มีข้อจำกัดด้านความเชื่อ";
     await subGroup.updateOne({ isWearing: false, spicy: false, foodLimit });
     return;
   }
-  let { isWearing, spicy, foodLimit } = firstHealthIsshue;
+  let { isWearing, spicy, foodLimit } = firstHealthIssue;
   let i = 1;
   while (i < subGroup.campMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
@@ -1278,6 +1278,32 @@ function recycleSubGroup(inputs: InterSubGroup[], compares: InterSubGroup[]) {
 function getSuitableSubGroups(inputs: InterSubGroup[], count: number) {
   const out: InterSubGroup[] = [];
   inputs.sort((a, b) => b.limit - a.limit);
+  function backtrack(
+    index: number,
+    current: InterSubGroup[],
+    total: number
+  ): boolean {
+    if (total === count) {
+      out.push(...current);
+      return true;
+    }
+    if (total > count || index >= inputs.length) return false;
+    // Try including this group
+    if (
+      backtrack(
+        index + 1,
+        [...current, inputs[index]],
+        total + inputs[index].limit
+      )
+    ) {
+      return true;
+    }
+    // Try excluding this group
+    return backtrack(index + 1, current, total);
+  }
+  if (backtrack(0, [], 0)) {
+    return out;
+  }
   let i = 0;
   while (i < inputs.length && count >= inputs[i].limit) {
     out.push(inputs[i]);
@@ -1361,9 +1387,9 @@ export async function autoAddToNearestGroup(
     const wearingBoySubGroups: InterSubGroup[] = [];
     const wearingGirlCampMemberCards: InterCampMemberCard[] = [];
     const wearingGirlSubGroups: InterSubGroup[] = [];
-    const empthySubGroup: InterSubGroup[] = [];
-    const empthyBoySubGroup: InterSubGroup[] = [];
-    const empthyGirlSubGroup: InterSubGroup[] = [];
+    const emptySubGroup: InterSubGroup[] = [];
+    const emptyBoySubGroup: InterSubGroup[] = [];
+    const emptyGirlSubGroup: InterSubGroup[] = [];
     let i = 0;
     while (i < container.subGroupIds.length) {
       const subGroup = await SubGroup.findById(container.subGroupIds[i++]);
@@ -1386,14 +1412,14 @@ export async function autoAddToNearestGroup(
         ifIsTrue(
           subGroup.genderType == "ชายเท่านั้น",
           subGroup,
-          empthyBoySubGroup
+          emptyBoySubGroup
         );
         ifIsTrue(
           subGroup.genderType == "หญิงเท่านั้น",
           subGroup,
-          empthyGirlSubGroup
+          emptyGirlSubGroup
         );
-        ifIsTrue(subGroup.genderType == "คละเพศ", subGroup, empthySubGroup);
+        ifIsTrue(subGroup.genderType == "คละเพศ", subGroup, emptySubGroup);
       }
     }
     i = 0;
@@ -1580,7 +1606,7 @@ export async function autoAddToNearestGroup(
           const nongGirlSubGroups: InterSubGroup[] = [];
           const peeBoySubGroups: InterSubGroup[] = [];
           const peeGirlSubGroups: InterSubGroup[] = [];
-          for (const subGroup of empthyBoySubGroup) {
+          for (const subGroup of emptyBoySubGroup) {
             ifIsTrue(
               subGroup.roleType == "น้องเท่านั้น",
               subGroup,
@@ -1592,7 +1618,7 @@ export async function autoAddToNearestGroup(
               peeBoySubGroups
             );
           }
-          for (const subGroup of empthyGirlSubGroup) {
+          for (const subGroup of emptyGirlSubGroup) {
             ifIsTrue(
               subGroup.roleType == "น้องเท่านั้น",
               subGroup,
@@ -1666,11 +1692,11 @@ export async function autoAddToNearestGroup(
             girls.push(campMemberCard);
           }
           const boySubGroups = getSuitableSubGroups(
-            empthyBoySubGroup,
+            emptyBoySubGroup,
             boys.length
           );
           const girlSubGroup = getSuitableSubGroups(
-            empthyGirlSubGroup,
+            emptyGirlSubGroup,
             girls.length
           );
           userIds = await addAllToGroup(boys, boySubGroups, container, userIds);
@@ -1708,19 +1734,19 @@ export async function autoAddToNearestGroup(
             ifIsTrue(campMemberCard.role == "pee", campMemberCard, peeGirls);
           }
           const nongBoySuitSubGroups = getSuitableSubGroups(
-            empthyBoySubGroup,
+            emptyBoySubGroup,
             nongBoys.length
           );
           const nongGirlSuitSubGroups = getSuitableSubGroups(
-            empthyGirlSubGroup,
+            emptyGirlSubGroup,
             nongGirls.length
           );
           const boyRemain = recycleSubGroup(
-            empthyBoySubGroup,
+            emptyBoySubGroup,
             nongBoySuitSubGroups
           );
           const girlRemain = recycleSubGroup(
-            empthyGirlSubGroup,
+            emptyGirlSubGroup,
             nongGirlSuitSubGroups
           );
           const peeBoySuitSubGroups = getSuitableSubGroups(
@@ -1787,7 +1813,7 @@ export async function autoAddToNearestGroup(
           }
           const peeSubGroups: InterSubGroup[] = [];
           const nongSubGroups: InterSubGroup[] = [];
-          for (const subGroup of empthySubGroup) {
+          for (const subGroup of emptySubGroup) {
             ifIsTrue(
               subGroup.roleType == "น้องเท่านั้น",
               subGroup,
@@ -1866,10 +1892,10 @@ export async function autoAddToNearestGroup(
             girls.push(campMemberCard);
           }
           const girlSubGroup = getSuitableSubGroups(
-            empthySubGroup,
+            emptySubGroup,
             girls.length
           );
-          const remain = recycleSubGroup(empthySubGroup, girlSubGroup);
+          const remain = recycleSubGroup(emptySubGroup, girlSubGroup);
           const boySubGroups = getSuitableSubGroups(remain, boys.length);
           userIds = await addAllToGroup(boys, boySubGroups, container, userIds);
           userIds = await addAllToGroup(
@@ -1906,11 +1932,11 @@ export async function autoAddToNearestGroup(
             ifIsTrue(campMemberCard.role == "pee", campMemberCard, peeGirls);
           }
           const nongGirlSuitSubGroups = getSuitableSubGroups(
-            empthySubGroup,
+            emptySubGroup,
             nongGirls.length
           );
           const remain1 = recycleSubGroup(
-            empthySubGroup,
+            emptySubGroup,
             nongGirlSuitSubGroups
           );
           const nongBoySuitSubGroups = getSuitableSubGroups(
@@ -1962,8 +1988,8 @@ export async function autoAddToNearestGroup(
         const spicyPeeSubGroups: InterSubGroup[] = [];
         const spicyPeeCampMemberCards: InterCampMemberCard[] = [];
         const spicyNongCampMemberCards: InterCampMemberCard[] = [];
-        const empthyNongSubGroups: InterSubGroup[] = [];
-        const empthyPeeSubGroups: InterSubGroup[] = [];
+        const emptyNongSubGroups: InterSubGroup[] = [];
+        const emptyPeeSubGroups: InterSubGroup[] = [];
         let i = 0;
         while (i < container.subGroupIds.length) {
           const subGroup = await SubGroup.findById(container.subGroupIds[i++]);
@@ -1984,13 +2010,13 @@ export async function autoAddToNearestGroup(
             subGroup.campMemberCardIds.length == 0 &&
               subGroup.roleType == "พี่เท่านั้น",
             subGroup,
-            empthyPeeSubGroups
+            emptyPeeSubGroups
           );
           ifIsTrue(
             subGroup.campMemberCardIds.length == 0 &&
               subGroup.roleType == "น้องเท่านั้น",
             subGroup,
-            empthyNongSubGroups
+            emptyNongSubGroups
           );
         }
         i = 0;
@@ -2081,11 +2107,11 @@ export async function autoAddToNearestGroup(
           pees.push(spicyPeeCampMemberCards[peeIndex++]);
         }
         const peeSuitSubGroups = getSuitableSubGroups(
-          empthyPeeSubGroups,
+          emptyPeeSubGroups,
           pees.length
         );
         const nongSuitSubGroups = getSuitableSubGroups(
-          empthyNongSubGroups,
+          emptyNongSubGroups,
           nongs.length
         );
         userIds = await addAllToGroup(
@@ -2105,7 +2131,7 @@ export async function autoAddToNearestGroup(
       case "คละพี่และน้อง": {
         const spicySubGroups: InterSubGroup[] = [];
         const spicyCampMemberCards: InterCampMemberCard[] = [];
-        const empthySubGroups: InterSubGroup[] = [];
+        const emptySubGroups: InterSubGroup[] = [];
         let i = 0;
         while (i < container.subGroupIds.length) {
           const subGroup = await SubGroup.findById(container.subGroupIds[i++]);
@@ -2116,7 +2142,7 @@ export async function autoAddToNearestGroup(
           ifIsTrue(
             !subGroup.campMemberCardIds.length,
             subGroup,
-            empthySubGroups
+            emptySubGroups
           );
         }
         i = 0;
@@ -2168,7 +2194,7 @@ export async function autoAddToNearestGroup(
           remainCampMemberCards.push(spicyCampMemberCards[index++]);
         }
         const suitSubGroup = getSuitableSubGroups(
-          empthySubGroups,
+          emptySubGroups,
           remainCampMemberCards.length
         );
         userIds = await addAllToGroup(
@@ -2184,7 +2210,7 @@ export async function autoAddToNearestGroup(
         const spicyPeeSubGroups: InterSubGroup[] = [];
         const spicyPeeCampMemberCards: InterCampMemberCard[] = [];
         const spicyNongCampMemberCards: InterCampMemberCard[] = [];
-        const empthySubGroups: InterSubGroup[] = [];
+        const emptySubGroups: InterSubGroup[] = [];
         let i = 0;
         while (i < container.subGroupIds.length) {
           const subGroup = await SubGroup.findById(container.subGroupIds[i++]);
@@ -2205,7 +2231,7 @@ export async function autoAddToNearestGroup(
             subGroup.campMemberCardIds.length == 0 &&
               subGroup.roleType == "พี่เท่านั้น",
             subGroup,
-            empthySubGroups
+            emptySubGroups
           );
         }
         i = 0;
@@ -2296,10 +2322,10 @@ export async function autoAddToNearestGroup(
           pees.push(spicyPeeCampMemberCards[peeIndex++]);
         }
         const nongSuitSubGroups = getSuitableSubGroups(
-          empthySubGroups,
+          emptySubGroups,
           nongs.length
         );
-        const remain = recycleSubGroup(empthySubGroups, nongSuitSubGroups);
+        const remain = recycleSubGroup(emptySubGroups, nongSuitSubGroups);
         const peeSuitSubGroups = getSuitableSubGroups(remain, pees.length);
 
         userIds = await addAllToGroup(

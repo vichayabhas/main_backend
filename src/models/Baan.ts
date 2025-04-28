@@ -93,7 +93,7 @@ const BaanSchema = new mongoose.Schema({
   jobIds: arrayObjectId,
   mirrorIds: arrayObjectId,
   canReadMirror: getDefaultBoolean(false),
-  canWhriteMirror: getDefaultBoolean(false),
+  canWriteMirror: getDefaultBoolean(false),
   groupContainerIds: arrayObjectId,
   defaultGroupId: {
     type: mongoose.Schema.ObjectId,

@@ -3,7 +3,7 @@ import { dataId, dataString } from "../controllers/setup";
 
 const mirrorSchema = new mongoose.Schema({
   senderCampMemberCardId: dataId,
-  reciverId: dataId,
+  receiverId: dataId,
   message: dataString,
   types: {
     type: String,

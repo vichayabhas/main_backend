@@ -1,6 +1,11 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
-import { arrayObjectId, dataString, getDefaultBoolean } from "../controllers/setup";
+import {
+  arrayObjectId,
+  dataId,
+  dataString,
+  getDefaultBoolean,
+} from "../controllers/setup";
 export const buf: string = process.env.JWT_SECECRET || "asdfjkl;;lkjfdsa";
 const UserSchema = new mongoose.Schema({
   name: dataString,
@@ -42,7 +47,7 @@ const UserSchema = new mongoose.Schema({
   },
   shirtSize: {
     type: String,
-    required: [true, "Plese choose shirt size"],
+    required: [true, "Please choose shirt size"],
     enum: ["S", "M", "L", "XL", "XXL", "3XL"],
   },
   healthIssueId: {
@@ -119,14 +124,13 @@ const UserSchema = new mongoose.Schema({
   citizenId: dataString,
   likeToSleepAtCamp: getDefaultBoolean(true),
   authPartIds: arrayObjectId,
-  selectOffsetId: {
-    type: mongoose.Schema.ObjectId,
-  },
-  displayOffsetId: {
-    type: mongoose.Schema.ObjectId,
-  },
+  selectOffsetId: dataId,
+  displayOffsetId: dataId,
   nongAnswerPackIds: arrayObjectId,
   peeAnswerPackIds: arrayObjectId,
+  staffShortActivityIds: arrayObjectId,
+  bookingRoomIds: arrayObjectId,
+  paticipantShortActivityIds: arrayObjectId,
 });
 UserSchema.pre("save", async function (next) {
   const salt = await bcrypt.genSalt(10);

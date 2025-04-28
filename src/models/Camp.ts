@@ -210,5 +210,6 @@ const campSchema = new mongoose.Schema({
   itemIds: arrayObjectId,
   orderIds: arrayObjectId,
   canNongSeeBaanOrder: getDefaultBoolean(false),
+  scoreIds: arrayObjectId,
 });
 export default mongoose.model("Camp", campSchema);

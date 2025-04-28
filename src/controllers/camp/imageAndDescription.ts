@@ -270,7 +270,7 @@ export async function editImageAndDescription(
   );
   res.status(200).json(data);
 }
-export async function deleteImageAndDescryption(
+export async function deleteImageAndDescription(
   req: express.Request,
   res: express.Response
 ) {
@@ -449,11 +449,11 @@ export async function getImageAndDescriptions(
       return;
     }
   }
-  const imageAndDescryptionContainers = await getImageAndDescriptionsRaw(
+  const imageAndDescriptionContainers = await getImageAndDescriptionsRaw(
     baan.imageAndDescriptionContainerIds
   );
   const out: GetImageAndDescriptionsPackForUpdate = {
-    imageAndDescryptionContainers,
+    imageAndDescriptionContainers,
     baan,
     isOverNight: camp.nongSleepModel != "ไม่มีการค้างคืน",
   };

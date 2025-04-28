@@ -158,7 +158,7 @@ export function conBaanBackToFront(input: InterBaanBack): InterBaanFront {
     imageAndDescriptionContainerIds,
     jobIds,
     canReadMirror,
-    canWhriteMirror,
+    canWriteMirror,
     mirrorIds,
     groupContainerIds,
     defaultGroupId,
@@ -202,7 +202,7 @@ export function conBaanBackToFront(input: InterBaanBack): InterBaanFront {
     imageAndDescriptionContainerIds,
     jobIds,
     canReadMirror,
-    canWhriteMirror,
+    canWriteMirror,
     mirrorIds,
     defaultGroupId,
     groupContainerIds,
@@ -304,6 +304,7 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
     nongCall,
     boyZoneLadyZoneState,
     canNongSeeBaanOrder,
+    scoreIds,
   } = input;
   return {
     partIds,
@@ -402,6 +403,7 @@ export function conCampBackToFront(input: InterCampBack): InterCampFront {
     nongCall,
     boyZoneLadyZoneState,
     canNongSeeBaanOrder,
+    scoreIds,
   };
 }
 export function conPartBackToFront(input: InterPartBack): InterPartFront {
