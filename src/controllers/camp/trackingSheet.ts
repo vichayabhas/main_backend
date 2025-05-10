@@ -116,12 +116,8 @@ export async function createWorkingItem(
     password,
     createBy: user._id,
   });
-  const camp = await Camp.findById(part?.campId);
   await part?.updateOne({
     workItemIds: swop(null, workItem._id, part.workItemIds),
-  });
-  await camp?.updateOne({
-    workItemIds: swop(null, workItem._id, camp.workItemIds),
   });
   if (fromId) {
     const from = await WorkItem.findById(fromId);
@@ -195,14 +191,21 @@ export async function getWorkingItems(
           continue;
         }
         let j = 0;
-        while (j < camp.workItemIds.length) {
-          const workItem: InterWorkingItem | null = await WorkItem.findById(
-            camp.workItemIds[j++]
-          );
-          if (!workItem) {
+        while (j < camp.partIds.length) {
+          const part = await Part.findById(camp.partIds[j++]);
+          if (!part) {
             continue;
           }
-          data.push(workItem);
+          let k = 0;
+          while (k < part.workItemIds.length) {
+            const workItem: InterWorkingItem | null = await WorkItem.findById(
+              part.workItemIds[k++]
+            );
+            if (!workItem) {
+              continue;
+            }
+            data.push(workItem);
+          }
         }
       }
     } else {
@@ -213,52 +216,20 @@ export async function getWorkingItems(
           continue;
         }
         let j = 0;
-        while (j < camp.workItemIds.length) {
-          const workItem: InterWorkingItem | null = await WorkItem.findById(
-            camp.workItemIds[j++]
-          );
-          if (!workItem) {
+        while (j < camp.partIds.length) {
+          const part = await Part.findById(camp.partIds[j++]);
+          if (!part) {
             continue;
           }
-          const {
-            name,
-            link,
-            status,
-            partId,
-            linkOutIds,
-            fromId,
-            createBy,
-            _id,
-            password,
-            partName,
-          } = workItem;
-          const isMatch = user.linkHash == password;
-          if (isMatch) {
-            data.push({
-              link,
-              status,
-              partId,
-              linkOutIds,
-              fromId,
-              createBy,
-              _id,
-              partName,
-              password,
-              name,
-            });
-          } else {
-            data.push({
-              link: null,
-              status,
-              partId,
-              linkOutIds,
-              fromId,
-              createBy,
-              _id,
-              partName,
-              password,
-              name,
-            });
+          let k = 0;
+          while (k < part.workItemIds.length) {
+            const workItem: InterWorkingItem | null = await WorkItem.findById(
+              part.workItemIds[k++]
+            );
+            if (!workItem) {
+              continue;
+            }
+            data.push(workItem);
           }
         }
       }
@@ -355,52 +326,20 @@ export async function getWorkingItemByCampId(
       return;
     }
     let j = 0;
-    while (j < camp.workItemIds.length) {
-      const workItem: InterWorkingItem | null = await WorkItem.findById(
-        camp.workItemIds[j++]
-      );
-      if (!workItem) {
+    while (j < camp.partIds.length) {
+      const part = await Part.findById(camp.partIds[j++]);
+      if (!part) {
         continue;
       }
-      const {
-        name,
-        link,
-        status,
-        partId,
-        linkOutIds,
-        fromId,
-        createBy,
-        _id,
-        password,
-        partName,
-      } = workItem;
-      const isMatch = user.linkHash == password;
-      if (isMatch) {
-        data.push({
-          link,
-          status,
-          partId,
-          linkOutIds,
-          fromId,
-          createBy,
-          _id,
-          partName,
-          password,
-          name,
-        });
-      } else {
-        data.push({
-          link: null,
-          status,
-          partId,
-          linkOutIds,
-          fromId,
-          createBy,
-          _id,
-          partName,
-          password,
-          name,
-        });
+      let k = 0;
+      while (k < part.workItemIds.length) {
+        const workItem: InterWorkingItem | null = await WorkItem.findById(
+          part.workItemIds[k++]
+        );
+        if (!workItem) {
+          continue;
+        }
+        data.push(workItem);
       }
     }
     const buffer: SuccessBase<InterWorkingItem[]> = {
@@ -434,12 +373,21 @@ async function getTriggerWorkItem(
     forParts.push(workItem);
   }
   i = 0;
-  while (i < camp.workItemIds.length) {
-    const workItem = await WorkItem.findById(camp.workItemIds[i++]);
-    if (!workItem) {
+  while (i < camp.partIds.length) {
+    const part = await Part.findById(camp.partIds[i++]);
+    if (!part) {
       continue;
     }
-    forCamps.push(workItem);
+    let j = 0;
+    while (j < part.workItemIds.length) {
+      const workItem: InterWorkingItem | null = await WorkItem.findById(
+        part.workItemIds[j++]
+      );
+      if (!workItem) {
+        continue;
+      }
+      forParts.push(workItem);
+    }
   }
   return { forCamps, forParts, partId: part._id, campId: camp._id };
 }

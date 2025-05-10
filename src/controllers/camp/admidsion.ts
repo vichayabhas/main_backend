@@ -123,14 +123,6 @@ export async function pass(req: express.Request, res: express.Response) {
   res.status(200).json(newData);
 }
 export async function kickPee(req: express.Request, res: express.Response) {
-  // const { campId, members } = req.body;
-  // const camp = await Camp.findById(campId);
-  // if (!camp) {
-  //   sendRes(res, false);
-  //   return;
-  // }
-  // const im = await getImpotentPartIdBCRP(camp._id);
-  // await changePartRaw(members, im[3]);
   sendRes(res, true);
 }
 export async function kickNong(req: express.Request, res: express.Response) {
@@ -186,9 +178,7 @@ export async function addNong(req: express.Request, res: express.Response) {
     let newNongPassIds = camp.nongSureIds;
     let count = 0;
     const baanNongHaveBottleIds = baan.nongHaveBottleIds;
-    const campNongHaveBottleIds = camp.nongHaveBottleIds;
     const baanNongSleepIds = baan.nongSleepIds;
-    const campNongSleepIds = camp.nongSleepIds;
     const size: Map<"S" | "M" | "L" | "XL" | "XXL" | "3XL", number> =
       startSize();
     let i = 0;
@@ -221,7 +211,7 @@ export async function addNong(req: express.Request, res: express.Response) {
           break;
         }
       }
-      ifIsTrue(sleepAtCamp, user._id, campNongSleepIds, baanNongSleepIds);
+      ifIsTrue(sleepAtCamp, user._id, baanNongSleepIds);
       const campMemberCard = await CampMemberCard.create({
         userId: user._id,
         size: user.shirtSize,
@@ -234,18 +224,14 @@ export async function addNong(req: express.Request, res: express.Response) {
       });
       nongCamp.nongCampMemberCardIds.push(campMemberCard._id);
       baan.nongCampMemberCardIds.push(campMemberCard._id);
-      camp.nongCampMemberCardIds.push(campMemberCard._id);
       user.campMemberCardIds.push(campMemberCard._id);
       newNongPassIds = swop(user._id, null, newNongPassIds);
       if (user.healthIssueId) {
         baan.nongHeathIssueIds.push(user.healthIssueId);
-        camp.nongHeathIssueIds.push(user.healthIssueId);
         const heathIssue = await HeathIssue.findById(user.healthIssueId);
         baan.nongCampMemberCardHaveHeathIssueIds.push(campMemberCard._id);
-        camp.nongCampMemberCardHaveHeathIssueIds.push(campMemberCard._id);
         if (heathIssue) {
           await heathIssue.updateOne({
-            //nongCampIds: swop(null, nongCamp._id, heathIssue.nongCampIds),
             campMemberCardIds: swop(
               null,
               campMemberCard._id,
@@ -256,42 +242,29 @@ export async function addNong(req: express.Request, res: express.Response) {
       }
       const userSize = user.shirtSize;
       size.set(userSize, (size.get(userSize) as number) + 1);
-      ifIsTrue(
-        user.haveBottle,
-        user._id,
-        baanNongHaveBottleIds,
-        campNongHaveBottleIds
-      );
+      ifIsTrue(user.haveBottle, user._id, baanNongHaveBottleIds);
       user.nongCampIds.push(nongCamp._id);
       camp.mapCampMemberCardIdByUserId.set(user.id, campMemberCard._id);
-      baan.mapCampMemberCardIdByUserId.set(user.id, campMemberCard._id); //
+      baan.mapCampMemberCardIdByUserId.set(user.id, campMemberCard._id);
       await user.updateOne({
         nongCampIds: user.nongCampIds,
         campMemberCardIds: user.campMemberCardIds,
       });
     }
     size.forEach((v, k) => {
-      camp.nongShirtSize.set(k, (camp.nongShirtSize.get(k) as number) + v);
       baan.nongShirtSize.set(k, (baan.nongShirtSize.get(k) as number) + v);
     });
     await camp.updateOne({
       nongSureIds: newNongPassIds,
-      nongCampMemberCardIds: camp.nongCampMemberCardIds,
-      nongShirtSize: camp.nongShirtSize,
-      nongHeathIssueIds: camp.nongHeathIssueIds,
       nongIds: camp.nongIds,
       mapCampMemberCardIdByUserId: camp.mapCampMemberCardIdByUserId,
-      nongSleepIds: campNongSleepIds,
       currentNong: camp.currentNong,
-      nongCampMemberCardHaveHeathIssueIds:
-        camp.nongCampMemberCardHaveHeathIssueIds,
-      nongHaveBottleIds: campNongHaveBottleIds,
     });
     await baan.updateOne({
       nongCampMemberCardIds: baan.nongCampMemberCardIds,
       nongShirtSize: baan.nongShirtSize,
       nongHeathIssueIds: baan.nongHeathIssueIds,
-      nongIds: baan.nongIds, //
+      nongIds: baan.nongIds,
       mapCampMemberCardIdByUserId: baan.mapCampMemberCardIdByUserId,
       nongSleepIds: baanNongSleepIds,
       nongCampMemberCardHaveHeathIssueIds:
@@ -299,7 +272,7 @@ export async function addNong(req: express.Request, res: express.Response) {
       nongHaveBottleIds: baanNongHaveBottleIds,
     });
     await nongCamp.updateOne({
-      nongIds: nongCamp.nongIds, //
+      nongIds: nongCamp.nongIds,
       nongCampMemberCardIds: nongCamp.nongCampMemberCardIds,
     });
     res.status(200).json({
@@ -363,9 +336,7 @@ export async function addPeeRaw(members: Id[], baanId: Id) {
       return false;
     }
     const baanPeeHaveBottleIds = baan.peeHaveBottleIds;
-    const campPeeHaveBottleIds = camp.peeHaveBottleIds;
     const baanPeeSleepIds = baan.peeSleepIds;
-    const campPeeSleepIds = camp.peeSleepIds;
     let count = 0;
     const size: Map<"S" | "M" | "L" | "XL" | "XXL" | "3XL", number> =
       startSize();
@@ -398,7 +369,6 @@ export async function addPeeRaw(members: Id[], baanId: Id) {
         case "ไม่มีการค้างคืน":
           sleepAtCamp = false;
       }
-
       camp.peeMapIdGtoL.set(user._id.toString(), camp.currentPee + 1);
       camp.peeMapIdLtoG.set((camp.currentPee + 1).toString(), user._id);
       const campMemberCard = await CampMemberCard.create({
@@ -412,7 +382,6 @@ export async function addPeeRaw(members: Id[], baanId: Id) {
         healthIssueId: user.healthIssueId,
       });
       part.peeCampMemberCardIds.push(campMemberCard._id);
-      camp.peeCampMemberCardIds.push(campMemberCard._id);
       baan.peeCampMemberCardIds.push(campMemberCard._id);
       user.campMemberCardIds.push(campMemberCard._id);
       count = count + 1;
@@ -422,7 +391,6 @@ export async function addPeeRaw(members: Id[], baanId: Id) {
       part.peeIds.push(user._id);
       if (user.healthIssueId) {
         baan.peeHeathIssueIds.push(user.healthIssueId);
-        camp.peeHeathIssueIds.push(user.healthIssueId);
         part.peeHeathIssueIds.push(user.healthIssueId);
         const heathIssue = await HeathIssue.findById(user.healthIssueId);
         if (heathIssue) {
@@ -435,7 +403,6 @@ export async function addPeeRaw(members: Id[], baanId: Id) {
           });
           baan.peeCampMemberCardHaveHeathIssueIds.push(campMemberCard._id);
           part.peeCampMemberCardHaveHeathIssueIds.push(campMemberCard._id);
-          camp.peeCampMemberCardHaveHeathIssueIds.push(campMemberCard._id);
         }
       }
       const userSize = user.shirtSize as "S" | "M" | "L" | "XL" | "XXL" | "3XL";
@@ -444,7 +411,6 @@ export async function addPeeRaw(members: Id[], baanId: Id) {
         (part.peeShirtSize.get(userSize) as number) + 1
       );
       size.set(userSize, (size.get(userSize) as number) + 1);
-
       user.peeCampIds.push(peeCamp._id);
       user.registerIds.push(camp._id);
       camp.peePassIds.delete(user.id);
@@ -478,34 +444,24 @@ export async function addPeeRaw(members: Id[], baanId: Id) {
           sleepAtCamp,
           user._id,
           part.peeSleepIds,
-          campPeeSleepIds,
           baanPeeSleepIds
         ),
         peeHaveBottleIds: ifIsTrue(
           user.haveBottle,
           user._id,
           part.peeHaveBottleIds,
-          baanPeeHaveBottleIds,
-          campPeeHaveBottleIds
+          baanPeeHaveBottleIds
         ),
       });
     }
     size.forEach((v, k) => {
-      camp.peeShirtSize.set(k, (camp.peeShirtSize.get(k) as number) + v);
       baan.peeShirtSize.set(k, (baan.peeShirtSize.get(k) as number) + v);
     });
     await camp.updateOne({
-      peeCampMemberCardIds: camp.peeCampMemberCardIds,
-      peeShirtSize: camp.peeShirtSize,
       peeIds: camp.peeIds,
-      peeHeathIssueIds: camp.peeHeathIssueIds,
       peePassIds: camp.peePassIds,
       mapCampMemberCardIdByUserId: camp.mapCampMemberCardIdByUserId,
-      peeSleepIds: campPeeSleepIds,
       currentPee: camp.currentPee,
-      peeCampMemberCardHaveHeathIssueIds:
-        camp.peeCampMemberCardHaveHeathIssueIds,
-      peeHaveBottleIds: campPeeHaveBottleIds,
       peeMapIdGtoL: camp.peeMapIdGtoL,
       peeMapIdLtoG: camp.peeMapIdLtoG,
     });
@@ -545,7 +501,6 @@ export async function addPetoRaw(
     sendRes(res, false);
     return;
   }
-  const campPetoHaveBottleIds = camp.petoHaveBottleIds;
   const partPetoHaveBottleIds = part.petoHaveBottleIds;
   let count = 0;
   const size: Map<"S" | "M" | "L" | "XL" | "XXL" | "3XL", number> = startSize();
@@ -590,7 +545,6 @@ export async function addPetoRaw(
       }
     }
     if (sleepAtCamp) {
-      camp.petoSleepIds.push(user._id);
       part.petoSleepIds.push(user._id);
     }
     const campMemberCard = await CampMemberCard.create({
@@ -605,15 +559,12 @@ export async function addPetoRaw(
     });
     petoCamp.petoCampMemberCardIds.push(campMemberCard._id);
     part.petoCampMemberCardIds.push(campMemberCard._id);
-    camp.petoCampMemberCardIds.push(campMemberCard._id);
     user.campMemberCardIds.push(campMemberCard._id);
     if (user.healthIssueId) {
       part.petoHeathIssueIds.push(user.healthIssueId);
-      camp.petoHeathIssueIds.push(user.healthIssueId);
       const heathIssue = await HeathIssue.findById(user.healthIssueId);
       if (heathIssue) {
         await heathIssue.updateOne({
-          //petoCampIds: swop(null, petoCamp._id, heathIssue.petoCampIds),
           campMemberCardIds: swop(
             null,
             campMemberCard._id,
@@ -621,17 +572,11 @@ export async function addPetoRaw(
           ),
         });
         part.petoCampMemberCardHaveHeathIssueIds.push(campMemberCard._id);
-        camp.petoCampMemberCardHaveHeathIssueIds.push(campMemberCard._id);
       }
     }
     const userSize = user.shirtSize;
     size.set(userSize, (size.get(userSize) as number) + 1);
-    ifIsTrue(
-      user.haveBottle,
-      user._id,
-      partPetoHaveBottleIds,
-      campPetoHaveBottleIds
-    );
+    ifIsTrue(user.haveBottle, user._id, partPetoHaveBottleIds);
     user.petoCampIds.push(petoCamp._id);
     user.registerIds.push(camp._id);
     camp.mapCampMemberCardIdByUserId.set(user.id, campMemberCard._id);
@@ -644,19 +589,11 @@ export async function addPetoRaw(
     });
   }
   size.forEach((v, k) => {
-    camp.petoShirtSize.set(k, (camp.petoShirtSize.get(k) as number) + v);
     part.petoShirtSize.set(k, (part.petoShirtSize.get(k) as number) + v);
   });
   await camp.updateOne({
-    petoHeathIssueIds: camp.petoHeathIssueIds,
     petoIds: camp.petoIds,
-    petoCampMemberCardIds: camp.petoCampMemberCardIds,
-    petoShirtSize: camp.petoShirtSize,
     mapCampMemberCardIdByUserId: camp.mapCampMemberCardIdByUserId,
-    petoSleepIds: camp.petoSleepIds,
-    petoCampMemberCardHaveHeathIssueIds:
-      camp.petoCampMemberCardHaveHeathIssueIds,
-    petoHaveBottleIds: campPetoHaveBottleIds,
     peeMapIdGtoL: camp.peeMapIdGtoL,
     peeMapIdLtoG: camp.peeMapIdLtoG,
   });

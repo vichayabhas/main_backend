@@ -1,6 +1,7 @@
 import express from "express";
 import { getUser } from "../../middleware/auth";
 import {
+  BasicCamp,
   CreateItem,
   CreateOrder,
   GetOrderForAdmin,
@@ -29,6 +30,26 @@ import TimeOffset from "../../models/TimeOffset";
 //*export async function deleteOrder
 //*export async function getOrderForAdmin
 //*export async function completeOrder
+async function getOrdersFromCamp(camp: BasicCamp) {
+  let i = 0;
+  const orderIds: Id[] = [];
+  while (i < camp.baanIds.length) {
+    const baan = await Baan.findById(camp.baanIds[i++]);
+    if (!baan) {
+      continue;
+    }
+    orderIds.push(...baan.orderIds);
+  }
+  i = 0;
+  while (i < camp.partIds.length) {
+    const part = await Part.findById(camp.partIds[i++]);
+    if (!part) {
+      continue;
+    }
+    orderIds.push(...part.orderIds);
+  }
+  return await getOrdersRaw(orderIds);
+}
 export async function getItemsRaw(itemIds: readonly Id[]) {
   let i = 0;
   const items: InterItem[] = [];
@@ -160,13 +181,11 @@ export async function createOrder(req: express.Request, res: express.Response) {
         campMemberCard.orderIds
       );
       const fromOrderIds = ifIsHave(order._id, part.orderIds);
-      const campOrderIds = ifIsHave(order._id, camp.orderIds);
       await campMemberCard.updateOne({ orderIds: campMemberCardOrderIds });
       await part.updateOne({ orderIds: fromOrderIds });
-      await camp.updateOne({ orderIds: campOrderIds });
       const campMemberCardOrders = await getOrdersRaw(campMemberCardOrderIds);
       const fromOrders = await getOrdersRaw(fromOrderIds);
-      const campOrders = await getOrdersRaw(campOrderIds);
+      const campOrders = await getOrdersFromCamp(camp);
       await item.updateOne({
         orderIds: ifIsHave(order._id, item.orderIds),
         remain: item.remain - order.count,
@@ -202,13 +221,11 @@ export async function createOrder(req: express.Request, res: express.Response) {
         campMemberCard.orderIds
       );
       const fromOrderIds = ifIsHave(order._id, baan.orderIds);
-      const campOrderIds = ifIsHave(order._id, camp.orderIds);
       await campMemberCard.updateOne({ orderIds: campMemberCardOrderIds });
       await baan.updateOne({ orderIds: fromOrderIds });
-      await camp.updateOne({ orderIds: campOrderIds });
       const campMemberCardOrders = await getOrdersRaw(campMemberCardOrderIds);
       const fromOrders = await getOrdersRaw(fromOrderIds);
-      const campOrders = await getOrdersRaw(campOrderIds);
+      const campOrders = await getOrdersFromCamp(camp);
       await item.updateOne({
         orderIds: ifIsHave(order._id, item.orderIds),
         remain: item.remain - order.count,
@@ -284,7 +301,6 @@ export async function deleteItem(req: express.Request, res: express.Response) {
     return;
   }
   let i = 0;
-  let campOrderIds = camp.orderIds;
   while (i < item.orderIds.length) {
     const order = await Order.findById(item.orderIds[i++]);
     if (!order) {
@@ -296,7 +312,6 @@ export async function deleteItem(req: express.Request, res: express.Response) {
     if (!campMemberCard) {
       continue;
     }
-    campOrderIds = swop(order._id, null, campOrderIds);
     switch (order.types) {
       case "part": {
         const partOrder = await Part.findById(order.fromId);
@@ -324,7 +339,6 @@ export async function deleteItem(req: express.Request, res: express.Response) {
     await order.deleteOne();
   }
   const itemIds = swop(item._id, null, camp.itemIds);
-  await camp.updateOne({ itemIds, orderIds: campOrderIds });
   await item.deleteOne();
   const data = await getItemsRaw(itemIds);
   res.status(200).json(data);
@@ -376,12 +390,10 @@ export async function deleteOrder(req: express.Request, res: express.Response) {
         orderIds: campMemberCardOrderIds,
       });
       await item.updateOne({ orderIds: swop(order._id, null, item.orderIds) });
-      const campOrderIds = swop(order._id, null, camp.orderIds);
-      await camp.updateOne({ orderIds: campOrderIds });
       await order.deleteOne();
       const campMemberCardOrders = await getOrdersRaw(campMemberCardOrderIds);
       const fromOrders = await getOrdersRaw(fromOrderIds);
-      const campOrders = await getOrdersRaw(campOrderIds);
+      const campOrders = await getOrdersFromCamp(camp);
       await item.updateOne({
         orderIds: ifIsHave(order._id, item.orderIds),
         remain: item.remain - order.count,
@@ -419,12 +431,10 @@ export async function deleteOrder(req: express.Request, res: express.Response) {
         orderIds: campMemberCardOrderIds,
       });
       await item.updateOne({ orderIds: swop(order._id, null, item.orderIds) });
-      const campOrderIds = swop(order._id, null, camp.orderIds);
-      await camp.updateOne({ orderIds: campOrderIds });
       await order.deleteOne();
       const campMemberCardOrders = await getOrdersRaw(campMemberCardOrderIds);
       const fromOrders = await getOrdersRaw(fromOrderIds);
-      const campOrders = await getOrdersRaw(campOrderIds);
+      const campOrders = await getOrdersFromCamp(camp);
       await item.updateOne({
         orderIds: ifIsHave(order._id, item.orderIds),
         remain: item.remain - order.count,
@@ -461,7 +471,7 @@ export async function getOrderForAdmin(
     return;
   }
   const items = await getItemsRaw(camp.itemIds);
-  const orders = await getOrdersRaw(camp.orderIds);
+  const orders = await getOrdersFromCamp(camp);
   const buffer: GetOrderForAdmin = {
     displayOffset,
     items,
@@ -515,7 +525,7 @@ export async function completeOrder(
       }
       const campMemberCardOrders = await getOrdersRaw(campMemberCard.orderIds);
       const fromOrders = await getOrdersRaw(from.orderIds);
-      const campOrders = await getOrdersRaw(camp.orderIds);
+      const campOrders = await getOrdersFromCamp(camp);
       const items = await getItemsRaw(camp.itemIds);
       const buffer: TriggerOrder = {
         campId: camp._id,
@@ -543,7 +553,7 @@ export async function completeOrder(
       }
       const campMemberCardOrders = await getOrdersRaw(campMemberCard.orderIds);
       const fromOrders = await getOrdersRaw(from.orderIds);
-      const campOrders = await getOrdersRaw(camp.orderIds);
+      const campOrders = await getOrdersFromCamp(camp);
       const items = await getItemsRaw(camp.itemIds);
       const buffer: TriggerOrder = {
         campId: camp._id,

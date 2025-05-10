@@ -41,6 +41,8 @@ import {
   startJsonSize,
   swop,
   isIdEqual,
+  sizeJsonMod,
+  sum,
 } from "../setup";
 import User from "../../models/User";
 import { getUser } from "../../middleware/auth";
@@ -327,6 +329,9 @@ export async function getAllWelfare(
   const partVegans: CampNumberData[] = [];
   const baanIsWearings: CampNumberData[] = [];
   const partIsWearings: CampNumberData[] = [];
+  const nongSize = startJsonSize();
+  const peeSize = startJsonSize();
+  const petoSize = startJsonSize();
   let campNongSpicyS = 0;
   let campPeeSpicyS = 0;
   let campPetoSpicyS = 0;
@@ -496,6 +501,12 @@ export async function getAllWelfare(
       peeNumber: baanPeeIsWearings,
       petoNumber: 0,
     });
+    baan.nongShirtSize.forEach((v, size) => {
+      sizeJsonMod(size, v, nongSize);
+    });
+    baan.peeShirtSize.forEach((v, size) => {
+      sizeJsonMod(size, v, peeSize);
+    });
   }
   i = 0;
   while (i < camp.partIds.length) {
@@ -642,6 +653,9 @@ export async function getAllWelfare(
       peeNumber: partPeeIsWearings,
       petoNumber: partPetoIsWearings,
     });
+    part.petoShirtSize.forEach((v, size) => {
+      sizeJsonMod(size, v, petoSize);
+    });
   }
   const meals: InterMeal[] = [];
   i = 0;
@@ -657,9 +671,9 @@ export async function getAllWelfare(
     partWelfares,
     baanWelfares,
     campWelfare: {
-      nongSize: sizeMapToJson(camp.nongShirtSize),
-      peeSize: sizeMapToJson(camp.peeShirtSize),
-      petoSize: sizeMapToJson(camp.petoShirtSize),
+      nongSize,
+      peeSize,
+      petoSize,
       name,
       nongHealths,
       peeHealths,
@@ -668,10 +682,14 @@ export async function getAllWelfare(
     baanHaveBottles,
     partHaveBottles,
     campBottleNumber: {
-      nongNumber: camp.nongHaveBottleIds.length,
-      peeNumber: camp.peeHaveBottleIds.length,
-      petoNumber: camp.petoHaveBottleIds.length,
       name,
+      nongNumber: baanHaveBottles
+        .map(({ nongNumber }) => nongNumber)
+        .reduce(sum),
+      peeNumber: baanHaveBottles.map(({ peeNumber }) => peeNumber).reduce(sum),
+      petoNumber: partHaveBottles
+        .map(({ petoNumber }) => petoNumber)
+        .reduce(sum),
     },
     baanHalalS,
     baanSpicyS,

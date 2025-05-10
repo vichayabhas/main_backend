@@ -143,7 +143,6 @@ export async function getMe(req: express.Request, res: express.Response) {
   res.status(200).json(user);
 }
 export async function logout(req: express.Request, res: express.Response) {
-  //Clears cookie
   res.cookie("token", "none", {
     expires: new Date(Date.now() + 10 * 1000),
     httpOnly: true,
@@ -207,14 +206,6 @@ export async function updateSize(req: express.Request, res: express.Response) {
             continue;
           }
           await campMemberCard.updateOne({ size: shirtSize });
-          camp.nongShirtSize.set(
-            oldSize,
-            calculate(camp.nongShirtSize.get(oldSize), 0, 1)
-          );
-          camp.nongShirtSize.set(
-            shirtSize,
-            calculate(camp.nongShirtSize.get(shirtSize), 1, 0)
-          );
           baan.nongShirtSize.set(
             oldSize,
             calculate(baan.nongShirtSize.get(oldSize), 0, 1)
@@ -223,9 +214,6 @@ export async function updateSize(req: express.Request, res: express.Response) {
             shirtSize,
             calculate(baan.nongShirtSize.get(shirtSize), 1, 0)
           );
-          await camp.updateOne({
-            nongShirtSize: camp.nongShirtSize,
-          });
           await baan.updateOne({
             nongShirtSize: baan.nongShirtSize,
           });
@@ -246,14 +234,6 @@ export async function updateSize(req: express.Request, res: express.Response) {
             continue;
           }
           await campMemberCard.updateOne({ size: shirtSize });
-          camp.peeShirtSize.set(
-            oldSize,
-            calculate(camp.peeShirtSize.get(oldSize), 0, 1)
-          );
-          camp.peeShirtSize.set(
-            shirtSize,
-            calculate(camp.peeShirtSize.get(shirtSize), 1, 0)
-          );
           baan.peeShirtSize.set(
             oldSize,
             calculate(baan.peeShirtSize.get(oldSize), 0, 1)
@@ -270,9 +250,6 @@ export async function updateSize(req: express.Request, res: express.Response) {
             shirtSize,
             calculate(part.peeShirtSize.get(shirtSize), 1, 0)
           );
-          await camp.updateOne({
-            peeShirtSize: camp.peeShirtSize,
-          });
           await baan.updateOne({
             peeShirtSize: baan.peeShirtSize,
           });
@@ -295,14 +272,6 @@ export async function updateSize(req: express.Request, res: express.Response) {
             continue;
           }
           await campMemberCard.updateOne({ size: shirtSize });
-          camp.petoShirtSize.set(
-            oldSize,
-            calculate(camp.petoShirtSize.get(oldSize), 0, 1)
-          );
-          camp.petoShirtSize.set(
-            shirtSize,
-            calculate(camp.petoShirtSize.get(shirtSize), 1, 0)
-          );
           part.petoShirtSize.set(
             oldSize,
             calculate(part.petoShirtSize.get(oldSize), 0, 1)
@@ -311,9 +280,6 @@ export async function updateSize(req: express.Request, res: express.Response) {
             shirtSize,
             calculate(part.petoShirtSize.get(shirtSize), 1, 0)
           );
-          await camp.updateOne({
-            petoShirtSize: camp.petoShirtSize,
-          });
           await part.updateOne({
             petoShirtSize: part.petoShirtSize,
           });
@@ -417,14 +383,6 @@ export async function updateHeath(req: express.Request, res: express.Response) {
             if (!baan) {
               continue;
             }
-            await camp.updateOne({
-              nongHeathIssueIds: swop(null, heath._id, camp.nongHeathIssueIds),
-              nongCampMemberCardHaveHeathIssueIds: swop(
-                null,
-                campMemberCard._id,
-                camp.nongCampMemberCardHaveHeathIssueIds
-              ),
-            });
             await baan.updateOne({
               nongHeathIssueIds: swop(null, heath._id, baan.nongHeathIssueIds),
               nongCampMemberCardHaveHeathIssueIds: swop(
@@ -451,14 +409,6 @@ export async function updateHeath(req: express.Request, res: express.Response) {
             if (!baan || !part) {
               continue;
             }
-            await camp.updateOne({
-              peeHeathIssueIds: swop(null, heath._id, camp.peeHeathIssueIds),
-              peeCampMemberCardHaveHeathIssueIds: swop(
-                null,
-                campMemberCard._id,
-                camp.peeCampMemberCardHaveHeathIssueIds
-              ),
-            });
             await baan.updateOne({
               peeHeathIssueIds: swop(null, heath._id, baan.peeHeathIssueIds),
               peeCampMemberCardHaveHeathIssueIds: swop(
@@ -493,7 +443,6 @@ export async function updateHeath(req: express.Request, res: express.Response) {
               continue;
             }
             await camp.updateOne({
-              petoHeathIssueIds: swop(null, heath._id, camp.petoHeathIssueIds),
               petoCampMemberCardHaveHeathIssueIds: swop(
                 null,
                 campMemberCard._id,
@@ -552,14 +501,6 @@ export async function updateHeath(req: express.Request, res: express.Response) {
             if (!baan || !camp) {
               continue;
             }
-            await camp.updateOne({
-              nongHeathIssueIds: swop(old._id, null, camp.nongHeathIssueIds),
-              nongCampMemberCardHaveHeathIssueIds: swop(
-                campMemberCard._id,
-                null,
-                camp.nongCampMemberCardHaveHeathIssueIds
-              ),
-            });
             await baan.updateOne({
               nongHeathIssueIds: swop(old._id, null, baan.nongHeathIssueIds),
               nongCampMemberCardHaveHeathIssueIds: swop(
@@ -582,14 +523,6 @@ export async function updateHeath(req: express.Request, res: express.Response) {
             if (!baan || !camp || !part) {
               continue;
             }
-            await camp.updateOne({
-              peeHeathIssueIds: swop(old._id, null, camp.peeHeathIssueIds),
-              peeCampMemberCardHaveHeathIssueIds: swop(
-                campMemberCard._id,
-                null,
-                camp.peeCampMemberCardHaveHeathIssueIds
-              ),
-            });
             await baan.updateOne({
               peeHeathIssueIds: swop(old._id, null, baan.peeHeathIssueIds),
               peeCampMemberCardHaveHeathIssueIds: swop(
@@ -621,14 +554,6 @@ export async function updateHeath(req: express.Request, res: express.Response) {
             if (!camp || !part) {
               continue;
             }
-            await camp.updateOne({
-              petoHeathIssueIds: swop(old._id, null, camp.petoHeathIssueIds),
-              petoCampMemberCardHaveHeathIssueIds: swop(
-                campMemberCard._id,
-                null,
-                camp.petoCampMemberCardHaveHeathIssueIds
-              ),
-            });
             await part.updateOne({
               petoHeathIssueIds: swop(old._id, null, part.petoHeathIssueIds),
               petoCampMemberCardHaveHeathIssueIds: swop(
@@ -698,9 +623,6 @@ export async function updateHeath(req: express.Request, res: express.Response) {
           if (!baan || !camp) {
             continue;
           }
-          await camp.updateOne({
-            nongHeathIssueIds: swop(old._id, heath._id, camp.nongHeathIssueIds),
-          });
           await baan.updateOne({
             nongHeathIssueIds: swop(old._id, heath._id, baan.nongHeathIssueIds),
           });
@@ -718,9 +640,6 @@ export async function updateHeath(req: express.Request, res: express.Response) {
           if (!baan || !camp || !part) {
             continue;
           }
-          await camp.updateOne({
-            peeHeathIssueIds: swop(old._id, heath._id, camp.peeHeathIssueIds),
-          });
           await baan.updateOne({
             peeHeathIssueIds: swop(old._id, heath._id, baan.peeHeathIssueIds),
           });
@@ -740,9 +659,6 @@ export async function updateHeath(req: express.Request, res: express.Response) {
           if (!camp || !part) {
             continue;
           }
-          await camp.updateOne({
-            petoHeathIssueIds: swop(old._id, heath._id, camp.petoHeathIssueIds),
-          });
           await part.updateOne({
             petoHeathIssueIds: swop(old._id, heath._id, part.petoHeathIssueIds),
           });
@@ -821,16 +737,10 @@ export async function updateBottle(
         }
         await campMemberCard.updateOne({ haveBottle: !oldBottle });
         if (oldBottle) {
-          await camp.updateOne({
-            nongHaveBottleIds: swop(user._id, null, camp.nongHaveBottleIds),
-          });
           await baan.updateOne({
             nongHaveBottleIds: swop(user._id, null, baan.nongHaveBottleIds),
           });
         } else {
-          await camp.updateOne({
-            nongHaveBottleIds: swop(null, user._id, camp.nongHaveBottleIds),
-          });
           await baan.updateOne({
             nongHaveBottleIds: swop(null, user._id, baan.nongHaveBottleIds),
           });
@@ -853,9 +763,6 @@ export async function updateBottle(
         }
         await campMemberCard.updateOne({ haveBottle: !oldBottle });
         if (oldBottle) {
-          await camp.updateOne({
-            peeHaveBottleIds: swop(user._id, null, camp.peeHaveBottleIds),
-          });
           await baan.updateOne({
             peeHaveBottleIds: swop(user._id, null, baan.peeHaveBottleIds),
           });
@@ -863,9 +770,6 @@ export async function updateBottle(
             peeHaveBottleIds: swop(user._id, null, part.peeHaveBottleIds),
           });
         } else {
-          await camp.updateOne({
-            peeHaveBottleIds: swop(null, user._id, camp.peeHaveBottleIds),
-          });
           await baan.updateOne({
             peeHaveBottleIds: swop(null, user._id, baan.peeHaveBottleIds),
           });
@@ -890,16 +794,10 @@ export async function updateBottle(
         }
         await campMemberCard.updateOne({ haveBottle: !oldBottle });
         if (oldBottle) {
-          await camp.updateOne({
-            petoHaveBottleIds: swop(user._id, null, camp.petoHaveBottleIds),
-          });
           await part.updateOne({
             petoHaveBottleIds: swop(user._id, null, part.petoHaveBottleIds),
           });
         } else {
-          await camp.updateOne({
-            petoHaveBottleIds: swop(null, user._id, camp.petoHaveBottleIds),
-          });
           await part.updateOne({
             petoHaveBottleIds: swop(null, user._id, part.petoHaveBottleIds),
           });
@@ -958,17 +856,14 @@ export async function changeModeToPee(
   }
 }
 export async function checkTel(req: express.Request, res: express.Response) {
-  //type FindMode='h=>nong,f=>nong'|'h=>nong,f=>pee'|'h=>nong,f=>peto'|'h=>pee,f=>nong'|'h=>pee,f=>pee'|'h=>pee,f=>peto'|'h=>peto,f=>nong'|'h=>peto,f=>pee'|'h=>peto,f=>peto'
   const findUser = await User.findOne({ tel: req.params.id });
   const host = await getUser(req);
-  //console.log(findUser)
   const relation: string[] = [];
   if (!host || !findUser) {
     res.status(400).json({ relation });
     return;
   }
   let i = 0;
-  //const map=new Map<string,FindMode>()
   while (i < host.nongCampIds.length) {
     const nongCamp = await NongCamp.findById(host.nongCampIds[i++]);
     if (!nongCamp) {
@@ -1159,16 +1054,10 @@ export async function updateSleep(req: express.Request, res: express.Response) {
         }
         await campMemberCard.updateOne({ sleepAtCamp: !oldSleep });
         if (oldSleep) {
-          await camp.updateOne({
-            nongSleepIds: swop(user._id, null, camp.nongSleepIds),
-          });
           await baan.updateOne({
             nongSleepIds: swop(user._id, null, baan.nongSleepIds),
           });
         } else {
-          await camp.updateOne({
-            nongSleepIds: swop(null, user._id, camp.nongSleepIds),
-          });
           await baan.updateOne({
             nongSleepIds: swop(null, user._id, baan.nongSleepIds),
           });
@@ -1195,9 +1084,6 @@ export async function updateSleep(req: express.Request, res: express.Response) {
         }
         await campMemberCard.updateOne({ sleepAtCamp: !oldSleep });
         if (oldSleep) {
-          await camp.updateOne({
-            peeSleepIds: swop(user._id, null, camp.peeSleepIds),
-          });
           await baan.updateOne({
             peeSleepIds: swop(user._id, null, baan.peeSleepIds),
           });
@@ -1205,9 +1091,6 @@ export async function updateSleep(req: express.Request, res: express.Response) {
             peeSleepIds: swop(user._id, null, part.peeSleepIds),
           });
         } else {
-          await camp.updateOne({
-            peeSleepIds: swop(null, user._id, camp.peeSleepIds),
-          });
           await baan.updateOne({
             peeSleepIds: swop(null, user._id, baan.peeSleepIds),
           });
@@ -1236,16 +1119,10 @@ export async function updateSleep(req: express.Request, res: express.Response) {
         }
         await campMemberCard.updateOne({ sleepAtCamp: !oldSleep });
         if (oldSleep) {
-          await camp.updateOne({
-            petoSleepIds: swop(user._id, null, camp.petoSleepIds),
-          });
           await part.updateOne({
             petoSleepIds: swop(user._id, null, part.petoSleepIds),
           });
         } else {
-          await camp.updateOne({
-            petoSleepIds: swop(null, user._id, camp.petoSleepIds),
-          });
           await part.updateOne({
             petoSleepIds: swop(null, user._id, part.petoSleepIds),
           });
@@ -1409,14 +1286,6 @@ export async function revalidationHeathIssues(ids: Id[]) {
             if (!baan || !camp) {
               continue;
             }
-            await camp.updateOne({
-              nongHeathIssueIds: swop(old._id, null, camp.nongHeathIssueIds),
-              nongCampMemberCardHaveHeathIssueIds: swop(
-                campMemberCard._id,
-                null,
-                camp.nongCampMemberCardHaveHeathIssueIds
-              ),
-            });
             await baan.updateOne({
               nongHeathIssueIds: swop(old._id, null, baan.nongHeathIssueIds),
               nongCampMemberCardHaveHeathIssueIds: swop(
@@ -1439,14 +1308,6 @@ export async function revalidationHeathIssues(ids: Id[]) {
             if (!baan || !camp || !part) {
               continue;
             }
-            await camp.updateOne({
-              peeHeathIssueIds: swop(old._id, null, camp.peeHeathIssueIds),
-              peeCampMemberCardHaveHeathIssueIds: swop(
-                campMemberCard._id,
-                null,
-                camp.peeCampMemberCardHaveHeathIssueIds
-              ),
-            });
             await baan.updateOne({
               peeHeathIssueIds: swop(old._id, null, baan.peeHeathIssueIds),
               peeCampMemberCardHaveHeathIssueIds: swop(
@@ -1478,14 +1339,6 @@ export async function revalidationHeathIssues(ids: Id[]) {
             if (!camp || !part) {
               continue;
             }
-            await camp.updateOne({
-              petoHeathIssueIds: swop(old._id, null, camp.petoHeathIssueIds),
-              petoCampMemberCardHaveHeathIssueIds: swop(
-                campMemberCard._id,
-                null,
-                camp.petoCampMemberCardHaveHeathIssueIds
-              ),
-            });
             await part.updateOne({
               petoHeathIssueIds: swop(old._id, null, part.petoHeathIssueIds),
               petoCampMemberCardHaveHeathIssueIds: swop(

@@ -138,9 +138,6 @@ export async function createActionPlan(
   await part?.updateOne({
     actionPlanIds: swop(null, actionPlan._id, part.actionPlanIds),
   });
-  await camp?.updateOne({
-    actionPlanIds: swop(null, actionPlan._id, camp.actionPlanIds),
-  });
   let i = 0;
   while (i < actionPlan.placeIds.length) {
     const place = await Place.findById(placeIds[i++]);
@@ -206,7 +203,7 @@ export async function updateActionPlan(
     }
     await actionPlan.updateOne(update);
     const data = await getTriggerActionPlan(actionPlan.partId);
-  res.status(200).json(data);
+    res.status(200).json(data);
   } catch {
     res.status(400).json({
       success: false,
@@ -232,10 +229,6 @@ export async function deleteActionPlan(
     }
     const buf = swop(hospital._id, null, part.actionPlanIds);
     await part?.updateOne({ actionPlanIds: buf });
-    const camp = await Camp.findById(part.campId);
-    await camp?.updateOne({
-      actionPlanIds: swop(hospital._id, null, camp.actionPlanIds),
-    });
     let i = 0;
     while (i < hospital.placeIds.length) {
       const place = await Place.findById(hospital.placeIds[i++]);
@@ -250,7 +243,7 @@ export async function deleteActionPlan(
 
     await hospital?.deleteOne();
     const data = await getTriggerActionPlan(hospital.partId);
-  res.status(200).json(data);
+    res.status(200).json(data);
   } catch {
     res.status(400).json({
       success: false,
@@ -276,49 +269,57 @@ export async function getActionPlans(
           continue;
         }
         let j = 0;
-        while (j < camp.actionPlanIds.length) {
-          const actionPlan: InterActionPlan | null = await ActionPlan.findById(
-            camp.actionPlanIds[j++]
-          );
-          if (!actionPlan) {
-            continue;
-          }
-          const {
-            action,
-            partId,
-            placeIds,
-            start,
-            end,
-            headId,
-            body,
-            partName,
-            _id,
-          } = actionPlan;
-          const user = await User.findById(headId);
-          if (!user) {
+        while (j < camp.partIds.length) {
+          const part = await Part.findById(camp.partIds[j++]);
+          if (!part) {
             continue;
           }
           let k = 0;
-          const placeName: string[] = [];
-          while (k < placeIds.length) {
-            const place = await Place.findById(placeIds[k++]);
-            const building = await Building.findById(place?.buildingId);
-            placeName.push(`${building?.name} ${place?.floor} ${place?.room}`);
+          while (k < part.actionPlanIds.length) {
+            const actionPlan: InterActionPlan | null =
+              await ActionPlan.findById(part.actionPlanIds[k++]);
+            if (!actionPlan) {
+              continue;
+            }
+            const {
+              action,
+              partId,
+              placeIds,
+              start,
+              end,
+              headId,
+              body,
+              partName,
+              _id,
+            } = actionPlan;
+            const user = await User.findById(headId);
+            if (!user) {
+              continue;
+            }
+            let l = 0;
+            const placeName: string[] = [];
+            while (l < placeIds.length) {
+              const place = await Place.findById(placeIds[l++]);
+              const building = await Building.findById(place?.buildingId);
+              placeName.push(
+                `${building?.name} ${place?.floor} ${place?.room}`
+              );
+            }
+            data.push({
+              action,
+              partId,
+              placeIds,
+              start,
+              end,
+              headId,
+              body,
+              headName: user.nickname,
+              headTel: user.tel,
+              partName,
+              placeName,
+              _id,
+            });
           }
-          data.push({
-            action,
-            partId,
-            placeIds,
-            start,
-            end,
-            headId,
-            body,
-            headName: user.nickname,
-            headTel: user.tel,
-            partName,
-            placeName,
-            _id,
-          });
         }
       }
     } else {
@@ -329,49 +330,57 @@ export async function getActionPlans(
           continue;
         }
         let j = 0;
-        while (j < camp.actionPlanIds.length) {
-          const actionPlan: InterActionPlan | null = await ActionPlan.findById(
-            camp.actionPlanIds[j++]
-          );
-          if (!actionPlan) {
-            continue;
-          }
-          const {
-            action,
-            partId,
-            placeIds,
-            start,
-            end,
-            headId,
-            body,
-            partName,
-            _id,
-          } = actionPlan;
-          const user = await User.findById(headId);
-          if (!user) {
+        while (j < camp.partIds.length) {
+          const part = await Part.findById(camp.partIds[j++]);
+          if (!part) {
             continue;
           }
           let k = 0;
-          const placeName: string[] = [];
-          while (k < placeIds.length) {
-            const place = await Place.findById(placeIds[k++]);
-            const building = await Building.findById(place?.buildingId);
-            placeName.push(`${building?.name} ${place?.floor} ${place?.room}`);
+          while (k < part.actionPlanIds.length) {
+            const actionPlan: InterActionPlan | null =
+              await ActionPlan.findById(part.actionPlanIds[k++]);
+            if (!actionPlan) {
+              continue;
+            }
+            const {
+              action,
+              partId,
+              placeIds,
+              start,
+              end,
+              headId,
+              body,
+              partName,
+              _id,
+            } = actionPlan;
+            const user = await User.findById(headId);
+            if (!user) {
+              continue;
+            }
+            let l = 0;
+            const placeName: string[] = [];
+            while (l < placeIds.length) {
+              const place = await Place.findById(placeIds[l++]);
+              const building = await Building.findById(place?.buildingId);
+              placeName.push(
+                `${building?.name} ${place?.floor} ${place?.room}`
+              );
+            }
+            data.push({
+              action,
+              partId,
+              placeIds,
+              start,
+              end,
+              headId,
+              body,
+              headName: user.nickname,
+              headTel: user.tel,
+              partName,
+              placeName,
+              _id,
+            });
           }
-          data.push({
-            action,
-            partId,
-            placeIds,
-            start,
-            end,
-            headId,
-            body,
-            headName: user.nickname,
-            headTel: user.tel,
-            partName,
-            placeName,
-            _id,
-          });
         }
       }
     }
@@ -457,49 +466,56 @@ export async function getActionPlanByCampId(
       return;
     }
     let i = 0;
-    while (i <= camp.actionPlanIds.length) {
-      const actionPlan: InterActionPlan | null = await ActionPlan.findById(
-        camp.actionPlanIds[i++]
-      );
-      if (!actionPlan) {
-        continue;
-      }
-      const {
-        action,
-        partId,
-        placeIds,
-        start,
-        end,
-        headId,
-        body,
-        partName,
-        _id,
-      } = actionPlan;
-      const user = await User.findById(headId);
-      if (!user) {
+    while (i < camp.partIds.length) {
+      const part = await Part.findById(camp.partIds[i++]);
+      if (!part) {
         continue;
       }
       let j = 0;
-      const placeName: string[] = [];
-      while (j < placeIds.length) {
-        const place = await Place.findById(placeIds[j++]);
-        const building = await Building.findById(place?.buildingId);
-        placeName.push(`${building?.name} ${place?.floor} ${place?.room}`);
+      while (j < part.actionPlanIds.length) {
+        const actionPlan: InterActionPlan | null = await ActionPlan.findById(
+          part.actionPlanIds[j++]
+        );
+        if (!actionPlan) {
+          continue;
+        }
+        const {
+          action,
+          partId,
+          placeIds,
+          start,
+          end,
+          headId,
+          body,
+          partName,
+          _id,
+        } = actionPlan;
+        const user = await User.findById(headId);
+        if (!user) {
+          continue;
+        }
+        let k = 0;
+        const placeName: string[] = [];
+        while (k < placeIds.length) {
+          const place = await Place.findById(placeIds[k++]);
+          const building = await Building.findById(place?.buildingId);
+          placeName.push(`${building?.name} ${place?.floor} ${place?.room}`);
+        }
+        data.push({
+          action,
+          partId,
+          placeIds,
+          start,
+          end,
+          headId,
+          body,
+          headName: user.nickname,
+          headTel: user.tel,
+          partName,
+          placeName,
+          _id,
+        });
       }
-      data.push({
-        action,
-        partId,
-        placeIds,
-        start,
-        end,
-        headId,
-        body,
-        headName: user.nickname,
-        headTel: user.tel,
-        partName,
-        placeName,
-        _id,
-      });
     }
     data.sort((a, b) => a.start.getTime() - b.start.getTime());
     const buffer: SuccessBase<ShowActionPlan[]> = {
@@ -646,49 +662,56 @@ async function getTriggerActionPlan(
   }
   forParts.sort((a, b) => a.start.getTime() - b.start.getTime());
   i = 0;
-  while (i < camp.actionPlanIds.length) {
-    const actionPlan: InterActionPlan | null = await ActionPlan.findById(
-      camp.actionPlanIds[i++]
-    );
-    if (!actionPlan) {
-      continue;
-    }
-    const {
-      action,
-      partId,
-      placeIds,
-      start,
-      end,
-      headId,
-      body,
-      partName,
-      _id,
-    } = actionPlan;
-    const user = await User.findById(headId);
-    if (!user) {
+  while (i < camp.partIds.length) {
+    const part = await Part.findById(camp.partIds[i++]);
+    if (!part) {
       continue;
     }
     let j = 0;
-    const placeName: string[] = [];
-    while (j < placeIds.length) {
-      const place = await Place.findById(placeIds[j++]);
-      const building = await Building.findById(place?.buildingId);
-      placeName.push(`${building?.name} ${place?.floor} ${place?.room}`);
+    while (j < part.actionPlanIds.length) {
+      const actionPlan: InterActionPlan | null = await ActionPlan.findById(
+        part.actionPlanIds[j++]
+      );
+      if (!actionPlan) {
+        continue;
+      }
+      const {
+        action,
+        partId,
+        placeIds,
+        start,
+        end,
+        headId,
+        body,
+        partName,
+        _id,
+      } = actionPlan;
+      const user = await User.findById(headId);
+      if (!user) {
+        continue;
+      }
+      let k = 0;
+      const placeName: string[] = [];
+      while (k < placeIds.length) {
+        const place = await Place.findById(placeIds[k++]);
+        const building = await Building.findById(place?.buildingId);
+        placeName.push(`${building?.name} ${place?.floor} ${place?.room}`);
+      }
+      forCamps.push({
+        action,
+        partId,
+        placeIds,
+        start,
+        end,
+        headId,
+        body,
+        headName: user.nickname,
+        headTel: user.tel,
+        partName,
+        placeName,
+        _id,
+      });
     }
-    forCamps.push({
-      action,
-      partId,
-      placeIds,
-      start,
-      end,
-      headId,
-      body,
-      headName: user.nickname,
-      headTel: user.tel,
-      partName,
-      placeName,
-      _id,
-    });
   }
   forCamps.sort((a, b) => a.start.getTime() - b.start.getTime());
   return { forCamps, forParts, partId: part._id, campId: camp._id };

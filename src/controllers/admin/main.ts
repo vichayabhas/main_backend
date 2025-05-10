@@ -923,9 +923,6 @@ export async function deleteWorkingItemRaw(workItemId: Id) {
   await part.updateOne({
     workItemIds: swop(workItem._id, null, part.workItemIds),
   });
-  await camp.updateOne({
-    workItemIds: swop(workItem._id, null, camp.workItemIds),
-  });
   let i = 0;
   while (i < workItem.linkOutIds.length) {
     if (workItem.linkOutIds[i++]) {

@@ -4,7 +4,6 @@ import Camp from "../../models/Camp";
 import {
   InterCampBack,
   BasicBaan,
-  InterCampFront,
   Id,
   ShowMember,
   GetMeals,
@@ -29,7 +28,7 @@ import Part from "../../models/Part";
 import PartNameContainer from "../../models/PartNameContainer";
 import PeeCamp from "../../models/PeeCamp";
 import PetoCamp from "../../models/PetoCamp";
-import { sendRes, conCampBackToFront, resError, stringToId } from "../setup";
+import { sendRes, resError, stringToId } from "../setup";
 import CampMemberCard from "../../models/CampMemberCard";
 import HeathIssue from "../../models/HeathIssue";
 import Song from "../../models/Song";
@@ -91,7 +90,7 @@ export async function getCamp(req: express.Request, res: express.Response) {
       return;
     }
     //console.log(data.toObject())
-    res.status(200).json(conCampBackToFront(data));
+    res.status(200).json(data);
     //console.log(req.params.id)
   } catch (err) {
     console.log(err);
@@ -127,10 +126,7 @@ export async function getCamps(req: express.Request, res: express.Response) {
       sendRes(res, false);
       return;
     }
-    const out: InterCampFront[] = data.map((input: InterCampBack) => {
-      return conCampBackToFront(input);
-    });
-    res.status(200).json(out);
+    res.status(200).json(data);
   } catch (err) {
     console.log(err);
     res.status(400).json({

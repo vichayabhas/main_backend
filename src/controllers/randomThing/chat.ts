@@ -54,6 +54,15 @@ export async function createPartChat(
   } else {
     typeChat = "คุยกันในฝ่าย";
   }
+  const campMemberCardIds: Id[] = [];
+  let i = 0;
+  while (i < camp.baanIds.length) {
+    const baan = await Baan.findById(camp.baanIds);
+    if (!baan) {
+      continue;
+    }
+    campMemberCardIds.push(...baan.peeCampMemberCardIds);
+  }
   const chat = await Chat.create({
     message: create.message,
     userId: user._id,
@@ -61,7 +70,7 @@ export async function createPartChat(
     role: campMemberCard.role,
     typeChat,
     refId: part._id,
-    campMemberCardIds: camp.peeCampMemberCardIds,
+    campMemberCardIds,
   });
   await campMemberCard.updateOne({
     ownChatIds: swop(null, chat._id, campMemberCard.ownChatIds),
@@ -69,10 +78,10 @@ export async function createPartChat(
   await camp.updateOne({
     allPetoChatIds: swop(null, chat._id, camp.allPetoChatIds),
   });
-  let i = 0;
-  while (i < camp.peeCampMemberCardIds.length) {
+  i = 0;
+  while (i < campMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
-      camp.peeCampMemberCardIds[i++]
+      campMemberCardIds[i++]
     );
     if (!campMemberCard) {
       continue;

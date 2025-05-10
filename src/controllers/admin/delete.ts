@@ -222,197 +222,141 @@ async function forceDeleteCampRaw(campId: Id, res: express.Response | null) {
           await SubGroup.findByIdAndDelete(container.subGroupIds[k++]);
         }
       }
+      j = 0;
+      if (camp.nongDataLock) {
+        while (j < baan.nongHeathIssueIds.length) {
+          const heathIssue = await HeathIssue.findById(
+            baan.nongHeathIssueIds[j++]
+          );
+          if (!heathIssue) {
+            continue;
+          }
+          await heathIssue.updateOne({
+            campIds: swop(camp._id, null, heathIssue.campIds),
+          });
+        }
+      } else {
+        while (j < baan.nongCampMemberCardHaveHeathIssueIds.length) {
+          const campMemberCard = await CampMemberCard.findById(
+            baan.nongCampMemberCardHaveHeathIssueIds[j++]
+          );
+          if (!campMemberCard) {
+            continue;
+          }
+          const heathIssue = await HeathIssue.findById(
+            campMemberCard.healthIssueId
+          );
+          if (!heathIssue) {
+            continue;
+          }
+          await heathIssue.updateOne({
+            campMemberCardIds: swop(
+              campMemberCard._id,
+              null,
+              heathIssue.campMemberCardIds
+            ),
+          });
+        }
+      }
+      j = 0;
+      if (camp.peeDataLock) {
+        while (i < baan.peeHeathIssueIds.length) {
+          const heathIssue = await HeathIssue.findById(
+            baan.peeHeathIssueIds[j++]
+          );
+          if (!heathIssue) {
+            continue;
+          }
+          await heathIssue.updateOne({
+            campIds: swop(camp._id, null, heathIssue.campIds),
+          });
+        }
+      } else {
+        while (j < baan.peeCampMemberCardHaveHeathIssueIds.length) {
+          const campMemberCard = await CampMemberCard.findById(
+            baan.peeCampMemberCardHaveHeathIssueIds[j++]
+          );
+          if (!campMemberCard) {
+            continue;
+          }
+          const heathIssue = await HeathIssue.findById(
+            campMemberCard.healthIssueId
+          );
+          if (!heathIssue) {
+            continue;
+          }
+          await heathIssue.updateOne({
+            campMemberCardIds: swop(
+              campMemberCard._id,
+              null,
+              heathIssue.campMemberCardIds
+            ),
+          });
+        }
+      }
+      await revalidationHeathIssues(baan.nongHeathIssueIds);
+      await revalidationHeathIssues(baan.peeHeathIssueIds);
+      j = 0;
+      while (j < baan.peeCampMemberCardIds.length) {
+        const campMemberCard = await CampMemberCard.findById(
+          baan.peeCampMemberCardIds[j++]
+        );
+        const user = await User.findById(campMemberCard?.userId);
+        if (!user || !campMemberCard) {
+          continue;
+        }
+        let k = 0;
+        while (k < campMemberCard.baanJobIds.length) {
+          await TimeRegister.findByIdAndDelete(campMemberCard.baanJobIds[k++]);
+        }
+        k = 0;
+        while (k < campMemberCard.partJobIds.length) {
+          await TimeRegister.findByIdAndDelete(campMemberCard.partJobIds[k++]);
+        }
+        k = 0;
+        while (k < campMemberCard.mirrorSenderIds.length) {
+          await Mirror.findByIdAndDelete(campMemberCard.mirrorSenderIds[k++]);
+        }
+        await user.updateOne({
+          campMemberCardIds: swop(
+            campMemberCard._id,
+            null,
+            user.campMemberCardIds
+          ),
+          filterIds: swop(camp._id, null, user.filterIds),
+          registerIds: swop(camp._id, null, user.registerIds),
+        });
+        await campMemberCard.deleteOne();
+      }
+      j = 0;
+      while (j < baan.nongCampMemberCardIds.length) {
+        const campMemberCard = await CampMemberCard.findById(
+          baan.nongCampMemberCardIds[j++]
+        );
+        if (!campMemberCard) {
+          continue;
+        }
+        const user = await User.findById(campMemberCard.userId);
+        if (!user) {
+          continue;
+        }
+        await user.updateOne({
+          campMemberCardIds: swop(
+            campMemberCard._id,
+            null,
+            user.campMemberCardIds
+          ),
+        });
+        let k = 0;
+        while (k < campMemberCard.chatIds.length) {
+          await Chat.findByIdAndDelete(campMemberCard.chatIds[k++]);
+        }
+        await campMemberCard.deleteOne();
+      }
       await baan.deleteOne();
     }
     await CampStyle.findByIdAndDelete(camp.campStyleId);
-    i = 0;
-    if (camp.nongDataLock) {
-      while (i < camp.nongHeathIssueIds.length) {
-        const heathIssue = await HeathIssue.findById(
-          camp.nongHeathIssueIds[i++]
-        );
-        if (!heathIssue) {
-          continue;
-        }
-        await heathIssue.updateOne({
-          campIds: swop(camp._id, null, heathIssue.campIds),
-        });
-      }
-    } else {
-      while (i < camp.nongCampMemberCardHaveHeathIssueIds.length) {
-        const campMemberCard = await CampMemberCard.findById(
-          camp.nongCampMemberCardHaveHeathIssueIds[i++]
-        );
-        if (!campMemberCard) {
-          continue;
-        }
-        const heathIssue = await HeathIssue.findById(
-          campMemberCard.healthIssueId
-        );
-        if (!heathIssue) {
-          continue;
-        }
-        await heathIssue.updateOne({
-          campMemberCardIds: swop(
-            campMemberCard._id,
-            null,
-            heathIssue.campMemberCardIds
-          ),
-        });
-      }
-    }
-    i = 0;
-    if (camp.peeDataLock) {
-      while (i < camp.peeHeathIssueIds.length) {
-        const heathIssue = await HeathIssue.findById(
-          camp.peeHeathIssueIds[i++]
-        );
-        if (!heathIssue) {
-          continue;
-        }
-        await heathIssue.updateOne({
-          campIds: swop(camp._id, null, heathIssue.campIds),
-        });
-      }
-    } else {
-      while (i < camp.peeCampMemberCardHaveHeathIssueIds.length) {
-        const campMemberCard = await CampMemberCard.findById(
-          camp.peeCampMemberCardHaveHeathIssueIds[i++]
-        );
-        if (!campMemberCard) {
-          continue;
-        }
-        const heathIssue = await HeathIssue.findById(
-          campMemberCard.healthIssueId
-        );
-        if (!heathIssue) {
-          continue;
-        }
-        await heathIssue.updateOne({
-          campMemberCardIds: swop(
-            campMemberCard._id,
-            null,
-            heathIssue.campMemberCardIds
-          ),
-        });
-      }
-    }
-    i = 0;
-    if (camp.petoDataLock) {
-      while (i < camp.petoHeathIssueIds.length) {
-        const heathIssue = await HeathIssue.findById(
-          camp.petoHeathIssueIds[i++]
-        );
-        if (!heathIssue) {
-          continue;
-        }
-        await heathIssue.updateOne({
-          campIds: swop(camp._id, null, heathIssue.campIds),
-        });
-      }
-    } else {
-      while (i < camp.petoCampMemberCardHaveHeathIssueIds.length) {
-        const campMemberCard = await CampMemberCard.findById(
-          camp.petoCampMemberCardHaveHeathIssueIds[i++]
-        );
-        if (!campMemberCard) {
-          continue;
-        }
-        const heathIssue = await HeathIssue.findById(
-          campMemberCard.healthIssueId
-        );
-        if (!heathIssue) {
-          continue;
-        }
-        await heathIssue.updateOne({
-          campMemberCardIds: swop(
-            campMemberCard._id,
-            null,
-            heathIssue.campMemberCardIds
-          ),
-        });
-      }
-    }
-    i = 0;
-    await revalidationHeathIssues(camp.nongHeathIssueIds);
-    await revalidationHeathIssues(camp.peeHeathIssueIds);
-    await revalidationHeathIssues(camp.petoHeathIssueIds);
-    while (i < camp.peeCampMemberCardIds.length) {
-      const campMemberCard = await CampMemberCard.findById(
-        camp.peeCampMemberCardIds[i++]
-      );
-      const user = await User.findById(campMemberCard?.userId);
-      if (!user || !campMemberCard) {
-        continue;
-      }
-      let j = 0;
-      while (j < campMemberCard.baanJobIds.length) {
-        await TimeRegister.findByIdAndDelete(campMemberCard.baanJobIds[j++]);
-      }
-      j = 0;
-      while (j < campMemberCard.partJobIds.length) {
-        await TimeRegister.findByIdAndDelete(campMemberCard.partJobIds[j++]);
-      }
-      j = 0;
-      while (j < campMemberCard.mirrorSenderIds.length) {
-        await Mirror.findByIdAndDelete(campMemberCard.mirrorSenderIds[j++]);
-      }
-      await user.updateOne({
-        campMemberCardIds: swop(
-          campMemberCard._id,
-          null,
-          user.campMemberCardIds
-        ),
-        filterIds: swop(camp._id, null, user.filterIds),
-        registerIds: swop(camp._id, null, user.registerIds),
-      });
-      await campMemberCard.deleteOne();
-    }
-    i = 0;
-    while (i < camp.nongCampMemberCardIds.length) {
-      const campMemberCard = await CampMemberCard.findById(
-        camp.nongCampMemberCardIds[i++]
-      );
-      if (!campMemberCard) {
-        continue;
-      }
-      const user = await User.findById(campMemberCard.userId);
-      if (!user) {
-        continue;
-      }
-      await user.updateOne({
-        campMemberCardIds: swop(
-          campMemberCard._id,
-          null,
-          user.campMemberCardIds
-        ),
-      });
-      let j = 0;
-      while (j < campMemberCard.chatIds.length) {
-        await Chat.findByIdAndDelete(campMemberCard.chatIds[j++]);
-      }
-      await campMemberCard.deleteOne();
-    }
-    i = 0;
-    while (i < camp.petoCampMemberCardIds.length) {
-      const campMemberCard = await CampMemberCard.findById(
-        camp.petoCampMemberCardIds[i++]
-      );
-      const user = await User.findById(campMemberCard?.userId);
-      if (!user || !campMemberCard) {
-        continue;
-      }
-      await user.updateOne({
-        campMemberCardIds: swop(
-          campMemberCard._id,
-          null,
-          user.campMemberCardIds
-        ),
-        filterIds: swop(camp._id, null, user.filterIds),
-        registerIds: swop(camp._id, null, user.registerIds),
-      });
-      await campMemberCard.deleteOne();
-    }
+
     i = 0;
     while (i < camp.partIds.length) {
       const part = await Part.findById(camp.partIds[i++]);
@@ -456,36 +400,93 @@ async function forceDeleteCampRaw(campId: Id, res: express.Response | null) {
       while (j < part.jobIds.length) {
         await JobAssign.findByIdAndDelete(part.jobIds[j++]);
       }
+      j = 0;
+      if (camp.petoDataLock) {
+        while (j < part.petoHeathIssueIds.length) {
+          const heathIssue = await HeathIssue.findById(
+            part.petoHeathIssueIds[j++]
+          );
+          if (!heathIssue) {
+            continue;
+          }
+          await heathIssue.updateOne({
+            campIds: swop(camp._id, null, heathIssue.campIds),
+          });
+        }
+      } else {
+        while (j < part.petoCampMemberCardHaveHeathIssueIds.length) {
+          const campMemberCard = await CampMemberCard.findById(
+            part.petoCampMemberCardHaveHeathIssueIds[j++]
+          );
+          if (!campMemberCard) {
+            continue;
+          }
+          const heathIssue = await HeathIssue.findById(
+            campMemberCard.healthIssueId
+          );
+          if (!heathIssue) {
+            continue;
+          }
+          await heathIssue.updateOne({
+            campMemberCardIds: swop(
+              campMemberCard._id,
+              null,
+              heathIssue.campMemberCardIds
+            ),
+          });
+        }
+      }
+
+      j = 0;
+      while (j < part.petoCampMemberCardIds.length) {
+        const campMemberCard = await CampMemberCard.findById(
+          part.petoCampMemberCardIds[j++]
+        );
+        const user = await User.findById(campMemberCard?.userId);
+        if (!user || !campMemberCard) {
+          continue;
+        }
+        await user.updateOne({
+          campMemberCardIds: swop(
+            campMemberCard._id,
+            null,
+            user.campMemberCardIds
+          ),
+          filterIds: swop(camp._id, null, user.filterIds),
+          registerIds: swop(camp._id, null, user.registerIds),
+        });
+        await campMemberCard.deleteOne();
+      }
+      j = 0;
+      while (j < part.workItemIds.length) {
+        await WorkItem.findByIdAndDelete(part.workItemIds[j++]);
+      }
+      j = 0;
+      while (j < part.actionPlanIds.length) {
+        const actionPlan = await ActionPlan.findById(part.actionPlanIds[j++]);
+        if (!actionPlan) {
+          continue;
+        }
+        let k = 0;
+        while (k < actionPlan.placeIds.length) {
+          const place = await Place.findById(actionPlan.placeIds[k++]);
+          if (!place) {
+            continue;
+          }
+          await place.updateOne({
+            actionPlanIds: swop(actionPlan._id, null, place.actionPlanIds),
+          });
+          const building = await Building.findById(place.buildingId);
+          if (!building) {
+            continue;
+          }
+          await building.updateOne({
+            actionPlanIds: swop(actionPlan._id, null, building.actionPlanIds),
+          });
+        }
+        await actionPlan.deleteOne();
+      }
       await part.deleteOne();
-    }
-    i = 0;
-    while (i < camp.workItemIds.length) {
-      await WorkItem.findByIdAndDelete(camp.workItemIds[i++]);
-    }
-    i = 0;
-    while (i < camp.actionPlanIds.length) {
-      const actionPlan = await ActionPlan.findById(camp.actionPlanIds[i++]);
-      if (!actionPlan) {
-        continue;
-      }
-      let j = 0;
-      while (j < actionPlan.placeIds.length) {
-        const place = await Place.findById(actionPlan.placeIds[j++]);
-        if (!place) {
-          continue;
-        }
-        await place.updateOne({
-          actionPlanIds: swop(actionPlan._id, null, place.actionPlanIds),
-        });
-        const building = await Building.findById(place.buildingId);
-        if (!building) {
-          continue;
-        }
-        await building.updateOne({
-          actionPlanIds: swop(actionPlan._id, null, building.actionPlanIds),
-        });
-      }
-      await actionPlan.deleteOne();
     }
     i = 0;
     while (i < camp.lostAndFoundIds.length) {
@@ -559,11 +560,15 @@ async function forceDeleteCampRaw(campId: Id, res: express.Response | null) {
     }
     i = 0;
     while (i < camp.mealIds.length) {
-      await Meal.findByIdAndDelete(camp.mealIds[i++]);
-    }
-    i = 0;
-    while (i < camp.foodIds.length) {
-      await Food.findByIdAndDelete(camp.foodIds[i++]);
+      const meal = await Meal.findById(camp.mealIds[i++]);
+      if (!meal) {
+        continue;
+      }
+      let j = 0;
+      while (j < meal.foodIds.length) {
+        await Food.findByIdAndDelete(meal.foodIds[j++]);
+      }
+      await meal.deleteOne();
     }
     i = 0;
     while (i < camp.jobIds.length) {
@@ -571,11 +576,15 @@ async function forceDeleteCampRaw(campId: Id, res: express.Response | null) {
     }
     i = 0;
     while (i < camp.itemIds.length) {
-      await Item.findByIdAndDelete(camp.itemIds[i++]);
-    }
-    i = 0;
-    while (i < camp.orderIds.length) {
-      await Order.findByIdAndDelete(camp.orderIds[i++]);
+      const item = await Item.findById(camp.itemIds[i++]);
+      if (!item) {
+        continue;
+      }
+      let j = 0;
+      while (j < item.orderIds.length) {
+        await Order.findByIdAndDelete(item.orderIds[j++]);
+      }
+      await item.deleteOne();
     }
     i = 0;
     while (i < camp.scoreIds.length) {
@@ -688,21 +697,8 @@ export async function forceDeleteBaan(
     return;
   }
   let nongIds = camp.nongIds;
-  let nongCampMemberCardIds = camp.nongCampMemberCardIds;
-  let peeCampMemberCardIds = camp.peeCampMemberCardIds;
   let peeModelIds = camp.peeModelIds;
   let peeIds = camp.peeIds;
-  let peeHeathIssueIds = camp.peeHeathIssueIds;
-  let nongHeathIssueIds = camp.nongHeathIssueIds;
-  let peeSleepIds = camp.peeSleepIds;
-  let nongSleepIds = camp.nongSleepIds;
-  let nongHaveBottleIds = camp.nongHaveBottleIds;
-  let peeHaveBottleIds = camp.peeHaveBottleIds;
-  let nongCampMemberCardHaveHeathIssueIds =
-    camp.nongCampMemberCardHaveHeathIssueIds;
-  let peeCampMemberCardHaveHeathIssueIds =
-    camp.peeCampMemberCardHaveHeathIssueIds;
-  let campOrderIds = camp.orderIds;
   let baanOrderIds = baan.orderIds;
   let i = 0;
   if (camp.nongDataLock) {
@@ -719,15 +715,9 @@ export async function forceDeleteBaan(
       if (!heathIssue) {
         continue;
       }
-      nongHeathIssueIds = swop(heathIssue._id, null, nongHeathIssueIds);
       await heathIssue.updateOne({
         campIds: swop(camp._id, null, heathIssue.campIds),
       });
-      nongCampMemberCardHaveHeathIssueIds = swop(
-        campMemberCard._id,
-        null,
-        nongCampMemberCardHaveHeathIssueIds
-      );
       await clearHealthIssue(campMemberCard._id);
     }
   } else {
@@ -744,7 +734,6 @@ export async function forceDeleteBaan(
       if (!heathIssue) {
         continue;
       }
-      nongHeathIssueIds = swop(heathIssue._id, null, nongHeathIssueIds);
       await heathIssue.updateOne({
         campMemberCardIds: swop(
           campMemberCard._id,
@@ -752,11 +741,6 @@ export async function forceDeleteBaan(
           heathIssue.campMemberCardIds
         ),
       });
-      nongCampMemberCardHaveHeathIssueIds = swop(
-        campMemberCard._id,
-        null,
-        nongCampMemberCardHaveHeathIssueIds
-      );
       await clearHealthIssue(campMemberCard._id);
     }
   }
@@ -780,7 +764,6 @@ export async function forceDeleteBaan(
     if (!heathIssue) {
       continue;
     }
-    peeHeathIssueIds = swop(heathIssue._id, null, peeHeathIssueIds);
     if (camp.peeDataLock) {
       await heathIssue.updateOne({
         campIds: swop(camp._id, null, heathIssue.campIds),
@@ -802,11 +785,6 @@ export async function forceDeleteBaan(
         part.peeCampMemberCardHaveHeathIssueIds
       ),
     });
-    peeCampMemberCardHaveHeathIssueIds = swop(
-      campMemberCard._id,
-      null,
-      peeCampMemberCardHaveHeathIssueIds
-    );
     await clearHealthIssue(campMemberCard._id);
   }
   i = 0;
@@ -856,14 +834,8 @@ export async function forceDeleteBaan(
       nongCampIds: swop(nongCamp._id, null, user.nongCampIds),
     });
     nongIds = swop(user._id, null, nongIds);
-    if (baan.nongHaveBottleIds.includes(user._id)) {
-      nongHaveBottleIds = swop(user._id, null, nongHaveBottleIds);
-    }
   }
   await nongCamp.deleteOne();
-  camp.nongShirtSize.forEach((v, k) => {
-    camp.nongShirtSize.set(k, calculate(v, 0, baan.nongShirtSize.get(k)));
-  });
   const boyP = await Place.findById(baan.boySleepPlaceId);
   if (boyP) {
     await boyP.updateOne({
@@ -900,9 +872,6 @@ export async function forceDeleteBaan(
       });
     }
   }
-  camp.peeShirtSize.forEach((v, k) => {
-    camp.peeShirtSize.set(k, calculate(v, 0, baan?.peeShirtSize.get(k)));
-  });
   while (i < baan.mirrorIds.length) {
     const mirror = await Mirror.findById(baan.mirrorIds[i++]);
     if (!mirror) {
@@ -935,15 +904,7 @@ export async function forceDeleteBaan(
     await user.updateOne({
       campMemberCardIds: swop(campMemberCard._id, null, user.campMemberCardIds),
     });
-    nongCampMemberCardIds = swop(
-      campMemberCard._id,
-      null,
-      nongCampMemberCardIds
-    );
     let j = 0;
-    if (campMemberCard.sleepAtCamp) {
-      nongSleepIds = swop(user._id, null, nongSleepIds);
-    }
     while (j < campMemberCard.allChatIds.length) {
       const chat = await Chat.findById(campMemberCard.allChatIds[j++]);
       if (!chat) {
@@ -1010,7 +971,7 @@ export async function forceDeleteBaan(
         continue;
       }
       await otherCampMemberCard.updateOne({
-        mirrorReciverIds: swop(
+        mirrorReceiverIds: swop(
           mirror._id,
           null,
           otherCampMemberCard.mirrorReceiverIds
@@ -1023,7 +984,6 @@ export async function forceDeleteBaan(
       if (!order) {
         continue;
       }
-      campOrderIds = swop(order._id, null, campOrderIds);
       if (order.fromId.toString() == baan._id.toString()) {
         baanOrderIds = swop(order._id, null, baanOrderIds);
       } else {
@@ -1061,18 +1021,14 @@ export async function forceDeleteBaan(
       await part.updateOne({
         peeHaveBottleIds: swop(user._id, null, part.peeHaveBottleIds),
       });
-      peeHaveBottleIds = swop(user._id, null, peeHaveBottleIds);
     }
-
     const p = swop(user._id, null, part.peeIds);
     await part.updateOne({ peeIds: p });
     peeIds = swop(user._id, null, peeIds);
     await user.updateOne({
       campMemberCardIds: swop(campMemberCard._id, null, user.campMemberCardIds),
     });
-    peeCampMemberCardIds = swop(campMemberCard._id, null, peeCampMemberCardIds);
     if (campMemberCard.sleepAtCamp) {
-      peeSleepIds = swop(user._id, null, peeSleepIds);
       await part.updateOne({
         peeSleepIds: swop(user._id, null, part.peeSleepIds),
       });
@@ -1181,7 +1137,7 @@ export async function forceDeleteBaan(
         continue;
       }
       await otherCampMemberCard.updateOne({
-        mirrorReciverIds: swop(
+        mirrorReceiverIds: swop(
           mirror._id,
           null,
           otherCampMemberCard.mirrorReceiverIds
@@ -1194,7 +1150,6 @@ export async function forceDeleteBaan(
       if (!order) {
         continue;
       }
-      campOrderIds = swop(order._id, null, campOrderIds);
       switch (order.types) {
         case "part": {
           const partOrder = await Part.findById(order.fromId);
@@ -1283,7 +1238,6 @@ export async function forceDeleteBaan(
     if (!campMemberCard) {
       continue;
     }
-    campOrderIds = swop(order._id, null, campOrderIds);
     await campMemberCard.updateOne({
       orderIds: swop(order._id, null, campMemberCard.orderIds),
     });
@@ -1291,23 +1245,10 @@ export async function forceDeleteBaan(
   }
   await camp.updateOne({
     nongIds,
-    nongShirtSize: camp.nongShirtSize,
     peeIds,
     peeModelIds,
-    peeShirtSize: camp.peeShirtSize,
-    peeCampMemberCardIds,
-    nongCampMemberCardIds,
-    nongHeathIssueIds,
-    peeHeathIssueIds,
-    nongSleepIds,
-    peeSleepIds,
     baanIds: swop(baan._id, null, camp.baanIds),
     nongModelIds: swop(baan.nongModelId as Id, null, camp.nongModelIds),
-    nongCampMemberCardHaveHeathIssueIds,
-    peeCampMemberCardHaveHeathIssueIds,
-    peeHaveBottleIds,
-    nongHaveBottleIds,
-    orderIds: campOrderIds,
   });
   await CampStyle.findByIdAndDelete(baan.styleId);
   await baan.deleteOne();
@@ -1467,24 +1408,10 @@ async function forceDeletePartRaw(partId: Id) {
   if (!camp) {
     return;
   }
-  let petoCampMemberCardIds = camp.petoCampMemberCardIds;
-  let peeCampMemberCardIds = camp.peeCampMemberCardIds;
-  let actionPlanIds = camp.actionPlanIds;
   let petoIds = camp.petoIds;
   let peeIds = camp.peeIds;
   let peeModelIds = camp.peeModelIds;
-  let workItemIds = camp.workItemIds;
-  let peeHeathIssueIds = camp.peeHeathIssueIds;
-  let petoHeathIssueIds = camp.petoHeathIssueIds;
-  let peeSleepIds = camp.peeSleepIds;
-  let petoSleepIds = camp.petoSleepIds;
-  let peeHaveBottleIds = camp.peeHaveBottleIds;
-  let petoHaveBottleIds = camp.petoHaveBottleIds;
-  let peeCampMemberCardHaveHeathIssueIds =
-    camp.peeCampMemberCardHaveHeathIssueIds;
-  let petoCampMemberCardHaveHeathIssueIds =
-    camp.petoCampMemberCardHaveHeathIssueIds;
-  let campOrderIds = camp.orderIds;
+
   let partOrderIds = part.orderIds;
   let i = 0;
   while (i < part.peeCampMemberCardHaveHeathIssueIds.length) {
@@ -1506,7 +1433,6 @@ async function forceDeletePartRaw(partId: Id) {
     if (!heathIssue) {
       continue;
     }
-    peeHeathIssueIds = swop(heathIssue._id, null, peeHeathIssueIds);
     if (camp.peeDataLock) {
       await heathIssue.updateOne({
         campIds: swop(camp._id, null, heathIssue.campIds),
@@ -1529,11 +1455,6 @@ async function forceDeletePartRaw(partId: Id) {
         baan.peeCampMemberCardHaveHeathIssueIds
       ),
     });
-    peeCampMemberCardHaveHeathIssueIds = swop(
-      campMemberCard._id,
-      null,
-      peeCampMemberCardHaveHeathIssueIds
-    );
   }
   i = 0;
   if (camp.petoDataLock) {
@@ -1550,15 +1471,9 @@ async function forceDeletePartRaw(partId: Id) {
       if (!heathIssue) {
         continue;
       }
-      petoHeathIssueIds = swop(heathIssue._id, null, petoHeathIssueIds);
       await heathIssue.updateOne({
         campIds: swop(camp._id, null, heathIssue.campIds),
       });
-      petoCampMemberCardHaveHeathIssueIds = swop(
-        campMemberCard._id,
-        null,
-        petoCampMemberCardHaveHeathIssueIds
-      );
       await clearHealthIssue(campMemberCard._id);
     }
   } else {
@@ -1575,7 +1490,6 @@ async function forceDeletePartRaw(partId: Id) {
       if (!heathIssue) {
         continue;
       }
-      petoHeathIssueIds = swop(heathIssue._id, null, petoHeathIssueIds);
       await heathIssue.updateOne({
         campMemberCardIds: swop(
           campMemberCard._id,
@@ -1583,20 +1497,9 @@ async function forceDeletePartRaw(partId: Id) {
           heathIssue.campMemberCardIds
         ),
       });
-      petoCampMemberCardHaveHeathIssueIds = swop(
-        campMemberCard._id,
-        null,
-        petoCampMemberCardHaveHeathIssueIds
-      );
       await clearHealthIssue(campMemberCard._id);
     }
   }
-  camp.petoShirtSize.forEach((v, k) => {
-    camp.petoShirtSize.set(k, calculate(v, 0, part?.petoShirtSize.get(k)));
-  });
-  camp.peeShirtSize.forEach((v, k) => {
-    camp.peeShirtSize.set(k, calculate(v, 0, part?.peeShirtSize.get(k)));
-  });
   i = 0;
   while (i < part.actionPlanIds.length) {
     const actionPlan = await ActionPlan.findById(part.actionPlanIds[i++]);
@@ -1620,7 +1523,6 @@ async function forceDeletePartRaw(partId: Id) {
         actionPlanIds: swop(actionPlan._id, null, building.actionPlanIds),
       });
     }
-    actionPlanIds = swop(actionPlan._id, null, actionPlanIds);
   }
   i = 0;
   while (i < part.workItemIds.length) {
@@ -1636,7 +1538,6 @@ async function forceDeletePartRaw(partId: Id) {
         });
       }
     }
-    workItemIds = swop(workItem._id, null, workItemIds);
     await deleteWorkingItemRaw(workItem._id);
   }
   i = 0;
@@ -1675,9 +1576,6 @@ async function forceDeletePartRaw(partId: Id) {
     await user.updateOne({
       petoCampIds: swop(petoCamp._id, null, user.petoCampIds),
     });
-    if (part.petoHaveBottleIds.includes(user._id)) {
-      petoHaveBottleIds = swop(user._id, null, petoHaveBottleIds);
-    }
   }
   i = 0;
   while (i < part.chatIds.length) {
@@ -1699,14 +1597,6 @@ async function forceDeletePartRaw(partId: Id) {
     await user.updateOne({
       campMemberCardIds: swop(campMemberCard._id, null, user.campMemberCardIds),
     });
-    petoCampMemberCardIds = swop(
-      campMemberCard._id,
-      null,
-      petoCampMemberCardIds
-    );
-    if (campMemberCard.sleepAtCamp) {
-      petoSleepIds = swop(user._id, null, petoSleepIds);
-    }
     let j = 0;
     while (j < campMemberCard.ownChatIds.length) {
       await deleteChatRaw(campMemberCard.ownChatIds[j++]);
@@ -1721,7 +1611,6 @@ async function forceDeletePartRaw(partId: Id) {
       if (!order) {
         continue;
       }
-      campOrderIds = swop(order._id, null, campOrderIds);
       if (order.fromId.toString() == part._id.toString()) {
         partOrderIds = swop(order._id, null, partOrderIds);
       } else {
@@ -1755,7 +1644,6 @@ async function forceDeletePartRaw(partId: Id) {
     await user?.updateOne({
       campMemberCardIds: swop(campMemberCard._id, null, user.campMemberCardIds),
     });
-    peeCampMemberCardIds = swop(campMemberCard._id, null, peeCampMemberCardIds);
     const peeCamp = await PeeCamp.findById(campMemberCard.campModelId);
     if (!peeCamp) {
       continue;
@@ -1765,7 +1653,6 @@ async function forceDeletePartRaw(partId: Id) {
       continue;
     }
     if (part.peeHaveBottleIds.includes(user._id)) {
-      peeHaveBottleIds = swop(user._id, null, peeHaveBottleIds);
       await baan.updateOne({
         peeHaveBottleIds: swop(user._id, null, baan.peeHaveBottleIds),
       });
@@ -1773,7 +1660,6 @@ async function forceDeletePartRaw(partId: Id) {
     await baan.updateOne({});
     peeIds = swop(user._id, null, peeIds);
     if (campMemberCard.sleepAtCamp) {
-      peeSleepIds = swop(user._id, null, peeSleepIds);
       await baan.updateOne({
         peeSleepIds: swop(user._id, null, baan.peeSleepIds),
       });
@@ -1789,10 +1675,6 @@ async function forceDeletePartRaw(partId: Id) {
     baan.peeShirtSize.set(
       campMemberCard.size,
       calculate(baan.peeShirtSize.get(campMemberCard.size), 0, 1)
-    );
-    camp.peeShirtSize.set(
-      campMemberCard.size,
-      calculate(camp.peeShirtSize.get(campMemberCard.size), 0, 1)
     );
     let j = 0;
     while (j < campMemberCard.allChatIds.length) {
@@ -1886,7 +1768,7 @@ async function forceDeletePartRaw(partId: Id) {
         continue;
       }
       await otherCampMemberCard.updateOne({
-        mirrorReciverIds: swop(
+        mirrorReceiverIds: swop(
           mirror._id,
           null,
           otherCampMemberCard.mirrorReceiverIds
@@ -1906,7 +1788,6 @@ async function forceDeletePartRaw(partId: Id) {
       if (!order) {
         continue;
       }
-      campOrderIds = swop(order._id, null, campOrderIds);
       switch (order.types) {
         case "part": {
           if (order.fromId.toString() == part._id.toString()) {
@@ -1956,9 +1837,7 @@ async function forceDeletePartRaw(partId: Id) {
     );
     if (!campMemberCard) {
       continue;
-    }
-    campOrderIds = swop(order._id, null, campOrderIds);
-    await campMemberCard.updateOne({
+    }    await campMemberCard.updateOne({
       orderIds: swop(order._id, null, campMemberCard.orderIds),
     });
     await order.deleteOne();
@@ -1966,24 +1845,9 @@ async function forceDeletePartRaw(partId: Id) {
   await camp.updateOne({
     partIds: swop(part._id, null, camp.partIds),
     petoModelIds: swop(part.petoModelId as Id, null, camp.petoModelIds),
-    petoShirtSize: camp.petoShirtSize,
-    peeShirtSize: camp.peeShirtSize,
-    petoCampMemberCardIds,
-    peeCampMemberCardIds,
     peeModelIds,
-    actionPlanIds,
     petoIds,
     peeIds,
-    workItemIds,
-    peeHeathIssueIds,
-    petoHeathIssueIds,
-    peeSleepIds,
-    petoSleepIds,
-    peeHaveBottleIds,
-    petoHaveBottleIds,
-    peeCampMemberCardHaveHeathIssueIds,
-    petoCampMemberCardHaveHeathIssueIds,
-    orderIds: campOrderIds,
   });
   if (part.auths.length) {
     let j = 0;
@@ -2225,17 +2089,17 @@ async function clearHealthIssue(campMemberCardId: Id) {
           continue;
         }
         await food.updateOne({
-          nongIds: swop(user._id, null, food.nongIds),
+          // nongIds: swop(user._id, null, food.nongIds),
           nongCampMemberCardIds: swop(
             campMemberCard._id,
             null,
             food.nongCampMemberCardIds
           ),
-          nongHeathIssueIds: swop(
-            healthIssue._id,
-            null,
-            food.nongCampMemberCardIds
-          ),
+          // nongHeathIssueIds: swop(
+          //   healthIssue._id,
+          //   null,
+          //   food.nongCampMemberCardIds
+          // ),
         });
       }
       i = 0;
@@ -2245,17 +2109,17 @@ async function clearHealthIssue(campMemberCardId: Id) {
           continue;
         }
         await food.updateOne({
-          nongIds: swop(user._id, null, food.nongIds),
+          // nongIds: swop(user._id, null, food.nongIds),
           nongCampMemberCardIds: swop(
             campMemberCard._id,
             null,
             food.nongCampMemberCardIds
           ),
-          nongHeathIssueIds: swop(
-            healthIssue._id,
-            null,
-            food.nongCampMemberCardIds
-          ),
+          // nongHeathIssueIds: swop(
+          //   healthIssue._id,
+          //   null,
+          //   food.nongCampMemberCardIds
+          // ),
         });
       }
       break;
@@ -2267,13 +2131,13 @@ async function clearHealthIssue(campMemberCardId: Id) {
           continue;
         }
         await food.updateOne({
-          peeIds: swop(user._id, null, food.peeIds),
+          // peeIds: swop(user._id, null, food.peeIds),
           peeCampMemberCardIds: swop(
             campMemberCard._id,
             null,
             food.peeCampMemberCardIds
           ),
-          peeHeathIssueIds: swop(healthIssue._id, null, food.peeHeathIssueIds),
+          // peeHeathIssueIds: swop(healthIssue._id, null, food.peeHeathIssueIds),
         });
       }
       i = 0;
@@ -2283,13 +2147,13 @@ async function clearHealthIssue(campMemberCardId: Id) {
           continue;
         }
         await food.updateOne({
-          peeIds: swop(user._id, null, food.peeIds),
+          // peeIds: swop(user._id, null, food.peeIds),
           peeCampMemberCardIds: swop(
             campMemberCard._id,
             null,
             food.peeCampMemberCardIds
           ),
-          peeHeathIssueIds: swop(healthIssue._id, null, food.peeHeathIssueIds),
+          // peeHeathIssueIds: swop(healthIssue._id, null, food.peeHeathIssueIds),
         });
       }
       break;
@@ -2301,17 +2165,17 @@ async function clearHealthIssue(campMemberCardId: Id) {
           continue;
         }
         await food.updateOne({
-          petoIds: swop(user._id, null, food.petoIds),
+          // petoIds: swop(user._id, null, food.petoIds),
           petoCampMemberCardIds: swop(
             campMemberCard._id,
             null,
             food.petoCampMemberCardIds
           ),
-          petoHeathIssueIds: swop(
-            healthIssue._id,
-            null,
-            food.petoHeathIssueIds
-          ),
+          // petoHeathIssueIds: swop(
+          //   healthIssue._id,
+          //   null,
+          //   food.petoHeathIssueIds
+          // ),
         });
       }
       i = 0;
@@ -2321,17 +2185,17 @@ async function clearHealthIssue(campMemberCardId: Id) {
           continue;
         }
         await food.updateOne({
-          petoIds: swop(user._id, null, food.petoIds),
+          // petoIds: swop(user._id, null, food.petoIds),
           petoCampMemberCardIds: swop(
             campMemberCard._id,
             null,
             food.petoCampMemberCardIds
           ),
-          petoHeathIssueIds: swop(
-            healthIssue._id,
-            null,
-            food.petoHeathIssueIds
-          ),
+          // petoHeathIssueIds: swop(
+          //   healthIssue._id,
+          //   null,
+          //   food.petoHeathIssueIds
+          // ),
         });
       }
       break;
