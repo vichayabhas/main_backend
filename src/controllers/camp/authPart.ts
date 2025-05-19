@@ -685,11 +685,11 @@ export async function getAllWelfare(
       name,
       nongNumber: baanHaveBottles
         .map(({ nongNumber }) => nongNumber)
-        .reduce(sum),
-      peeNumber: baanHaveBottles.map(({ peeNumber }) => peeNumber).reduce(sum),
+        .reduce(sum,0),
+      peeNumber: baanHaveBottles.map(({ peeNumber }) => peeNumber).reduce(sum,0),
       petoNumber: partHaveBottles
         .map(({ petoNumber }) => petoNumber)
-        .reduce(sum),
+        .reduce(sum,0),
     },
     baanHalalS,
     baanSpicyS,

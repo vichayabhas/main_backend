@@ -6,6 +6,7 @@ import {
   dataString,
   getDefaultBoolean,
 } from "../controllers/setup";
+import { departures } from "./interface";
 export const buf: string = process.env.JWT_SECECRET || "asdfjkl;;lkjfdsa";
 const UserSchema = new mongoose.Schema({
   name: dataString,
@@ -130,7 +131,17 @@ const UserSchema = new mongoose.Schema({
   peeAnswerPackIds: arrayObjectId,
   staffShortActivityIds: arrayObjectId,
   bookingRoomIds: arrayObjectId,
-  paticipantShortActivityIds: arrayObjectId,
+  participantShortActivityIds: arrayObjectId,
+  gewertzSquareBookingIds: arrayObjectId,
+  departureAuths: {
+    type: [
+      {
+        type: String,
+        enum: departures,
+      },
+    ],
+    default: [],
+  },
 });
 UserSchema.pre("save", async function (next) {
   const salt = await bcrypt.genSalt(10);

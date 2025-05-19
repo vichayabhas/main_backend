@@ -1,6 +1,12 @@
 import mongoose from "mongoose";
-import { arrayObjectId, dataId, dataString } from "../controllers/setup";
+import {
+  arrayObjectId,
+  dataId,
+  dataString,
+  getDefaultBoolean,
+} from "../controllers/setup";
 import bcrypt from "bcrypt";
+import { departures } from "./interface";
 
 const schema = new mongoose.Schema({
   name: dataString,
@@ -33,10 +39,21 @@ const schema = new mongoose.Schema({
   selectOffsetId: dataId,
   displayOffsetId: dataId,
   bookingRoomIds: arrayObjectId,
+  gewertzSquareBookingIds: arrayObjectId,
+  fridayActEn: getDefaultBoolean(true),
+  departureAuths: {
+    type: [
+      {
+        type: String,
+        enum: departures,
+      },
+    ],
+    default: [],
+  },
 });
 schema.pre("save", async function (next) {
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
-export default mongoose.model("UnivercityStaff", schema);
+export default mongoose.model("UniversityStaff", schema);

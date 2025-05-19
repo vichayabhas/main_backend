@@ -12,6 +12,7 @@ import subFrontend from "./src/routes/subFrontend";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { socketEvents } from "./src/models/interface";
+import gewertzSquare from "./src/routes/gewertzSquare";
 
 config({ path: "./config/config.env" });
 
@@ -29,6 +30,7 @@ app.use("/subFunction", subFrontend);
 
 app.use("/camp", camp);
 app.use("/api/v1/auth", user);
+app.use('/gewertzSquare',gewertzSquare)
 const httpServer = createServer(app);
 
 export const io = new Server(httpServer, {

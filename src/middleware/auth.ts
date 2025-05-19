@@ -3,6 +3,7 @@ import User, { buf } from "../models/User";
 import { NextFunction } from "express";
 import express from "express";
 import { resError } from "../controllers/setup";
+import UniversityStaff from "../models/UniversityStaff";
 const testJwt = buf;
 export async function protect(
   req: express.Request,
@@ -236,4 +237,25 @@ export async function isPass(
     "hhhhhhnjmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmppppppppppppppppppppppppppppppppppppp"
   );
   next();
+}
+export async function getUniversityStaff(req: express.Request) {
+  let token: string | null | undefined;
+
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  }
+  if (!token) {
+    return null;
+  }
+  try {
+    const decoded = jwt.verify(token.toString(), testJwt);
+    const { id } = decoded as { id: string };
+    const user = await UniversityStaff.findById(id).select("+password");
+    return user;
+  } catch {
+    return null;
+  }
 }

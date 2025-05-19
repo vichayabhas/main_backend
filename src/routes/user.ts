@@ -31,6 +31,7 @@ import {
   getUniversityStaffMe,
   universityStaffLogin,
   universityStaffRegister,
+  updateUniversityStaff,
 } from "../controllers/UniversityStaff";
 
 router.post("/register", register); //
@@ -58,4 +59,5 @@ router.get("/getOwnRegisterCampDatas/params/:id", getOwnRegisterCampDatas); //
 router.post("/universityStaffRegister/", universityStaffRegister); //
 router.post("/universityStaffLogin/", universityStaffLogin); //
 router.get("/getUniversityStaffMe/", getUniversityStaffMe); //
+router.put("/updateUniversityStaff/", updateUniversityStaff);
 export default router;

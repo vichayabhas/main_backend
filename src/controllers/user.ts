@@ -1,4 +1,4 @@
-import { getUser } from "../middleware/auth";
+import { getUniversityStaff, getUser } from "../middleware/auth";
 import Baan from "../models/Baan";
 import Camp from "../models/Camp";
 import HeathIssue from "../models/HeathIssue";
@@ -1373,6 +1373,23 @@ export async function bypassRole(req: express.Request, res: express.Response) {
   const { key } = req.body;
   const user = await getUser(req);
   if (!user) {
+    const universityStaff = await getUniversityStaff(req);
+    if (!universityStaff) {
+      sendRes(res, false);
+      return;
+    }
+    switch (key) {
+      case process.env.GEWERTZ_SQUARE_BOOKING_KEY: {
+        await universityStaff.updateOne({
+          departureAuths: [
+            ...universityStaff.departureAuths,
+            "วิศวกรรมไฟฟ้า (Electrical Engineering)",
+          ],
+        });
+        sendRes(res, true);
+        return;
+      }
+    }
     sendRes(res, false);
     return;
   }
@@ -1394,6 +1411,16 @@ export async function bypassRole(req: express.Request, res: express.Response) {
     }
     case process.env.NONG: {
       await user.updateOne({ role: "nong" });
+      sendRes(res, true);
+      return;
+    }
+    case process.env.GEWERTZ_SQUARE_BOOKING_KEY: {
+      await user.updateOne({
+        departureAuths: [
+          ...user.departureAuths,
+          "วิศวกรรมไฟฟ้า (Electrical Engineering)",
+        ],
+      });
       sendRes(res, true);
       return;
     }

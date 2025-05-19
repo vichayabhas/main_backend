@@ -1,5 +1,9 @@
 import express from "express";
-import { Id, UniversityStaffRegister } from "../models/interface";
+import {
+  Id,
+  UniversityStaffRegister,
+  UpdateUniversityStaff,
+} from "../models/interface";
 
 import TimeOffset from "../models/TimeOffset";
 import bcrypt from "bcrypt";
@@ -7,6 +11,7 @@ import jwt from "jsonwebtoken";
 import { buf } from "../models/User";
 import { sendRes } from "./setup";
 import UniversityStaff from "../models/UniversityStaff";
+import { getUniversityStaff } from "../middleware/auth";
 export async function universityStaffRegister(
   req: express.Request,
   res: express.Response
@@ -109,7 +114,7 @@ export async function getUniversityStaffMe(
   }
   if (!token) {
     sendRes(res, false);
-    return
+    return;
   }
   try {
     const decoded = jwt.verify(token.toString(), testJwt);
@@ -119,4 +124,17 @@ export async function getUniversityStaffMe(
   } catch {
     sendRes(res, false);
   }
+}
+export async function updateUniversityStaff(
+  req: express.Request,
+  res: express.Response
+) {
+  const input: UpdateUniversityStaff = req.body;
+  const user = await getUniversityStaff(req);
+  if (!user) {
+    sendRes(res, false);
+    return;
+  }
+  await user.updateOne(input);
+  sendRes(res, true);
 }
