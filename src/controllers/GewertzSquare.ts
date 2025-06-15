@@ -1,20 +1,25 @@
 import express from "express";
 import {
   BookingGewertzSquareRoom,
-  CommonUser,
   GetGewertzSquareBooking,
   gewertzSquareAvailableTimes,
   gewertzSquareMaxContinue,
+  GewertzSquareRegister,
   GewertzSquareRoomType,
+  Id,
   InterGewertzSquareBooking,
   UpdateBookingGewertzSquareRoom,
   UserType,
 } from "../models/interface";
-import { getUniversityStaff, getUser } from "../middleware/auth";
+import { getGewertzSquareUser } from "../middleware/auth";
 import { sendRes, swop } from "./setup";
 import GewertzSquareBooking from "../models/GewertzSquareBooking";
-import User from "../models/User";
+import User, { buf } from "../models/User";
 import UniversityStaff from "../models/UniversityStaff";
+import bcrypt from "bcrypt";
+import TimeOffset from "../models/TimeOffset";
+import jwt from "jsonwebtoken";
+import GewertzSquareUser from "../models/GewertzSquareUser";
 function isAvailableGewertzSquareRoom(
   oldBookings: InterGewertzSquareBooking[],
   room: GewertzSquareRoomType
@@ -68,21 +73,15 @@ export async function bookingGewertzSquareRoom(
   req: express.Request,
   res: express.Response
 ) {
-  let userType: UserType;
-  let user: CommonUser | null;
-  user = await getUser(req);
+  const user = await getGewertzSquareUser(req);
   if (!user) {
-    user = await getUniversityStaff(req);
-    if (!user) {
-      sendRes(res, false);
-      return;
-    } else {
-      userType = "universityStaff";
-    }
-  } else {
-    userType = "student";
+    sendRes(res, false);
+    return;
   }
-  if (!user.departureAuths.includes("วิศวกรรมไฟฟ้า (Electrical Engineering)")) {
+  const userType: UserType = user.userType;
+  if (
+    !user.user.departureAuths.includes("วิศวกรรมไฟฟ้า (Electrical Engineering)")
+  ) {
     sendRes(res, false);
     return;
   }
@@ -142,24 +141,30 @@ export async function bookingGewertzSquareRoom(
     day,
     month,
     year,
-    userId: user._id,
+    userId: user.user._id,
     userType,
     room,
   });
   const gewertzSquareBookingIds = swop(
     null,
     booking._id,
-    user.gewertzSquareBookingIds
+    user.user.gewertzSquareBookingIds
   );
   switch (userType) {
     case "student": {
-      await User.findByIdAndUpdate(user._id, {
+      await User.findByIdAndUpdate(user.user._id, {
         gewertzSquareBookingIds,
       });
       break;
     }
     case "universityStaff": {
-      await UniversityStaff.findByIdAndUpdate(user._id, {
+      await UniversityStaff.findByIdAndUpdate(user.user._id, {
+        gewertzSquareBookingIds,
+      });
+      break;
+    }
+    case "gewertzSquare": {
+      await GewertzSquareUser.findByIdAndUpdate(user.user._id, {
         gewertzSquareBookingIds,
       });
       break;
@@ -187,18 +192,16 @@ export async function getGewertzSquareBooking(
   req: express.Request,
   res: express.Response
 ) {
-  let user: CommonUser | null;
-  user = await getUser(req);
-  if (!user) {
-    user = await getUniversityStaff(req);
-    if (!user) {
-      const all = await GewertzSquareBooking.find();
-      const buffer: GetGewertzSquareBooking = { all, own: [] };
-      res.status(200).json(buffer);
-      return;
-    }
-  }
+  const userRaw = await getGewertzSquareUser(req);
   const all = await GewertzSquareBooking.find();
+
+  if (!userRaw) {
+    const buffer: GetGewertzSquareBooking = { all, own: [] };
+    res.status(200).json(buffer);
+    return;
+  }
+  const { user } = userRaw;
+
   const own: InterGewertzSquareBooking[] = [];
   let i = 0;
   while (i < user.gewertzSquareBookingIds.length) {
@@ -220,15 +223,12 @@ export async function updateBookingGewertzSquareRoom(
   req: express.Request,
   res: express.Response
 ) {
-  let user: CommonUser | null;
-  user = await getUser(req);
-  if (!user) {
-    user = await getUniversityStaff(req);
-    if (!user) {
-      sendRes(res, false);
-      return;
-    }
+  const userRaw = await getGewertzSquareUser(req);
+  if (!userRaw) {
+    sendRes(res, false);
+    return;
   }
+  const { user } = userRaw;
   if (!user.departureAuths.includes("วิศวกรรมไฟฟ้า (Electrical Engineering)")) {
     sendRes(res, false);
     return;
@@ -322,15 +322,12 @@ export async function deleteBookingGewertzSquareRoom(
   req: express.Request,
   res: express.Response
 ) {
-  let user: CommonUser | null;
-  user = await getUser(req);
-  if (!user) {
-    user = await getUniversityStaff(req);
-    if (!user) {
-      sendRes(res, false);
-      return;
-    }
+  const userRaw = await getGewertzSquareUser(req);
+  if (!userRaw) {
+    sendRes(res, false);
+    return;
   }
+  const { user } = userRaw;
   if (!user.departureAuths.includes("วิศวกรรมไฟฟ้า (Electrical Engineering)")) {
     sendRes(res, false);
     return;
@@ -359,6 +356,12 @@ export async function deleteBookingGewertzSquareRoom(
       });
       break;
     }
+    case "gewertzSquare": {
+      await UniversityStaff.findByIdAndUpdate(booking.userId, {
+        gewertzSquareBookingIds,
+      });
+      break;
+    }
   }
   await booking.deleteOne();
   const all = await GewertzSquareBooking.find();
@@ -378,4 +381,102 @@ export async function deleteBookingGewertzSquareRoom(
     own,
   };
   res.status(200).json(buffer);
+}
+export async function gewertzSquareRegister(
+  req: express.Request,
+  res: express.Response
+) {
+  try {
+    const {
+      name,
+      lastname,
+      password,
+      tel,
+      email,
+    }: //private
+    GewertzSquareRegister = req.body;
+    const select = await TimeOffset.create({});
+    const display = await TimeOffset.create({});
+    const user = await GewertzSquareUser.create({
+      name,
+      lastname,
+      password,
+      email,
+      tel,
+      displayOffsetId: display._id,
+      selectOffsetId: select._id,
+    });
+    sendTokenResponse(user._id, 200, res);
+  } catch (err) {
+    res.status(400).json({
+      success: false,
+    });
+    console.log(err);
+  }
+}
+export async function gewertzSquareLogin(
+  req: express.Request,
+  res: express.Response
+) {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    res.status(400).json({
+      success: false,
+      msg: "Please provide an email and password",
+    });
+    return;
+  }
+  let user = await User.findOne({
+    email,
+  }).select("+password");
+  if (!user) {
+    user = await UniversityStaff.findOne({ email }).select("+password");
+  }
+  if (!user) {
+    user = await GewertzSquareUser.findOne({ email }).select("+password");
+  }
+  if (!user) {
+    res.status(400).json({
+      success: false,
+      msg: "Invalid credentials",
+    });
+    return;
+  }
+  const isMatch = await bcrypt.compare(password, user.password);
+
+  if (!isMatch) {
+    res.status(401).json({
+      success: false,
+      msg: "Invalid credentials",
+    });
+    return;
+  }
+  sendTokenResponse(user._id, 200, res);
+}
+const sendTokenResponse = (
+  id: Id,
+  statusCode: number,
+  res: express.Response
+) => {
+  const token = jwt.sign({ id }, buf, {
+    expiresIn: process.env.JWT_EXPIRE,
+  });
+  const options = {
+    expires: new Date(
+      Date.now() +
+        parseInt(process.env.JWT_COOKIE_EXPIRE || "0") * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true,
+  };
+  res.status(statusCode).cookie("token", token, options).json({
+    success: true,
+    token,
+  });
+};
+export async function getGewertzSquareUserMe(
+  req: express.Request,
+  res: express.Response
+) {
+  const user = await getGewertzSquareUser(req);
+  res.status(200).json(user);
 }

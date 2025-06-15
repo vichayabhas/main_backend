@@ -12,6 +12,7 @@ import { calculate, sendingEmail, sendRes, swop } from "./setup";
 import express from "express";
 import bcrypt from "bcrypt";
 import {
+  Departure,
   FoodLimit,
   HeathIssueBody,
   HeathIssuePack,
@@ -19,11 +20,14 @@ import {
   OwnRegisterCampData,
   Register,
   UpdateTimeOffset,
+  UserType,
 } from "../models/interface";
 import jwt from "jsonwebtoken";
 import TimeOffset from "../models/TimeOffset";
 import { revalidateSubGroup } from "./camp/subGroup";
 import SubGroup from "../models/SubGroup";
+import GewertzSquareUser from "../models/GewertzSquareUser";
+import GewertzSquareBooking from "../models/GewertzSquareBooking";
 //*export async function register
 //*export async function login
 //*export async function getMe
@@ -63,6 +67,28 @@ export async function register(req: express.Request, res: express.Response) {
       likeToSleepAtCamp,
     }: //private
     Register = req.body;
+    let gewertzSquareBookingIds: Id[] = [];
+    let departureAuths: Departure[] = [];
+    let fridayActEn: boolean = false;
+    const gewertzSquareUser = await GewertzSquareUser.findOne({ email }).select(
+      "+password"
+    );
+    if (gewertzSquareUser) {
+      const isMatch = await bcrypt.compare(
+        password,
+        gewertzSquareUser.password
+      );
+      if (!isMatch) {
+        res.status(401).json({
+          success: false,
+          msg: "Invalid credentials",
+        });
+        return;
+      }
+      gewertzSquareBookingIds = gewertzSquareUser.gewertzSquareBookingIds;
+      fridayActEn = gewertzSquareUser.fridayActEn;
+      departureAuths = gewertzSquareUser.departureAuths;
+    }
     const select = await TimeOffset.create({});
     const display = await TimeOffset.create({});
     const user = await User.create({
@@ -79,7 +105,21 @@ export async function register(req: express.Request, res: express.Response) {
       tel,
       displayOffsetId: display._id,
       selectOffsetId: select._id,
+      gewertzSquareBookingIds,
+      departureAuths,
+      fridayActEn,
     });
+    if (gewertzSquareUser) {
+      let i = 0;
+      while (i < gewertzSquareBookingIds.length) {
+        const userType: UserType = "student";
+        await GewertzSquareBooking.findByIdAndUpdate(
+          gewertzSquareBookingIds[i++],
+          { userType, userId: user._id }
+        );
+      }
+      await gewertzSquareUser.deleteOne();
+    }
     sendTokenResponse(user._id, 200, res);
   } catch (err) {
     res.status(400).json({

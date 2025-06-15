@@ -4,6 +4,8 @@ import { NextFunction } from "express";
 import express from "express";
 import { resError } from "../controllers/setup";
 import UniversityStaff from "../models/UniversityStaff";
+import GewertzSquareUser from "../models/GewertzSquareUser";
+import { UserType } from "../models/interface";
 const testJwt = buf;
 export async function protect(
   req: express.Request,
@@ -233,9 +235,7 @@ export async function isPass(
   res: express.Response,
   next: NextFunction
 ) {
-  console.log(
-    "hhhhhhnjmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmppppppppppppppppppppppppppppppppppppp"
-  );
+  console.log();
   next();
 }
 export async function getUniversityStaff(req: express.Request) {
@@ -255,6 +255,45 @@ export async function getUniversityStaff(req: express.Request) {
     const { id } = decoded as { id: string };
     const user = await UniversityStaff.findById(id).select("+password");
     return user;
+  } catch {
+    return null;
+  }
+}
+export async function getGewertzSquareUser(req: express.Request) {
+  let token: string | null | undefined;
+
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
+  }
+  if (!token) {
+    return null;
+  }
+  try {
+    let userType: UserType;
+    const decoded = jwt.verify(token.toString(), testJwt);
+    const { id } = decoded as { id: string };
+    let user = await GewertzSquareUser.findById(id).select("+password");
+    if (!user) {
+      user = await UniversityStaff.findById(id).select("+password");
+    } else {
+      userType = "gewertzSquare";
+      return { user, userType };
+    }
+    if (!user) {
+      user = await User.findById(id).select("+password");
+    } else {
+      userType = "universityStaff";
+      return { user, userType };
+    }
+    if (!user) {
+      return null;
+    } else {
+      userType = "student";
+      return { user, userType };
+    }
   } catch {
     return null;
   }

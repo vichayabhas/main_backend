@@ -5,7 +5,6 @@ import {
   dataString,
   getDefaultBoolean,
 } from "../controllers/setup";
-import bcrypt from "bcrypt";
 import { departures } from "./interface";
 
 const schema = new mongoose.Schema({
@@ -39,7 +38,7 @@ const schema = new mongoose.Schema({
   displayOffsetId: dataId,
   bookingRoomIds: arrayObjectId,
   gewertzSquareBookingIds: arrayObjectId,
-  fridayActEn: getDefaultBoolean(true),
+  fridayActEn: getDefaultBoolean(false),
   departureAuths: {
     type: [
       {
@@ -50,9 +49,4 @@ const schema = new mongoose.Schema({
     default: [],
   },
 });
-schema.pre("save", async function (next) {
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-  next();
-});
-export default mongoose.model("UniversityStaff", schema);
+export default mongoose.model("GewertzSquareUser", schema);

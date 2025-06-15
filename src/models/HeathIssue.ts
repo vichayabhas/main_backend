@@ -33,4 +33,4 @@ const PeeCampSchema = new mongoose.Schema({
     default: "ไม่มีข้อจำกัดด้านความเชื่อ",
   },
 });
-export default mongoose.model("HelthIsue", PeeCampSchema);
+export default mongoose.model("HealthIssue", PeeCampSchema);

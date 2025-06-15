@@ -1,8 +1,10 @@
 import express from "express";
 import {
+  Departure,
   Id,
   UniversityStaffRegister,
   UpdateUniversityStaff,
+  UserType,
 } from "../models/interface";
 
 import TimeOffset from "../models/TimeOffset";
@@ -12,6 +14,8 @@ import { buf } from "../models/User";
 import { sendRes } from "./setup";
 import UniversityStaff from "../models/UniversityStaff";
 import { getUniversityStaff } from "../middleware/auth";
+import GewertzSquareUser from "../models/GewertzSquareUser";
+import GewertzSquareBooking from "../models/GewertzSquareBooking";
 export async function universityStaffRegister(
   req: express.Request,
   res: express.Response
@@ -26,6 +30,28 @@ export async function universityStaffRegister(
       tel,
     }: //private
     UniversityStaffRegister = req.body;
+    let gewertzSquareBookingIds: Id[] = [];
+    let departureAuths: Departure[] = [];
+    let fridayActEn: boolean = false;
+    const gewertzSquareUser = await GewertzSquareUser.findOne({ email }).select(
+      "+password"
+    );
+    if (gewertzSquareUser) {
+      const isMatch = await bcrypt.compare(
+        password,
+        gewertzSquareUser.password
+      );
+      if (!isMatch) {
+        res.status(401).json({
+          success: false,
+          msg: "Invalid credentials",
+        });
+        return;
+      }
+      gewertzSquareBookingIds = gewertzSquareUser.gewertzSquareBookingIds;
+      fridayActEn = gewertzSquareUser.fridayActEn;
+      departureAuths = gewertzSquareUser.departureAuths;
+    }
     const select = await TimeOffset.create({});
     const display = await TimeOffset.create({});
     const user = await UniversityStaff.create({
@@ -37,7 +63,21 @@ export async function universityStaffRegister(
       tel,
       displayOffsetId: display._id,
       selectOffsetId: select._id,
+      gewertzSquareBookingIds,
+      fridayActEn,
+      departureAuths,
     });
+    if (gewertzSquareUser) {
+      let i = 0;
+      while (i < gewertzSquareBookingIds.length) {
+        const userType: UserType = "universityStaff";
+        await GewertzSquareBooking.findByIdAndUpdate(
+          gewertzSquareBookingIds[i++],
+          { userType, userId: user._id }
+        );
+      }
+      await gewertzSquareUser.deleteOne();
+    }
     sendTokenResponse(user._id, 200, res);
   } catch (err) {
     res.status(400).json({
