@@ -12,7 +12,7 @@ import {
   UserType,
 } from "../models/interface";
 import { getGewertzSquareUser } from "../middleware/auth";
-import { sendRes, swop } from "./setup";
+import { isIdEqual, sendRes, swop } from "./setup";
 import GewertzSquareBooking from "../models/GewertzSquareBooking";
 import User, { buf } from "../models/User";
 import UniversityStaff from "../models/UniversityStaff";
@@ -338,35 +338,67 @@ export async function deleteBookingGewertzSquareRoom(
     sendRes(res, false);
     return;
   }
-  const gewertzSquareBookingIds = swop(
-    booking._id,
-    null,
-    user.gewertzSquareBookingIds
-  );
+  if (
+    !isIdEqual(user._id, booking.userId) &&
+    !user.extraAuth.includes("gewertz square admin")
+  ) {
+    sendRes(res, false);
+    return;
+  }
+  let gewertzSquareBookingIds: Id[];
+
   switch (booking.userType) {
     case "student": {
-      await User.findByIdAndUpdate(booking.userId, {
-        gewertzSquareBookingIds,
-      });
+      const user = await User.findById(booking.userId);
+      if (!user) {
+        sendRes(res, false);
+        return;
+      }
+      gewertzSquareBookingIds = swop(
+        booking._id,
+        null,
+        user.gewertzSquareBookingIds
+      );
+      await user.updateOne({ gewertzSquareBookingIds });
       break;
     }
     case "universityStaff": {
-      await UniversityStaff.findByIdAndUpdate(booking.userId, {
-        gewertzSquareBookingIds,
-      });
+      const user = await UniversityStaff.findById(booking.userId);
+      if (!user) {
+        sendRes(res, false);
+        return;
+      }
+      gewertzSquareBookingIds = swop(
+        booking._id,
+        null,
+        user.gewertzSquareBookingIds
+      );
+      await user.updateOne({ gewertzSquareBookingIds });
       break;
     }
     case "gewertzSquare": {
-      await UniversityStaff.findByIdAndUpdate(booking.userId, {
-        gewertzSquareBookingIds,
-      });
+      const user = await GewertzSquareUser.findById(booking.userId);
+      if (!user) {
+        sendRes(res, false);
+        return;
+      }
+      gewertzSquareBookingIds = swop(
+        booking._id,
+        null,
+        user.gewertzSquareBookingIds
+      );
+      await user.updateOne({ gewertzSquareBookingIds });
       break;
     }
   }
-  await booking.deleteOne();
+
   const all = await GewertzSquareBooking.find();
   const own: InterGewertzSquareBooking[] = [];
   let i = 0;
+  if (!isIdEqual(booking.userId, user._id)) {
+    gewertzSquareBookingIds = user.gewertzSquareBookingIds;
+  }
+  await booking.deleteOne();
   while (i < gewertzSquareBookingIds.length) {
     const buf = await GewertzSquareBooking.findById(
       gewertzSquareBookingIds[i++]

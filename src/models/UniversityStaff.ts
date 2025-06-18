@@ -6,7 +6,7 @@ import {
   getDefaultBoolean,
 } from "../controllers/setup";
 import bcrypt from "bcrypt";
-import { departures } from "./interface";
+import { departures, extraAuths } from "./interface";
 
 const schema = new mongoose.Schema({
   name: dataString,
@@ -45,6 +45,15 @@ const schema = new mongoose.Schema({
       {
         type: String,
         enum: departures,
+      },
+    ],
+    default: [],
+  },
+  extraAuth: {
+    type: [
+      {
+        type: String,
+        enum: extraAuths,
       },
     ],
     default: [],

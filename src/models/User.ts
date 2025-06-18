@@ -6,7 +6,7 @@ import {
   dataString,
   getDefaultBoolean,
 } from "../controllers/setup";
-import { departures } from "./interface";
+import { departures, extraAuths } from "./interface";
 export const buf: string = process.env.JWT_SECECRET || "asdfjkl;;lkjfdsa";
 const UserSchema = new mongoose.Schema({
   name: dataString,
@@ -138,6 +138,15 @@ const UserSchema = new mongoose.Schema({
       {
         type: String,
         enum: departures,
+      },
+    ],
+    default: [],
+  },
+  extraAuth: {
+    type: [
+      {
+        type: String,
+        enum: extraAuths,
       },
     ],
     default: [],

@@ -13,6 +13,7 @@ import express from "express";
 import bcrypt from "bcrypt";
 import {
   Departure,
+  ExtraAuths,
   FoodLimit,
   HeathIssueBody,
   HeathIssuePack,
@@ -1450,6 +1451,15 @@ export async function bypassRole(req: express.Request, res: express.Response) {
           sendRes(res, true);
           return;
         }
+        case process.env.GEWERTZ_SQUARE_ADMIN_KEY: {
+          const extraAuth: ExtraAuths[] = [
+            ...user.extraAuth,
+            "gewertz square admin",
+          ];
+          await user.updateOne({ extraAuth });
+          sendRes(res, true);
+          return;
+        }
       }
       sendRes(res, false);
       return;
@@ -1466,6 +1476,15 @@ export async function bypassRole(req: express.Request, res: express.Response) {
           sendRes(res, true);
           return;
         }
+        case process.env.GEWERTZ_SQUARE_ADMIN_KEY: {
+          const extraAuth: ExtraAuths[] = [
+            ...user.extraAuth,
+            "gewertz square admin",
+          ];
+          await user.updateOne({ extraAuth });
+          sendRes(res, true);
+          return;
+        }
       }
       sendRes(res, false);
       return;
@@ -1479,6 +1498,15 @@ export async function bypassRole(req: express.Request, res: express.Response) {
               "วิศวกรรมไฟฟ้า (Electrical Engineering)",
             ],
           });
+          sendRes(res, true);
+          return;
+        }
+        case process.env.GEWERTZ_SQUARE_ADMIN_KEY: {
+          const extraAuth: ExtraAuths[] = [
+            ...user.extraAuth,
+            "gewertz square admin",
+          ];
+          await user.updateOne({ extraAuth });
           sendRes(res, true);
           return;
         }
