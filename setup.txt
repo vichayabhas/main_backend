@@ -37,3 +37,5 @@ LAST_TWO_DIGIT='21'
 บรรทัดที่ 61 {!endEmail.split(",").includes(user.email.split("@")[1]) ||
 ให้แก้เป็น { แทน
 
+GEWERTZ_SQUARE_BOOKING_KEY=keyสำหรับใช้เพื่อปลดล็อคให้จองห้องที่ gewertz square ได้
+GEWERTZ_SQUARE_ADMIN_KEY='gewertz-square-admin'
