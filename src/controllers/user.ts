@@ -1,4 +1,4 @@
-import { getUniversityStaff, getUser } from "../middleware/auth";
+import { getGewertzSquareUser, getUser } from "../middleware/auth";
 import Baan from "../models/Baan";
 import Camp from "../models/Camp";
 import HeathIssue from "../models/HeathIssue";
@@ -1401,71 +1401,92 @@ export async function checkPassword(
   req: express.Request,
   res: express.Response
 ) {
-  const user = await getUser(req);
+  const user = await getGewertzSquareUser(req);
   if (!user) {
     sendRes(res, false);
     return;
   }
-  const isMatch = await bcrypt.compare(req.body.password, user.password);
+  const isMatch = await bcrypt.compare(req.body.password, user.user.password);
   sendRes(res, isMatch);
 }
 export async function bypassRole(req: express.Request, res: express.Response) {
   const { key } = req.body;
-  const user = await getUser(req);
-  if (!user) {
-    const universityStaff = await getUniversityStaff(req);
-    if (!universityStaff) {
-      sendRes(res, false);
-      return;
-    }
-    switch (key) {
-      case process.env.GEWERTZ_SQUARE_BOOKING_KEY: {
-        await universityStaff.updateOne({
-          departureAuths: [
-            ...universityStaff.departureAuths,
-            "วิศวกรรมไฟฟ้า (Electrical Engineering)",
-          ],
-        });
-        sendRes(res, true);
-        return;
-      }
-    }
+  const userRaw = await getGewertzSquareUser(req);
+  if (!userRaw) {
     sendRes(res, false);
     return;
   }
-  switch (key) {
-    case process.env.PEEBAAN: {
-      await user.updateOne({ role: "pee" });
-      sendRes(res, true);
+  const { user, userType } = userRaw;
+  switch (userType) {
+    case "student": {
+      switch (key) {
+        case process.env.PEEBAAN: {
+          await user.updateOne({ role: "pee" });
+          sendRes(res, true);
+          return;
+        }
+        case process.env.PETO: {
+          await user.updateOne({ role: "peto" });
+          sendRes(res, true);
+          return;
+        }
+        case process.env.ADMIN: {
+          await user.updateOne({ role: "admin" });
+          sendRes(res, true);
+          return;
+        }
+        case process.env.NONG: {
+          await user.updateOne({ role: "nong" });
+          sendRes(res, true);
+          return;
+        }
+        case process.env.GEWERTZ_SQUARE_BOOKING_KEY: {
+          await user.updateOne({
+            departureAuths: [
+              ...user.departureAuths,
+              "วิศวกรรมไฟฟ้า (Electrical Engineering)",
+            ],
+          });
+          sendRes(res, true);
+          return;
+        }
+      }
+      sendRes(res, false);
       return;
     }
-    case process.env.PETO: {
-      await user.updateOne({ role: "peto" });
-      sendRes(res, true);
+    case "universityStaff": {
+      switch (key) {
+        case process.env.GEWERTZ_SQUARE_BOOKING_KEY: {
+          await user.updateOne({
+            departureAuths: [
+              ...user.departureAuths,
+              "วิศวกรรมไฟฟ้า (Electrical Engineering)",
+            ],
+          });
+          sendRes(res, true);
+          return;
+        }
+      }
+      sendRes(res, false);
       return;
     }
-    case process.env.ADMIN: {
-      await user.updateOne({ role: "admin" });
-      sendRes(res, true);
-      return;
-    }
-    case process.env.NONG: {
-      await user.updateOne({ role: "nong" });
-      sendRes(res, true);
-      return;
-    }
-    case process.env.GEWERTZ_SQUARE_BOOKING_KEY: {
-      await user.updateOne({
-        departureAuths: [
-          ...user.departureAuths,
-          "วิศวกรรมไฟฟ้า (Electrical Engineering)",
-        ],
-      });
-      sendRes(res, true);
+    case "gewertzSquare": {
+      switch (key) {
+        case process.env.GEWERTZ_SQUARE_BOOKING_KEY: {
+          await user.updateOne({
+            departureAuths: [
+              ...user.departureAuths,
+              "วิศวกรรมไฟฟ้า (Electrical Engineering)",
+            ],
+          });
+          sendRes(res, true);
+          return;
+        }
+      }
+      sendRes(res, false);
       return;
     }
   }
-  sendRes(res, false);
 }
 export function isWelfareValid(input: HeathIssuePack): boolean {
   return (

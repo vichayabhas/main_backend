@@ -480,3 +480,15 @@ export async function getGewertzSquareUserMe(
   const user = await getGewertzSquareUser(req);
   res.status(200).json(user);
 }
+export async function updateGewertzSquareAccount(
+  req: express.Request,
+  res: express.Response
+) {
+  const user = await getGewertzSquareUser(req);
+  if (user) {
+    await user.user.updateOne(req.body);
+    sendRes(res, true);
+    return;
+  }
+  sendRes(res, false);
+}
