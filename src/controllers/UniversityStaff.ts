@@ -1,6 +1,7 @@
 import express from "express";
 import {
   Departure,
+  ExtraAuths,
   Id,
   UniversityStaffRegister,
   UpdateUniversityStaff,
@@ -33,6 +34,7 @@ export async function universityStaffRegister(
     let gewertzSquareBookingIds: Id[] = [];
     let departureAuths: Departure[] = [];
     let fridayActEn: boolean = false;
+    let extraAuth: ExtraAuths[] = [];
     const gewertzSquareUser = await GewertzSquareUser.findOne({ email }).select(
       "+password"
     );
@@ -51,6 +53,7 @@ export async function universityStaffRegister(
       gewertzSquareBookingIds = gewertzSquareUser.gewertzSquareBookingIds;
       fridayActEn = gewertzSquareUser.fridayActEn;
       departureAuths = gewertzSquareUser.departureAuths;
+      extraAuth = gewertzSquareUser.extraAuth;
     }
     const select = await TimeOffset.create({});
     const display = await TimeOffset.create({});
@@ -66,6 +69,7 @@ export async function universityStaffRegister(
       gewertzSquareBookingIds,
       fridayActEn,
       departureAuths,
+      extraAuth,
     });
     if (gewertzSquareUser) {
       let i = 0;

@@ -71,6 +71,7 @@ export async function register(req: express.Request, res: express.Response) {
     let gewertzSquareBookingIds: Id[] = [];
     let departureAuths: Departure[] = [];
     let fridayActEn: boolean = false;
+    let extraAuth: ExtraAuths[] = [];
     const gewertzSquareUser = await GewertzSquareUser.findOne({ email }).select(
       "+password"
     );
@@ -89,6 +90,7 @@ export async function register(req: express.Request, res: express.Response) {
       gewertzSquareBookingIds = gewertzSquareUser.gewertzSquareBookingIds;
       fridayActEn = gewertzSquareUser.fridayActEn;
       departureAuths = gewertzSquareUser.departureAuths;
+      extraAuth = gewertzSquareUser.extraAuth;
     }
     const select = await TimeOffset.create({});
     const display = await TimeOffset.create({});
@@ -109,6 +111,7 @@ export async function register(req: express.Request, res: express.Response) {
       gewertzSquareBookingIds,
       departureAuths,
       fridayActEn,
+      extraAuth,
     });
     if (gewertzSquareUser) {
       let i = 0;
