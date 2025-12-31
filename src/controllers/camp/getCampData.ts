@@ -11,7 +11,7 @@ import {
   GetPartForPlan,
   GetPeeData,
   GetPetoData,
-  HeathIssueBody,
+  HealthIssueBody,
   InterCampMemberCard,
   InterFood,
   ShowPlace,
@@ -19,7 +19,6 @@ import {
   AuthType,
   BasicPart,
   CampState,
-  ShowImageAndDescriptions,
   GetGroupContainer,
 } from "../../models/interface";
 import NameContainer from "../../models/NameContainer";
@@ -28,9 +27,9 @@ import Part from "../../models/Part";
 import PartNameContainer from "../../models/PartNameContainer";
 import PeeCamp from "../../models/PeeCamp";
 import PetoCamp from "../../models/PetoCamp";
-import { sendRes, resError, stringToId } from "../setup";
+import { sendRes, resError, stringToId, emptyHealthyIssue } from "../setup";
 import CampMemberCard from "../../models/CampMemberCard";
-import HeathIssue from "../../models/HeathIssue";
+import HealthIssue from "../../models/HealthIssue";
 import Song from "../../models/Song";
 import User from "../../models/User";
 import { getUser } from "../../middleware/auth";
@@ -258,10 +257,12 @@ export async function getNongsFromBaanIdRaw(baanId: Id) {
     }
     let isWearing = false;
     let spicy = false;
-    const heathIssue = await HeathIssue.findById(campMemberCard.healthIssueId);
-    if (heathIssue) {
-      isWearing = heathIssue.isWearing;
-      spicy = heathIssue.spicy;
+    const healthIssue = await HealthIssue.findById(
+      campMemberCard.healthIssueId
+    );
+    if (healthIssue) {
+      isWearing = healthIssue.isWearing;
+      spicy = healthIssue.spicy;
     }
     out.push({
       name,
@@ -282,6 +283,8 @@ export async function getNongsFromBaanIdRaw(baanId: Id) {
       spicy,
       id: camp.nongMapIdGtoL.get(_id.toString()) as number,
       campMemberCardId: campMemberCard._id,
+      healthIssue: healthIssue ? healthIssue : emptyHealthyIssue,
+      campMemberCard,
     });
   }
   return out;
@@ -338,10 +341,12 @@ export async function getPeesFromBaanIdRaw(baanId: Id) {
     }
     let isWearing = false;
     let spicy = false;
-    const heathIssue = await HeathIssue.findById(campMemberCard.healthIssueId);
-    if (heathIssue) {
-      isWearing = heathIssue.isWearing;
-      spicy = heathIssue.spicy;
+    const healthIssue = await HealthIssue.findById(
+      campMemberCard.healthIssueId
+    );
+    if (healthIssue) {
+      isWearing = healthIssue.isWearing;
+      spicy = healthIssue.spicy;
     }
     out.push({
       name,
@@ -362,6 +367,8 @@ export async function getPeesFromBaanIdRaw(baanId: Id) {
       spicy,
       id: camp.peeMapIdGtoL.get(_id.toString()) as number,
       campMemberCardId: campMemberCard._id,
+      campMemberCard,
+      healthIssue: healthIssue ? healthIssue : emptyHealthyIssue,
     });
   }
   return out;
@@ -418,10 +425,12 @@ export async function getPeesFromPartIdRaw(partId: Id) {
     }
     let isWearing = false;
     let spicy = false;
-    const heathIssue = await HeathIssue.findById(campMemberCard.healthIssueId);
-    if (heathIssue) {
-      isWearing = heathIssue.isWearing;
-      spicy = heathIssue.spicy;
+    const healthIssue = await HealthIssue.findById(
+      campMemberCard.healthIssueId
+    );
+    if (healthIssue) {
+      isWearing = healthIssue.isWearing;
+      spicy = healthIssue.spicy;
     }
     out.push({
       name,
@@ -442,6 +451,8 @@ export async function getPeesFromPartIdRaw(partId: Id) {
       spicy,
       id: camp.peeMapIdGtoL.get(_id.toString()) as number,
       campMemberCardId: campMemberCard._id,
+      campMemberCard,
+      healthIssue: healthIssue ? healthIssue : emptyHealthyIssue,
     });
   }
   return out;
@@ -498,10 +509,12 @@ export async function getPetosFromPartIdRaw(partId: Id) {
     }
     let isWearing = false;
     let spicy = false;
-    const heathIssue = await HeathIssue.findById(campMemberCard.healthIssueId);
-    if (heathIssue) {
-      isWearing = heathIssue.isWearing;
-      spicy = heathIssue.spicy;
+    const healthIssue = await HealthIssue.findById(
+      campMemberCard.healthIssueId
+    );
+    if (healthIssue) {
+      isWearing = healthIssue.isWearing;
+      spicy = healthIssue.spicy;
     }
     out.push({
       name,
@@ -522,12 +535,14 @@ export async function getPetosFromPartIdRaw(partId: Id) {
       spicy,
       id: camp.peeMapIdGtoL.get(_id.toString()) as number,
       campMemberCardId: campMemberCard._id,
+      campMemberCard,
+      healthIssue: healthIssue ? healthIssue : emptyHealthyIssue,
     });
   }
   return out;
 }
 export async function getMealsByHealthIssue(
-  healthIssue: HeathIssueBody | null,
+  healthIssue: HealthIssueBody | null,
   mealIds: Id[],
   campMemberCard: InterCampMemberCard
 ) {
@@ -656,6 +671,19 @@ export async function getMealsByHealthIssue(
   }
   return output;
 }
+async function getTimeOffsetRaw(
+  timeOffsetId: Id
+): Promise<UpdateTimeOffsetRaw> {
+  const timeOffset = await TimeOffset.findById(timeOffsetId);
+  if (!timeOffset) {
+    return {
+      day: 0,
+      hour: 0,
+      minute: 0,
+    };
+  }
+  return timeOffset;
+}
 export async function getNongCampData(
   req: express.Request,
   res: express.Response
@@ -686,7 +714,7 @@ export async function getNongCampData(
   const boy: ShowPlace | null = await getShowPlaceRaw(baan.boySleepPlaceId);
   const girl: ShowPlace | null = await getShowPlaceRaw(baan.girlSleepPlaceId);
   const normal: ShowPlace | null = await getShowPlaceRaw(baan.normalPlaceId);
-  const healthIssue = await HeathIssue.findById(campMemberCard.healthIssueId);
+  const healthIssue = await HealthIssue.findById(campMemberCard.healthIssueId);
   const meals = await getMealsByHealthIssue(
     healthIssue,
     camp.mealIds,
@@ -694,16 +722,7 @@ export async function getNongCampData(
   );
   const nongs = await getNongsFromBaanIdRaw(baan._id);
   const pees = await getPeesFromBaanIdRaw(baan._id);
-  let displayOffset: UpdateTimeOffsetRaw | null = await TimeOffset.findById(
-    user.displayOffsetId
-  );
-  if (!displayOffset) {
-    displayOffset = {
-      day: 0,
-      hour: 0,
-      minute: 0,
-    };
-  }
+  const displayOffset = await getTimeOffsetRaw(user.displayOffsetId);
   const defaultGroup = await getGroupContainerRaw(baan.defaultGroupId);
   const groups: GetGroupContainer[] = [];
   let i = 0;
@@ -718,6 +737,7 @@ export async function getNongCampData(
   const items = await getItemsRaw(camp.itemIds);
   const campMemberCardOrders = await getOrdersRaw(campMemberCard.orderIds);
   const baanOrders = await getOrdersRaw(baan.orderIds);
+  const baanJobs = await getBaanJobsRaw(baan.jobIds, null);
   const buffer: GetNongData = {
     baan,
     camp,
@@ -748,6 +768,7 @@ export async function getNongCampData(
     items,
     campMemberCardOrders,
     baanOrders,
+    baanJobs,
   };
   res.status(200).json(buffer);
 }
@@ -784,7 +805,7 @@ export async function getPeeCampData(
   const girl: ShowPlace | null = await getShowPlaceRaw(baan.girlSleepPlaceId);
   const normal: ShowPlace | null = await getShowPlaceRaw(baan.normalPlaceId);
   const partPlace = await getShowPlaceRaw(part.placeId);
-  const healthIssue = await HeathIssue.findById(campMemberCard.healthIssueId);
+  const healthIssue = await HealthIssue.findById(campMemberCard.healthIssueId);
   const meals = await getMealsByHealthIssue(
     healthIssue,
     camp.mealIds,
@@ -794,28 +815,11 @@ export async function getPeeCampData(
   const peeBaans = await getPeesFromBaanIdRaw(baan._id);
   const peeParts = await getPeesFromPartIdRaw(part._id);
   const petoParts = await getPetosFromPartIdRaw(part._id);
-  const imageAndDescriptions: ShowImageAndDescriptions[] =
-    await getImageAndDescriptionsRaw(baan.imageAndDescriptionContainerIds);
-  let displayOffset: UpdateTimeOffsetRaw | null = await TimeOffset.findById(
-    user.displayOffsetId
+  const imageAndDescriptions = await getImageAndDescriptionsRaw(
+    baan.imageAndDescriptionContainerIds
   );
-  if (!displayOffset) {
-    displayOffset = {
-      day: 0,
-      hour: 0,
-      minute: 0,
-    };
-  }
-  let selectOffset: UpdateTimeOffsetRaw | null = await TimeOffset.findById(
-    user.selectOffsetId
-  );
-  if (!selectOffset) {
-    selectOffset = {
-      day: 0,
-      hour: 0,
-      minute: 0,
-    };
-  }
+  const displayOffset = await getTimeOffsetRaw(user.displayOffsetId);
+  const selectOffset = await getTimeOffsetRaw(user.selectOffsetId);
   const baanJobs = await getBaanJobsRaw(baan.jobIds, user._id);
   const partJobs = await getPartJobsRaw(part.jobIds, user._id);
   const mirrorData = await getMirrorRaw(baan, campMemberCard, user);
@@ -902,30 +906,8 @@ export async function getPetoCampData(
     sendRes(res, false);
     return;
   }
-  async function getShowPlaceRaw(
-    placeId: Id | null
-  ): Promise<ShowPlace | null> {
-    if (placeId) {
-      const place = await Place.findById(placeId);
-      if (!place) {
-        return null;
-      }
-      const building = await Building.findById(place.buildingId);
-      if (!building) {
-        return null;
-      }
-      return {
-        _id: place._id,
-        buildingName: building.name,
-        floor: place.floor,
-        room: place.room,
-      };
-    } else {
-      return null;
-    }
-  }
   const partPlace = await getShowPlaceRaw(part.placeId);
-  const healthIssue = await HeathIssue.findById(campMemberCard.healthIssueId);
+  const healthIssue = await HealthIssue.findById(campMemberCard.healthIssueId);
   const meals = await getMealsByHealthIssue(
     healthIssue,
     camp.mealIds,

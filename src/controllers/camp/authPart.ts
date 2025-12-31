@@ -18,7 +18,7 @@ import {
   GetBaansForPlan,
   GetCoopData,
   GetPartForPlan,
-  HeathIssuePack,
+  HealthIssuePack,
   InterBaanBack,
   InterMeal,
   InterPartBack,
@@ -29,6 +29,10 @@ import {
   UpdateBaanOut,
   UpdatePartOut,
   PlanUpdateOut,
+  HealthIssueOverrideData,
+  GetOverrideHealthIssue,
+  UpdateOverrideHealthIssue,
+  GetAuthPartForPage,
 } from "../../models/interface";
 import Part from "../../models/Part";
 import {
@@ -43,12 +47,13 @@ import {
   isIdEqual,
   sizeJsonMod,
   sum,
+  emptyHealthyIssue,
 } from "../setup";
 import User from "../../models/User";
 import { getUser } from "../../middleware/auth";
 import Building from "../../models/Building";
 import CampMemberCard from "../../models/CampMemberCard";
-import HeathIssue from "../../models/HeathIssue";
+import HealthIssue from "../../models/HealthIssue";
 import Meal from "../../models/Meal";
 import NongCamp from "../../models/NongCamp";
 import PeeCamp from "../../models/PeeCamp";
@@ -65,6 +70,7 @@ import {
 } from "./getCampData";
 import { getHealthIssuePack } from "../randomThing/meal";
 import { getBaanJobsRaw } from "./jobAssign";
+import TimeOffset from "../../models/TimeOffset";
 export async function getRegisterData(
   req: express.Request,
   res: express.Response
@@ -312,9 +318,9 @@ export async function getAllWelfare(
     sendRes(res, false);
     return;
   }
-  const nongHealths: HeathIssuePack[] = [];
-  const peeHealths: HeathIssuePack[] = [];
-  const petoHealths: HeathIssuePack[] = [];
+  const nongHealths: HealthIssuePack[] = [];
+  const peeHealths: HealthIssuePack[] = [];
+  const petoHealths: HealthIssuePack[] = [];
   const baanWelfares: WelfarePack[] = [];
   const partWelfares: WelfarePack[] = [];
   const baanHaveBottles: CampNumberData[] = [];
@@ -373,23 +379,23 @@ export async function getAllWelfare(
     let baanNongIsWearings = 0;
     let baanPeeIsWearings = 0;
     let j = 0;
-    while (j < baan.nongCampMemberCardHaveHeathIssueIds.length) {
+    while (j < baan.nongCampMemberCardHaveHealthIssueIds.length) {
       const campMemberCard = await CampMemberCard.findById(
-        baan.nongCampMemberCardHaveHeathIssueIds[j++]
+        baan.nongCampMemberCardHaveHealthIssueIds[j++]
       );
       if (!campMemberCard) {
         continue;
       }
-      const heathIssue = await HeathIssue.findById(
+      const healthIssue = await HealthIssue.findById(
         campMemberCard.healthIssueId
       );
       const user = await User.findById(campMemberCard.userId);
-      if (!heathIssue || !user) {
+      if (!healthIssue || !user) {
         continue;
       }
-      const buffer: HeathIssuePack = {
+      const buffer: HealthIssuePack = {
         user,
-        heathIssue,
+        healthIssue,
         campMemberCardId: campMemberCard._id,
       };
       welfareBaan.nongHealths = ifIsTrue(
@@ -398,47 +404,47 @@ export async function getAllWelfare(
         welfareBaan.nongHealths,
         nongHealths
       );
-      campNongSpicyS = ifIsPlus(heathIssue.spicy, campNongSpicyS);
-      baanNongSpicyS = ifIsPlus(heathIssue.spicy, baanNongSpicyS);
+      campNongSpicyS = ifIsPlus(healthIssue.spicy, campNongSpicyS);
+      baanNongSpicyS = ifIsPlus(healthIssue.spicy, baanNongSpicyS);
       campNongHalalS = ifIsPlus(
-        heathIssue.foodLimit == "อิสลาม",
+        healthIssue.foodLimit == "อิสลาม",
         campNongHalalS
       );
       baanNongHalalS = ifIsPlus(
-        heathIssue.foodLimit == "อิสลาม",
+        healthIssue.foodLimit == "อิสลาม",
         baanNongHalalS
       );
       campNongVegetarians = ifIsPlus(
-        heathIssue.foodLimit == "มังสวิรัติ",
+        healthIssue.foodLimit == "มังสวิรัติ",
         campNongVegetarians
       );
       baanNongVegetarians = ifIsPlus(
-        heathIssue.foodLimit == "มังสวิรัติ",
+        healthIssue.foodLimit == "มังสวิรัติ",
         baanNongVegetarians
       );
-      campNongVegans = ifIsPlus(heathIssue.foodLimit == "เจ", campNongVegans);
-      baanNongVegans = ifIsPlus(heathIssue.foodLimit == "เจ", baanNongVegans);
-      campNongIsWearings = ifIsPlus(heathIssue.isWearing, campNongIsWearings);
-      baanNongIsWearings = ifIsPlus(heathIssue.isWearing, baanNongIsWearings);
+      campNongVegans = ifIsPlus(healthIssue.foodLimit == "เจ", campNongVegans);
+      baanNongVegans = ifIsPlus(healthIssue.foodLimit == "เจ", baanNongVegans);
+      campNongIsWearings = ifIsPlus(healthIssue.isWearing, campNongIsWearings);
+      baanNongIsWearings = ifIsPlus(healthIssue.isWearing, baanNongIsWearings);
     }
     j = 0;
-    while (j < baan.peeCampMemberCardHaveHeathIssueIds.length) {
+    while (j < baan.peeCampMemberCardHaveHealthIssueIds.length) {
       const campMemberCard = await CampMemberCard.findById(
-        baan.peeCampMemberCardHaveHeathIssueIds[j++]
+        baan.peeCampMemberCardHaveHealthIssueIds[j++]
       );
       if (!campMemberCard) {
         continue;
       }
-      const heathIssue = await HeathIssue.findById(
+      const healthIssue = await HealthIssue.findById(
         campMemberCard.healthIssueId
       );
       const user = await User.findById(campMemberCard.userId);
-      if (!heathIssue || !user) {
+      if (!healthIssue || !user) {
         continue;
       }
-      const buffer: HeathIssuePack = {
+      const buffer: HealthIssuePack = {
         user,
-        heathIssue,
+        healthIssue,
         campMemberCardId: campMemberCard._id,
       };
       welfareBaan.peeHealths = ifIsTrue(
@@ -447,22 +453,28 @@ export async function getAllWelfare(
         welfareBaan.peeHealths,
         peeHealths
       );
-      campPeeSpicyS = ifIsPlus(heathIssue.spicy, campPeeSpicyS);
-      baanPeeSpicyS = ifIsPlus(heathIssue.spicy, baanPeeSpicyS);
-      campPeeHalalS = ifIsPlus(heathIssue.foodLimit == "อิสลาม", campPeeHalalS);
-      baanPeeHalalS = ifIsPlus(heathIssue.foodLimit == "อิสลาม", baanPeeHalalS);
+      campPeeSpicyS = ifIsPlus(healthIssue.spicy, campPeeSpicyS);
+      baanPeeSpicyS = ifIsPlus(healthIssue.spicy, baanPeeSpicyS);
+      campPeeHalalS = ifIsPlus(
+        healthIssue.foodLimit == "อิสลาม",
+        campPeeHalalS
+      );
+      baanPeeHalalS = ifIsPlus(
+        healthIssue.foodLimit == "อิสลาม",
+        baanPeeHalalS
+      );
       campPeeVegetarians = ifIsPlus(
-        heathIssue.foodLimit == "มังสวิรัติ",
+        healthIssue.foodLimit == "มังสวิรัติ",
         campPeeVegetarians
       );
       baanPeeVegetarians = ifIsPlus(
-        heathIssue.foodLimit == "มังสวิรัติ",
+        healthIssue.foodLimit == "มังสวิรัติ",
         baanPeeVegetarians
       );
-      campPeeVegans = ifIsPlus(heathIssue.foodLimit == "เจ", campPeeVegans);
-      baanPeeVegans = ifIsPlus(heathIssue.foodLimit == "เจ", baanPeeVegans);
-      campPeeIsWearings = ifIsPlus(heathIssue.isWearing, campPeeIsWearings);
-      baanPeeIsWearings = ifIsPlus(heathIssue.isWearing, baanPeeIsWearings);
+      campPeeVegans = ifIsPlus(healthIssue.foodLimit == "เจ", campPeeVegans);
+      baanPeeVegans = ifIsPlus(healthIssue.foodLimit == "เจ", baanPeeVegans);
+      campPeeIsWearings = ifIsPlus(healthIssue.isWearing, campPeeIsWearings);
+      baanPeeIsWearings = ifIsPlus(healthIssue.isWearing, baanPeeIsWearings);
     }
     baanWelfares.push(welfareBaan);
     baanHaveBottles.push({
@@ -534,23 +546,23 @@ export async function getAllWelfare(
     let partPeeIsWearings = 0;
     let partPetoIsWearings = 0;
     let j = 0;
-    while (j < part.petoCampMemberCardHaveHeathIssueIds.length) {
+    while (j < part.petoCampMemberCardHaveHealthIssueIds.length) {
       const campMemberCard = await CampMemberCard.findById(
-        part.petoCampMemberCardHaveHeathIssueIds[j++]
+        part.petoCampMemberCardHaveHealthIssueIds[j++]
       );
       if (!campMemberCard) {
         continue;
       }
-      const heathIssue = await HeathIssue.findById(
+      const healthIssue = await HealthIssue.findById(
         campMemberCard.healthIssueId
       );
       const user = await User.findById(campMemberCard.userId);
-      if (!heathIssue || !user) {
+      if (!healthIssue || !user) {
         continue;
       }
-      const buffer: HeathIssuePack = {
+      const buffer: HealthIssuePack = {
         user,
-        heathIssue,
+        healthIssue,
         campMemberCardId: campMemberCard._id,
       };
       welfarePart.petoHealths = ifIsTrue(
@@ -559,47 +571,47 @@ export async function getAllWelfare(
         welfarePart.petoHealths,
         petoHealths
       );
-      campPetoSpicyS = ifIsPlus(heathIssue.spicy, campPetoSpicyS);
-      partPetoSpicyS = ifIsPlus(heathIssue.spicy, partPetoSpicyS);
+      campPetoSpicyS = ifIsPlus(healthIssue.spicy, campPetoSpicyS);
+      partPetoSpicyS = ifIsPlus(healthIssue.spicy, partPetoSpicyS);
       campPetoHalalS = ifIsPlus(
-        heathIssue.foodLimit == "อิสลาม",
+        healthIssue.foodLimit == "อิสลาม",
         campPetoHalalS
       );
       partPetoHalalS = ifIsPlus(
-        heathIssue.foodLimit == "อิสลาม",
+        healthIssue.foodLimit == "อิสลาม",
         partPetoHalalS
       );
       campPetoVegetarians = ifIsPlus(
-        heathIssue.foodLimit == "มังสวิรัติ",
+        healthIssue.foodLimit == "มังสวิรัติ",
         campPetoVegetarians
       );
       partPetoVegetarians = ifIsPlus(
-        heathIssue.foodLimit == "มังสวิรัติ",
+        healthIssue.foodLimit == "มังสวิรัติ",
         partPetoVegetarians
       );
-      campPetoVegans = ifIsPlus(heathIssue.foodLimit == "เจ", campPetoVegans);
-      partPetoVegans = ifIsPlus(heathIssue.foodLimit == "เจ", partPetoVegans);
-      campPetoIsWearings = ifIsPlus(heathIssue.isWearing, campPetoIsWearings);
-      partPetoIsWearings = ifIsPlus(heathIssue.isWearing, partPetoIsWearings);
+      campPetoVegans = ifIsPlus(healthIssue.foodLimit == "เจ", campPetoVegans);
+      partPetoVegans = ifIsPlus(healthIssue.foodLimit == "เจ", partPetoVegans);
+      campPetoIsWearings = ifIsPlus(healthIssue.isWearing, campPetoIsWearings);
+      partPetoIsWearings = ifIsPlus(healthIssue.isWearing, partPetoIsWearings);
     }
     j = 0;
-    while (j < part.peeHeathIssueIds.length) {
+    while (j < part.peeHealthIssueIds.length) {
       const campMemberCard = await CampMemberCard.findById(
-        part.peeCampMemberCardHaveHeathIssueIds[j++]
+        part.peeCampMemberCardHaveHealthIssueIds[j++]
       );
       if (!campMemberCard) {
         continue;
       }
-      const heathIssue = await HeathIssue.findById(
+      const healthIssue = await HealthIssue.findById(
         campMemberCard.healthIssueId
       );
       const user = await User.findById(campMemberCard.userId);
-      if (!user || !heathIssue) {
+      if (!user || !healthIssue) {
         continue;
       }
-      const buffer: HeathIssuePack = {
+      const buffer: HealthIssuePack = {
         user,
-        heathIssue,
+        healthIssue,
         campMemberCardId: campMemberCard._id,
       };
       welfarePart.peeHealths = ifIsTrue(
@@ -607,14 +619,17 @@ export async function getAllWelfare(
         buffer,
         welfarePart.peeHealths
       );
-      partPeeSpicyS = ifIsPlus(heathIssue.spicy, partPeeSpicyS);
-      partPeeHalalS = ifIsPlus(heathIssue.foodLimit == "อิสลาม", partPeeHalalS);
+      partPeeSpicyS = ifIsPlus(healthIssue.spicy, partPeeSpicyS);
+      partPeeHalalS = ifIsPlus(
+        healthIssue.foodLimit == "อิสลาม",
+        partPeeHalalS
+      );
       partPeeVegetarians = ifIsPlus(
-        heathIssue.foodLimit == "มังสวิรัติ",
+        healthIssue.foodLimit == "มังสวิรัติ",
         partPeeVegetarians
       );
-      partPeeVegans = ifIsPlus(heathIssue.foodLimit == "เจ", partPeeVegans);
-      partPeeIsWearings = ifIsPlus(heathIssue.isWearing, partPeeIsWearings);
+      partPeeVegans = ifIsPlus(healthIssue.foodLimit == "เจ", partPeeVegans);
+      partPeeIsWearings = ifIsPlus(healthIssue.isWearing, partPeeIsWearings);
     }
     partWelfares.push(welfarePart);
     partHaveBottles.push({
@@ -685,11 +700,13 @@ export async function getAllWelfare(
       name,
       nongNumber: baanHaveBottles
         .map(({ nongNumber }) => nongNumber)
-        .reduce(sum,0),
-      peeNumber: baanHaveBottles.map(({ peeNumber }) => peeNumber).reduce(sum,0),
+        .reduce(sum, 0),
+      peeNumber: baanHaveBottles
+        .map(({ peeNumber }) => peeNumber)
+        .reduce(sum, 0),
       petoNumber: partHaveBottles
         .map(({ petoNumber }) => petoNumber)
-        .reduce(sum,0),
+        .reduce(sum, 0),
     },
     baanHalalS,
     baanSpicyS,
@@ -948,6 +965,13 @@ export async function planUpdateCamp(
       nongSendMessage,
       canReadMirror,
       canWriteMirror,
+      canNongSeeAdvanceNongData,
+      canNongSeeAdvancePeeData,
+      canNongSeeJobData,
+      canNongSeeNongExtra,
+      canNongSeePeeExtra,
+      canPeeSeeAdvanceNongData,
+      canPeeSeeAdvancePeeData,
     } = baan;
     const boy = await Place.findById(updateBaan.boyId);
     const girl = await Place.findById(updateBaan.girlId);
@@ -971,6 +995,13 @@ export async function planUpdateCamp(
       fullName,
       canReadMirror,
       canWriteMirror,
+      canNongSeeAdvanceNongData,
+      canNongSeeAdvancePeeData,
+      canNongSeeJobData,
+      canNongSeeNongExtra,
+      canNongSeePeeExtra,
+      canPeeSeeAdvanceNongData,
+      canPeeSeeAdvancePeeData,
     });
     if (!data) {
       continue;
@@ -1049,8 +1080,10 @@ export async function plusActionPlan(
   });
   sendRes(res, true);
 }
-function isHaveExtra(input: HeathIssuePack): boolean {
-  return input.heathIssue.chronicDisease != "" || input.heathIssue.extra != "";
+function isHaveExtra(input: HealthIssuePack): boolean {
+  return (
+    input.healthIssue.chronicDisease != "" || input.healthIssue.extra != ""
+  );
 }
 export async function getHealthIssueForAct(
   req: express.Request,
@@ -1061,9 +1094,9 @@ export async function getHealthIssueForAct(
     sendRes(res, false);
     return;
   }
-  const nongHealths: HeathIssuePack[] = [];
-  const peeHealths: HeathIssuePack[] = [];
-  const petoHealths: HeathIssuePack[] = [];
+  const nongHealths: HealthIssuePack[] = [];
+  const peeHealths: HealthIssuePack[] = [];
+  const petoHealths: HealthIssuePack[] = [];
   const baanHealthIssuePacks: ShowHealthIssuePack[] = [];
   const partHealthIssuePacks: ShowHealthIssuePack[] = [];
   let i = 0;
@@ -1075,12 +1108,12 @@ export async function getHealthIssueForAct(
     const welfareBaan: ShowHealthIssuePack = {
       name: `${camp.groupName}${baan.name}`,
       nongHealths: await getHealthIssuePack(
-        baan.nongCampMemberCardHaveHeathIssueIds,
+        baan.nongCampMemberCardHaveHealthIssueIds,
         isHaveExtra,
         nongHealths
       ),
       peeHealths: await getHealthIssuePack(
-        baan.peeCampMemberCardHaveHeathIssueIds,
+        baan.peeCampMemberCardHaveHealthIssueIds,
         isHaveExtra,
         peeHealths
       ),
@@ -1098,11 +1131,11 @@ export async function getHealthIssueForAct(
       name: `ฝ่าย${part.partName}`,
       nongHealths: [],
       peeHealths: await getHealthIssuePack(
-        part.peeCampMemberCardHaveHeathIssueIds,
+        part.peeCampMemberCardHaveHealthIssueIds,
         isHaveExtra
       ),
       petoHealths: await getHealthIssuePack(
-        part.petoCampMemberCardHaveHeathIssueIds,
+        part.petoCampMemberCardHaveHealthIssueIds,
         isHaveExtra,
         petoHealths
       ),
@@ -1122,19 +1155,19 @@ export async function getHealthIssueForAct(
   };
   res.status(200).json(buffer);
 }
-function isMedicalValid(input: HeathIssuePack): boolean {
+function isMedicalValid(input: HealthIssuePack): boolean {
   return (
-    input.heathIssue.medicine != "" ||
-    input.heathIssue.extra != "" ||
-    input.heathIssue.chronicDisease != "" ||
-    input.heathIssue.isWearing
+    input.healthIssue.medicine != "" ||
+    input.healthIssue.extra != "" ||
+    input.healthIssue.chronicDisease != "" ||
+    input.healthIssue.isWearing
   );
 }
-function isCoopValid(input: HeathIssuePack): boolean {
+function isCoopValid(input: HealthIssuePack): boolean {
   return (
-    input.heathIssue.extra != "" ||
-    input.heathIssue.chronicDisease != "" ||
-    input.heathIssue.isWearing
+    input.healthIssue.extra != "" ||
+    input.healthIssue.chronicDisease != "" ||
+    input.healthIssue.isWearing
   );
 }
 export async function getMedicalHealthIssue(
@@ -1146,9 +1179,9 @@ export async function getMedicalHealthIssue(
     sendRes(res, false);
     return;
   }
-  const nongHealths: HeathIssuePack[] = [];
-  const peeHealths: HeathIssuePack[] = [];
-  const petoHealths: HeathIssuePack[] = [];
+  const nongHealths: HealthIssuePack[] = [];
+  const peeHealths: HealthIssuePack[] = [];
+  const petoHealths: HealthIssuePack[] = [];
   const baanHealthIssuePacks: ShowHealthIssuePack[] = [];
   const partHealthIssuePacks: ShowHealthIssuePack[] = [];
   let i = 0;
@@ -1160,12 +1193,12 @@ export async function getMedicalHealthIssue(
     const welfareBaan: ShowHealthIssuePack = {
       name: `${camp.groupName}${baan.name}`,
       nongHealths: await getHealthIssuePack(
-        baan.nongCampMemberCardHaveHeathIssueIds,
+        baan.nongCampMemberCardHaveHealthIssueIds,
         isMedicalValid,
         nongHealths
       ),
       peeHealths: await getHealthIssuePack(
-        baan.peeCampMemberCardHaveHeathIssueIds,
+        baan.peeCampMemberCardHaveHealthIssueIds,
         isMedicalValid,
         peeHealths
       ),
@@ -1183,11 +1216,11 @@ export async function getMedicalHealthIssue(
       name: `ฝ่าย${part.partName}`,
       nongHealths: [],
       peeHealths: await getHealthIssuePack(
-        part.peeCampMemberCardHaveHeathIssueIds,
+        part.peeCampMemberCardHaveHealthIssueIds,
         isMedicalValid
       ),
       petoHealths: await getHealthIssuePack(
-        part.petoCampMemberCardHaveHeathIssueIds,
+        part.petoCampMemberCardHaveHealthIssueIds,
         isMedicalValid,
         petoHealths
       ),
@@ -1222,11 +1255,11 @@ export async function getCoopData(req: express.Request, res: express.Response) {
   const girl = await Place.findById(baan.girlSleepPlaceId);
   const normal = await Place.findById(baan.normalPlaceId);
   const nongHealths = await getHealthIssuePack(
-    baan.nongCampMemberCardHaveHeathIssueIds,
+    baan.nongCampMemberCardHaveHealthIssueIds,
     isCoopValid
   );
   const peeHealths = await getHealthIssuePack(
-    baan.peeCampMemberCardHaveHeathIssueIds,
+    baan.peeCampMemberCardHaveHealthIssueIds,
     isCoopValid
   );
   const baanJobs = await getBaanJobsRaw(baan.jobIds, null);
@@ -1255,5 +1288,190 @@ export async function getShowRegisters(
     sendRes(res, false);
     return;
   }
+  res.status(200).json(out);
+}
+export async function getOverrideHealthIssueRaw(
+  baanId: Id
+): Promise<GetOverrideHealthIssue | null> {
+  const baan = await Baan.findById(baanId);
+  if (!baan) {
+    return null;
+  }
+  const camp = await Camp.findById(baan.campId);
+  if (!camp) {
+    return null;
+  }
+  const nongs: HealthIssueOverrideData[] = [];
+  const pees: HealthIssueOverrideData[] = [];
+  let i = 0;
+  while (i < baan.nongCampMemberCardIds.length) {
+    const campMemberCard = await CampMemberCard.findById(
+      baan.nongCampMemberCardIds[i++]
+    );
+    if (!campMemberCard) {
+      continue;
+    }
+    const user = await User.findById(campMemberCard.userId);
+    if (!user) {
+      continue;
+    }
+    const healthIssue = await HealthIssue.findById(
+      campMemberCard.healthIssueId
+    );
+    nongs.push({
+      user,
+      healthIssue: healthIssue ? healthIssue : emptyHealthyIssue,
+      campMemberCard,
+    });
+  }
+  i = 0;
+  while (i < baan.peeCampMemberCardIds.length) {
+    const campMemberCard = await CampMemberCard.findById(
+      baan.peeCampMemberCardIds[i++]
+    );
+    if (!campMemberCard) {
+      continue;
+    }
+    const user = await User.findById(campMemberCard.userId);
+    if (!user) {
+      continue;
+    }
+    const healthIssue = await HealthIssue.findById(
+      campMemberCard.healthIssueId
+    );
+    pees.push({
+      user,
+      healthIssue: healthIssue ? healthIssue : emptyHealthyIssue,
+      campMemberCard,
+    });
+  }
+  return { nongs, pees, baan, camp };
+}
+export async function getOverrideHealthIssue(
+  req: express.Request,
+  res: express.Response
+) {
+  const out = await getOverrideHealthIssueRaw(stringToId(req.params.id));
+  if (!out) {
+    sendRes(res, false);
+    return;
+  }
+  res.status(200).json(out);
+}
+export async function updateOverrideHealthIssue(
+  req: express.Request,
+  res: express.Response
+) {
+  const input: UpdateOverrideHealthIssue = req.body;
+  const user = await getUser(req);
+  const baan = await Baan.findById(input.baanId);
+  if (!user || !baan) {
+    sendRes(res, false);
+    return;
+  }
+  const camp = await Camp.findById(baan.campId);
+  if (!camp) {
+    sendRes(res, false);
+    return;
+  }
+  const campMemberCard = await CampMemberCard.findById(
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+  );
+  if (!campMemberCard) {
+    sendRes(res, false);
+    return;
+  }
+  switch (campMemberCard.role) {
+    case "nong": {
+      sendRes(res, false);
+      return;
+    }
+    case "pee": {
+      const peeCamp = await PeeCamp.findById(campMemberCard.campModelId);
+      if (!peeCamp) {
+        sendRes(res, false);
+        return;
+      }
+      const part = await Part.findById(peeCamp.partId);
+      if (
+        !part ||
+        (!part.auths.includes("แก้ไขปัญหาสุขภาพให้เข้ากับพี่และน้อง") &&
+          !camp.boardIds.includes(user._id))
+      ) {
+        sendRes(res, false);
+        return;
+      }
+      break;
+    }
+    case "peto": {
+      const petoCamp = await PetoCamp.findById(campMemberCard.campModelId);
+      if (!petoCamp) {
+        sendRes(res, false);
+        return;
+      }
+      const part = await Part.findById(petoCamp.partId);
+      if (
+        !part ||
+        (!part.auths.includes("แก้ไขปัญหาสุขภาพให้เข้ากับพี่และน้อง") &&
+          !camp.boardIds.includes(user._id))
+      ) {
+        sendRes(res, false);
+        return;
+      }
+      break;
+    }
+  }
+  let i = 0;
+  while (i < input.datas.length) {
+    const { campMemberCardId, peeReplaceExtra, nongReplaceExtra } =
+      input.datas[i++];
+    await CampMemberCard.findByIdAndUpdate(campMemberCardId, {
+      peeReplaceExtra,
+      nongReplaceExtra,
+    });
+  }
+  const out = await getOverrideHealthIssueRaw(input.baanId);
+  if (!out) {
+    sendRes(res, false);
+    return;
+  }
+  res.status(200).json(out);
+}
+export async function getAuthPartForPage(
+  req: express.Request,
+  res: express.Response
+) {
+  const user = await getUser(req);
+  const part = await Part.findById(req.params.id);
+  if (!user || !part) {
+    sendRes(res, false);
+    return;
+  }
+  const camp = await Camp.findById(part.campId);
+  if (!camp) {
+    sendRes(res, false);
+    return;
+  }
+  const campMemberCard = await CampMemberCard.findById(
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+  );
+  if (!campMemberCard) {
+    sendRes(res, false);
+    return;
+  }
+  const healthIssue = await HealthIssue.findById(campMemberCard.healthIssueId);
+  const displayOffset = await TimeOffset.findById(user.displayOffsetId);
+  const selectOffset = await TimeOffset.findById(user.selectOffsetId);
+  const out: GetAuthPartForPage = {
+    camp,
+    campMemberCard,
+    healthIssue: healthIssue ? healthIssue : emptyHealthyIssue,
+    user,
+    part,
+    selectOffset: selectOffset ? selectOffset : { day: 0, hour: 0, minute: 0 },
+    displayOffset: displayOffset
+      ? displayOffset
+      : { day: 0, hour: 0, minute: 0 },
+  };
   res.status(200).json(out);
 }

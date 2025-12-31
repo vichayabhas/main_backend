@@ -122,19 +122,19 @@ export async function changeBaanRaw(userIds: Id[], baanId: Id) {
         });
         if (campMemberCard.healthIssueId) {
           await oldBaan.updateOne({
-            nongHeathIssueIds: swop(
+            nongHealthIssueIds: swop(
               campMemberCard.healthIssueId,
               null,
-              oldBaan.nongHeathIssueIds
+              oldBaan.nongHealthIssueIds
             ),
-            nongCampMemberCardHaveHeathIssueIds: swop(
+            nongCampMemberCardHaveHealthIssueIds: swop(
               campMemberCard._id,
               null,
-              oldBaan.nongCampMemberCardHaveHeathIssueIds
+              oldBaan.nongCampMemberCardHaveHealthIssueIds
             ),
           });
-          baan.nongCampMemberCardHaveHeathIssueIds.push(campMemberCard._id);
-          baan.nongHeathIssueIds.push(campMemberCard.healthIssueId);
+          baan.nongCampMemberCardHaveHealthIssueIds.push(campMemberCard._id);
+          baan.nongHealthIssueIds.push(campMemberCard.healthIssueId);
         }
         if (campMemberCard.sleepAtCamp) {
           await oldBaan.updateOne({
@@ -204,19 +204,19 @@ export async function changeBaanRaw(userIds: Id[], baanId: Id) {
         baan.mapCampMemberCardIdByUserId.set(user.id, campMemberCard._id);
         if (campMemberCard.healthIssueId) {
           await oldBaan.updateOne({
-            peeHeathIssueIds: swop(
+            peeHealthIssueIds: swop(
               campMemberCard.healthIssueId,
               null,
-              oldBaan.peeHeathIssueIds
+              oldBaan.peeHealthIssueIds
             ),
-            peeCampMemberCardHaveHeathIssueIds: swop(
+            peeCampMemberCardHaveHealthIssueIds: swop(
               campMemberCard._id,
               null,
-              oldBaan.peeCampMemberCardHaveHeathIssueIds
+              oldBaan.peeCampMemberCardHaveHealthIssueIds
             ),
           });
-          baan.peeHeathIssueIds.push(campMemberCard.healthIssueId);
-          baan.peeCampMemberCardHaveHeathIssueIds.push(campMemberCard._id);
+          baan.peeHealthIssueIds.push(campMemberCard.healthIssueId);
+          baan.peeCampMemberCardHaveHealthIssueIds.push(campMemberCard._id);
         }
         if (campMemberCard.sleepAtCamp) {
           await oldBaan.updateOne({
@@ -280,19 +280,19 @@ export async function changeBaanRaw(userIds: Id[], baanId: Id) {
   });
   await baan.updateOne({
     mapCampMemberCardIdByUserId: baan.mapCampMemberCardIdByUserId,
-    nongHeathIssueIds: baan.nongHeathIssueIds,
+    nongHealthIssueIds: baan.nongHealthIssueIds,
     nongIds: baan.nongIds,
     nongCampMemberCardIds: baan.nongCampMemberCardIds,
     nongShirtSize: baan.nongShirtSize,
-    nongCampMemberCardHaveHeathIssueIds:
-      baan.nongCampMemberCardHaveHeathIssueIds,
+    nongCampMemberCardHaveHealthIssueIds:
+      baan.nongCampMemberCardHaveHealthIssueIds,
     nongHaveBottleIds: baan.nongHaveBottleIds,
     nongSleepIds: baan.nongSleepIds,
-    peeHeathIssueIds: baan.peeHeathIssueIds,
+    peeHealthIssueIds: baan.peeHealthIssueIds,
     peeIds: baan.peeIds,
     peeCampMemberCardIds: baan.peeCampMemberCardIds,
     peeShirtSize: baan.peeShirtSize,
-    peeCampMemberCardHaveHeathIssueIds: baan.peeCampMemberCardHaveHeathIssueIds,
+    peeCampMemberCardHaveHealthIssueIds: baan.peeCampMemberCardHaveHealthIssueIds,
     peeHaveBottleIds: baan.peeHaveBottleIds,
     peeSleepIds: baan.peeSleepIds,
   });
@@ -418,19 +418,19 @@ export async function changePartRaw(userIds: Id[], partId: Id) {
         });
         if (campMemberCard.healthIssueId) {
           await oldPart.updateOne({
-            petoHeathIssueIds: swop(
+            petoHealthIssueIds: swop(
               campMemberCard.healthIssueId,
               null,
-              oldPart.petoHeathIssueIds
+              oldPart.petoHealthIssueIds
             ),
-            petoCampMemberCardHaveHeathIssueIds: swop(
+            petoCampMemberCardHaveHealthIssueIds: swop(
               campMemberCard._id,
               null,
-              oldPart.petoCampMemberCardHaveHeathIssueIds
+              oldPart.petoCampMemberCardHaveHealthIssueIds
             ),
           });
-          part.petoCampMemberCardHaveHeathIssueIds.push(campMemberCard._id);
-          part.petoHeathIssueIds.push(campMemberCard.healthIssueId);
+          part.petoCampMemberCardHaveHealthIssueIds.push(campMemberCard._id);
+          part.petoHealthIssueIds.push(campMemberCard.healthIssueId);
         }
         if (campMemberCard.sleepAtCamp) {
           await oldPart.updateOne({
@@ -507,19 +507,19 @@ export async function changePartRaw(userIds: Id[], partId: Id) {
         part.mapCampMemberCardIdByUserId.set(user.id, campMemberCard._id);
         if (campMemberCard.healthIssueId) {
           await oldPart.updateOne({
-            peeHeathIssueIds: swop(
+            peeHealthIssueIds: swop(
               campMemberCard.healthIssueId,
               null,
-              oldPart.peeHeathIssueIds
+              oldPart.peeHealthIssueIds
             ),
-            peeCampMemberCardHaveHeathIssueIds: swop(
+            peeCampMemberCardHaveHealthIssueIds: swop(
               campMemberCard._id,
               null,
-              oldPart.peeCampMemberCardHaveHeathIssueIds
+              oldPart.peeCampMemberCardHaveHealthIssueIds
             ),
           });
-          part.peeHeathIssueIds.push(campMemberCard.healthIssueId);
-          part.peeCampMemberCardHaveHeathIssueIds.push(campMemberCard._id);
+          part.peeHealthIssueIds.push(campMemberCard.healthIssueId);
+          part.peeCampMemberCardHaveHealthIssueIds.push(campMemberCard._id);
         }
         if (campMemberCard.sleepAtCamp) {
           await oldPart.updateOne({
@@ -563,18 +563,18 @@ export async function changePartRaw(userIds: Id[], partId: Id) {
   }
   await part.updateOne({
     mapCampMemberCardIdByUserId: part.mapCampMemberCardIdByUserId,
-    petoHeathIssueIds: part.petoHeathIssueIds,
+    petoHealthIssueIds: part.petoHealthIssueIds,
     petoIds: part.petoIds,
     petoCampMemberCardIds: part.petoCampMemberCardIds,
-    petoCampMemberCardHaveHeathIssueIds:
-      part.petoCampMemberCardHaveHeathIssueIds,
+    petoCampMemberCardHaveHealthIssueIds:
+      part.petoCampMemberCardHaveHealthIssueIds,
     petoHaveBottleIds: part.petoHaveBottleIds,
     petoSleepIds: part.petoSleepIds,
-    peeHeathIssueIds: part.peeHeathIssueIds,
+    peeHealthIssueIds: part.peeHealthIssueIds,
     peeIds: part.peeIds,
     peeCampMemberCardIds: part.peeCampMemberCardIds,
     peeShirtSize: part.peeShirtSize,
-    peeCampMemberCardHaveHeathIssueIds: part.peeCampMemberCardHaveHeathIssueIds,
+    peeCampMemberCardHaveHealthIssueIds: part.peeCampMemberCardHaveHealthIssueIds,
     peeHaveBottleIds: part.peeHaveBottleIds,
     peeSleepIds: part.peeSleepIds,
   });

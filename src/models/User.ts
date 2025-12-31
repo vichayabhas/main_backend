@@ -122,7 +122,6 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: "null",
   },
-  citizenId: dataString,
   likeToSleepAtCamp: getDefaultBoolean(true),
   authPartIds: arrayObjectId,
   selectOffsetId: dataId,
@@ -151,6 +150,7 @@ const UserSchema = new mongoose.Schema({
     ],
     default: [],
   },
+  notifyOnlyYourPart: getDefaultBoolean(true),
 });
 UserSchema.pre("save", async function (next) {
   const salt = await bcrypt.genSalt(10);

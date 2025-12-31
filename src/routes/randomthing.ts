@@ -52,6 +52,7 @@ import {
   getShowBaanSongs,
   getAuthSongs,
 } from "../controllers/randomThing/song";
+import { getNotification } from "../controllers/notification";
 
 const router = express.Router();
 router.get("/getAllBuilding/", getAllBuilding); //
@@ -96,4 +97,5 @@ router.get("/getShowBaanSongs/params/:id", protect, getShowBaanSongs); //
 router.get("/getAuthSongs/params/:id", protect, getAuthSongs); //
 router.get("/getMealForUpdate/params/:id", protect, getMealForUpdate); //
 router.get("/getAllPlaceDataSetups/", getAllPlaceDataSetups); //
+router.get("/getNotification/", getNotification); //
 export default router;

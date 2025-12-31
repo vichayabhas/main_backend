@@ -3,12 +3,12 @@ import { getUser } from "../../middleware/auth";
 import Camp from "../../models/Camp";
 import CampMemberCard from "../../models/CampMemberCard";
 import Food from "../../models/Food";
-import HeathIssue from "../../models/HeathIssue";
+import HealthIssue from "../../models/HealthIssue";
 import {
   CreateMeal,
   Id,
   CreateFood,
-  HeathIssuePack,
+  HealthIssuePack,
   GetFoodForUpdate,
   UpdateFood,
   InterFood,
@@ -54,7 +54,7 @@ async function getMealTrigger(
     if (!campMemberCard) {
       continue;
     }
-    const healthIssue = await HeathIssue.findById(campMemberCard.healthIssueId);
+    const healthIssue = await HealthIssue.findById(campMemberCard.healthIssueId);
     const meals = await getMealsByHealthIssue(
       healthIssue,
       mealIds,
@@ -178,20 +178,20 @@ export async function getFoodForUpdate(
     sendRes(res, false);
     return;
   }
-  const nongCampMemberCardHaveHeathIssueIds: Id[] = [];
-  const peeCampMemberCardHaveHeathIssueIds: Id[] = [];
-  const petoCampMemberCardHaveHeathIssueIds: Id[] = [];
+  const nongCampMemberCardHaveHealthIssueIds: Id[] = [];
+  const peeCampMemberCardHaveHealthIssueIds: Id[] = [];
+  const petoCampMemberCardHaveHealthIssueIds: Id[] = [];
   let i = 0;
   while (i < camp.baanIds.length) {
     const baan = await Baan.findById(camp.baanIds[i++]);
     if (!baan) {
       continue;
     }
-    nongCampMemberCardHaveHeathIssueIds.push(
-      ...baan.nongCampMemberCardHaveHeathIssueIds
+    nongCampMemberCardHaveHealthIssueIds.push(
+      ...baan.nongCampMemberCardHaveHealthIssueIds
     );
-    peeCampMemberCardHaveHeathIssueIds.push(
-      ...baan.peeCampMemberCardHaveHeathIssueIds
+    peeCampMemberCardHaveHealthIssueIds.push(
+      ...baan.peeCampMemberCardHaveHealthIssueIds
     );
   }
   i = 0;
@@ -200,28 +200,28 @@ export async function getFoodForUpdate(
     if (!part) {
       continue;
     }
-    petoCampMemberCardHaveHeathIssueIds.push(
-      ...part.petoCampMemberCardHaveHeathIssueIds
+    petoCampMemberCardHaveHealthIssueIds.push(
+      ...part.petoCampMemberCardHaveHealthIssueIds
     );
   }
-  const nongHealths: HeathIssuePack[] =
+  const nongHealths: HealthIssuePack[] =
     camp.nongDataLock && meal.roles.includes("nong")
       ? await getHealthIssuePack(
-          nongCampMemberCardHaveHeathIssueIds,
+          nongCampMemberCardHaveHealthIssueIds,
           isFoodValid
         )
       : [];
-  const peeHealths: HeathIssuePack[] =
+  const peeHealths: HealthIssuePack[] =
     camp.peeDataLock && meal.roles.includes("pee")
       ? await getHealthIssuePack(
-          peeCampMemberCardHaveHeathIssueIds,
+          peeCampMemberCardHaveHealthIssueIds,
           isFoodValid
         )
       : [];
-  const petoHealths: HeathIssuePack[] =
+  const petoHealths: HealthIssuePack[] =
     camp.petoDataLock && meal.roles.includes("peto")
       ? await getHealthIssuePack(
-          petoCampMemberCardHaveHeathIssueIds,
+          petoCampMemberCardHaveHealthIssueIds,
           isFoodValid
         )
       : [];
@@ -257,11 +257,11 @@ export async function getFoodForUpdate(
 }
 export async function getHealthIssuePack(
   campMemberCardIds: Id[],
-  isValid: (input: HeathIssuePack) => boolean,
-  optionalArray?: HeathIssuePack[]
+  isValid: (input: HealthIssuePack) => boolean,
+  optionalArray?: HealthIssuePack[]
 ) {
   let i = 0;
-  const healthPacks: HeathIssuePack[] = [];
+  const healthPacks: HealthIssuePack[] = [];
   while (i < campMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
       campMemberCardIds[i++]
@@ -269,14 +269,14 @@ export async function getHealthIssuePack(
     if (!campMemberCard) {
       continue;
     }
-    const heathIssue = await HeathIssue.findById(campMemberCard.healthIssueId);
+    const healthIssue = await HealthIssue.findById(campMemberCard.healthIssueId);
     const user = await User.findById(campMemberCard.userId);
-    if (!heathIssue || !user) {
+    if (!healthIssue || !user) {
       continue;
     }
-    const buffer: HeathIssuePack = {
+    const buffer: HealthIssuePack = {
       user,
-      heathIssue,
+      healthIssue,
       campMemberCardId: campMemberCard._id,
     };
     ifIsTrue(isValid(buffer), buffer, healthPacks, optionalArray);
@@ -530,20 +530,20 @@ export async function updateFood(req: express.Request, res: express.Response) {
     const nongChangeCampMemberCardIds = addNong.concat(removeNong);
     const peeChangeCampMemberCardIds = addPee.concat(removePee);
     const petoChangeCampMemberCardIds = addPeto.concat(removePeto);
-    const nongCampMemberCardHaveHeathIssueIds: Id[] = [];
-    const peeCampMemberCardHaveHeathIssueIds: Id[] = [];
-    const petoCampMemberCardHaveHeathIssueIds: Id[] = [];
+    const nongCampMemberCardHaveHealthIssueIds: Id[] = [];
+    const peeCampMemberCardHaveHealthIssueIds: Id[] = [];
+    const petoCampMemberCardHaveHealthIssueIds: Id[] = [];
     i = 0;
     while (i < camp.baanIds.length) {
       const baan = await Baan.findById(camp.baanIds[i++]);
       if (!baan) {
         continue;
       }
-      nongCampMemberCardHaveHeathIssueIds.push(
-        ...baan.nongCampMemberCardHaveHeathIssueIds
+      nongCampMemberCardHaveHealthIssueIds.push(
+        ...baan.nongCampMemberCardHaveHealthIssueIds
       );
-      peeCampMemberCardHaveHeathIssueIds.push(
-        ...baan.peeCampMemberCardHaveHeathIssueIds
+      peeCampMemberCardHaveHealthIssueIds.push(
+        ...baan.peeCampMemberCardHaveHealthIssueIds
       );
     }
     i = 0;
@@ -552,21 +552,21 @@ export async function updateFood(req: express.Request, res: express.Response) {
       if (!part) {
         continue;
       }
-      petoCampMemberCardHaveHeathIssueIds.push(
-        ...part.petoCampMemberCardHaveHeathIssueIds
+      petoCampMemberCardHaveHealthIssueIds.push(
+        ...part.petoCampMemberCardHaveHealthIssueIds
       );
     }
     if (changeListPriority || !listPriority) {
       const nongHealthCampMemberCardIds = removeDuplicate(
-        nongCampMemberCardHaveHeathIssueIds,
+        nongCampMemberCardHaveHealthIssueIds,
         nongChangeCampMemberCardIds
       );
       const peeHealthCampMemberCardIds = removeDuplicate(
-        peeCampMemberCardHaveHeathIssueIds,
+        peeCampMemberCardHaveHealthIssueIds,
         peeChangeCampMemberCardIds
       );
       const petoHealthCampMemberCardIds = removeDuplicate(
-        petoCampMemberCardHaveHeathIssueIds,
+        petoCampMemberCardHaveHealthIssueIds,
         petoChangeCampMemberCardIds
       );
       const healthCampMemberCardIds = nongHealthCampMemberCardIds.concat(
@@ -582,7 +582,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
           if (!healthCampMemberCard) {
             continue;
           }
-          const healthIssue = await HeathIssue.findById(
+          const healthIssue = await HealthIssue.findById(
             healthCampMemberCard.healthIssueId
           );
           if (!healthIssue) {
@@ -613,7 +613,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
           if (!healthCampMemberCard) {
             continue;
           }
-          const healthIssue = await HeathIssue.findById(
+          const healthIssue = await HealthIssue.findById(
             healthCampMemberCard.healthIssueId
           );
           if (!healthIssue) {
@@ -654,13 +654,13 @@ export async function updateFood(req: express.Request, res: express.Response) {
   } else {
     let nongCampMemberCardIds: Id[] = [];
     let nongIds: Id[] = [];
-    let nongHeathIssueIds: Id[] = [];
+    let nongHealthIssueIds: Id[] = [];
     let peeCampMemberCardIds: Id[] = [];
     let peeIds: Id[] = [];
-    let peeHeathIssueIds: Id[] = [];
+    let peeHealthIssueIds: Id[] = [];
     let petoCampMemberCardIds: Id[] = [];
     let petoIds: Id[] = [];
-    let petoHeathIssueIds: Id[] = [];
+    let petoHealthIssueIds: Id[] = [];
     let i = 0;
     while (i < food.nongCampMemberCardIds.length) {
       const campMemberCard = await CampMemberCard.findById(
@@ -701,10 +701,10 @@ export async function updateFood(req: express.Request, res: express.Response) {
         campMemberCard._id,
         nongCampMemberCardIds
       );
-      nongHeathIssueIds = swop(
+      nongHealthIssueIds = swop(
         null,
         campMemberCard.healthIssueId,
-        nongHeathIssueIds
+        nongHealthIssueIds
       );
       if (input.isWhiteList) {
         await campMemberCard.updateOne({
@@ -764,10 +764,10 @@ export async function updateFood(req: express.Request, res: express.Response) {
         campMemberCard._id,
         peeCampMemberCardIds
       );
-      peeHeathIssueIds = swop(
+      peeHealthIssueIds = swop(
         null,
         campMemberCard.healthIssueId,
-        peeHeathIssueIds
+        peeHealthIssueIds
       );
       if (input.isWhiteList) {
         await campMemberCard.updateOne({
@@ -827,10 +827,10 @@ export async function updateFood(req: express.Request, res: express.Response) {
         campMemberCard._id,
         petoCampMemberCardIds
       );
-      petoHeathIssueIds = swop(
+      petoHealthIssueIds = swop(
         null,
         campMemberCard.healthIssueId,
-        petoHeathIssueIds
+        petoHealthIssueIds
       );
       if (input.isWhiteList) {
         await campMemberCard.updateOne({
@@ -854,13 +854,13 @@ export async function updateFood(req: express.Request, res: express.Response) {
     await food.updateOne({
       nongCampMemberCardIds,
       nongIds,
-      nongHeathIssueIds,
+      nongHealthIssueIds,
       peeCampMemberCardIds,
       peeIds,
-      peeHeathIssueIds,
+      peeHealthIssueIds,
       petoCampMemberCardIds,
       petoIds,
-      petoHeathIssueIds,
+      petoHealthIssueIds,
       name,
       isWhiteList,
       lists,
@@ -902,7 +902,7 @@ export async function getMealByUserRaw(userId: Id, mealId: Id) {
   if (!campMemberCard) {
     return null;
   }
-  const healthIssue = await HeathIssue.findById(campMemberCard.healthIssueId);
+  const healthIssue = await HealthIssue.findById(campMemberCard.healthIssueId);
   const whiteLists: InterFood[] = [];
   const blackLists: InterFood[] = [];
   let i = 0;

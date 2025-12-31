@@ -875,6 +875,7 @@ export async function getNongChat(req: express.Request, res: express.Response) {
     sendType: {
       id: campMemberCard._id,
       roomType: "น้องคุยส่วนตัวกับพี่",
+      baanId: baan._id,
     },
     timeOffset,
     success: true,

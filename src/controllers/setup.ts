@@ -12,6 +12,7 @@ import {
   Size,
   Id,
   SystemInfo,
+  HealthIssueBody,
 } from "../models/interface";
 import mongoose from "mongoose";
 
@@ -126,8 +127,8 @@ export function conPartBackToFront(input: InterPartBack): InterPartFront {
     campId,
     peeIds,
     petoIds,
-    peeHeathIssueIds,
-    petoHeathIssueIds,
+    peeHealthIssueIds,
+    petoHealthIssueIds,
     peeShirtSize,
     petoShirtSize,
     peeModelIds,
@@ -144,9 +145,9 @@ export function conPartBackToFront(input: InterPartBack): InterPartFront {
     chatIds,
     petoSleepIds,
     peeHaveBottleIds,
-    peeCampMemberCardHaveHeathIssueIds,
+    peeCampMemberCardHaveHealthIssueIds,
     petoHaveBottleIds,
-    petoCampMemberCardHaveHeathIssueIds,
+    petoCampMemberCardHaveHealthIssueIds,
     auths,
     jobIds,
   } = input;
@@ -156,12 +157,12 @@ export function conPartBackToFront(input: InterPartBack): InterPartFront {
     workItemIds,
     campId,
     nameId,
-    peeHeathIssueIds,
+    peeHealthIssueIds,
     peeIds,
     peeModelIds,
     peeCampMemberCardIds,
     peeShirtSize: sizeMapToJson(peeShirtSize),
-    petoHeathIssueIds,
+    petoHealthIssueIds,
     petoIds,
     petoModelId,
     petoCampMemberCardIds,
@@ -176,9 +177,9 @@ export function conPartBackToFront(input: InterPartBack): InterPartFront {
     chatIds,
     petoSleepIds,
     peeHaveBottleIds,
-    peeCampMemberCardHaveHeathIssueIds,
+    peeCampMemberCardHaveHealthIssueIds,
     petoHaveBottleIds,
-    petoCampMemberCardHaveHeathIssueIds,
+    petoCampMemberCardHaveHealthIssueIds,
     auths,
     jobIds,
   };
@@ -374,6 +375,16 @@ export function isIdEqual(input1: Id | null, input2: Id | null) {
   }
   return input1.toString() == input2.toString();
 }
-export function sum(a:number,b:number){
-  return (a+b)
+export function sum(a: number, b: number) {
+  return a + b;
 }
+export const emptyHealthyIssue: HealthIssueBody = {
+  food: "",
+  chronicDisease: "",
+  medicine: "",
+  extra: "",
+  isWearing: false,
+  spicy: false,
+  foodConcern: "",
+  foodLimit: "ไม่มีข้อจำกัดด้านความเชื่อ",
+};

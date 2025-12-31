@@ -3,7 +3,7 @@ import Baan from "../../models/Baan";
 import Camp from "../../models/Camp";
 import CampMemberCard from "../../models/CampMemberCard";
 import GroupContainer from "../../models/GroupContainer";
-import HeathIssue from "../../models/HeathIssue";
+import HealthIssue from "../../models/HealthIssue";
 import {
   BasicUser,
   CreateGroupContainer,
@@ -16,7 +16,7 @@ import {
   GroupContainerPack,
   GroupGenderType,
   GroupRoleType,
-  HeathIssueBody,
+  HealthIssueBody,
   Id,
   InterCampMemberCard,
   InterGroupContainer,
@@ -1078,7 +1078,7 @@ async function registerAddSubGroupRaw(
       break;
     }
   }
-  let healthIssue: HeathIssueBody | null = await HeathIssue.findById(
+  let healthIssue: HealthIssueBody | null = await HealthIssue.findById(
     campMemberCard.healthIssueId
   );
   if (!healthIssue) {
@@ -1236,7 +1236,7 @@ export async function revalidateSubGroup(subGroupId: Id) {
   if (!firstCampMemberCard) {
     return;
   }
-  const firstHealthIssue = await HeathIssue.findById(
+  const firstHealthIssue = await HealthIssue.findById(
     firstCampMemberCard.healthIssueId
   );
   if (!firstHealthIssue) {
@@ -1253,7 +1253,7 @@ export async function revalidateSubGroup(subGroupId: Id) {
     if (!campMemberCard) {
       continue;
     }
-    const healthIssue = await HeathIssue.findById(campMemberCard.healthIssueId);
+    const healthIssue = await HealthIssue.findById(campMemberCard.healthIssueId);
     if (!healthIssue) {
       const foodLimit: FoodLimit = "ไม่มีข้อจำกัดด้านความเชื่อ";
       await subGroup.updateOne({ isWearing: false, spicy: false, foodLimit });
@@ -1423,8 +1423,8 @@ export async function autoAddToNearestGroup(
       }
     }
     i = 0;
-    const memberIds = baan.nongCampMemberCardHaveHeathIssueIds.concat(
-      baan.peeCampMemberCardHaveHeathIssueIds
+    const memberIds = baan.nongCampMemberCardHaveHealthIssueIds.concat(
+      baan.peeCampMemberCardHaveHealthIssueIds
     );
     while (i < memberIds.length) {
       const campMemberCard = await CampMemberCard.findById(memberIds[i++]);
@@ -1434,7 +1434,7 @@ export async function autoAddToNearestGroup(
       if (userIds.includes(campMemberCard.userId)) {
         continue;
       }
-      const healthIssue = await HeathIssue.findById(
+      const healthIssue = await HealthIssue.findById(
         campMemberCard.healthIssueId
       );
       if (!healthIssue) {
@@ -2020,14 +2020,14 @@ export async function autoAddToNearestGroup(
           );
         }
         i = 0;
-        while (i < baan.nongCampMemberCardHaveHeathIssueIds.length) {
+        while (i < baan.nongCampMemberCardHaveHealthIssueIds.length) {
           const campMemberCard = await CampMemberCard.findById(
-            baan.nongCampMemberCardHaveHeathIssueIds[i++]
+            baan.nongCampMemberCardHaveHealthIssueIds[i++]
           );
           if (!campMemberCard || userIds.includes(campMemberCard.userId)) {
             continue;
           }
-          const healthIssue = await HeathIssue.findById(
+          const healthIssue = await HealthIssue.findById(
             campMemberCard.healthIssueId
           );
           if (!healthIssue) {
@@ -2146,15 +2146,15 @@ export async function autoAddToNearestGroup(
           );
         }
         i = 0;
-        const memberIds = baan.nongCampMemberCardHaveHeathIssueIds.concat(
-          baan.peeCampMemberCardHaveHeathIssueIds
+        const memberIds = baan.nongCampMemberCardHaveHealthIssueIds.concat(
+          baan.peeCampMemberCardHaveHealthIssueIds
         );
         while (i < memberIds.length) {
           const campMemberCard = await CampMemberCard.findById(memberIds[i++]);
           if (!campMemberCard || userIds.includes(campMemberCard.userId)) {
             continue;
           }
-          const healthIssue = await HeathIssue.findById(
+          const healthIssue = await HealthIssue.findById(
             campMemberCard.healthIssueId
           );
           if (!healthIssue) {
@@ -2235,14 +2235,14 @@ export async function autoAddToNearestGroup(
           );
         }
         i = 0;
-        while (i < baan.nongCampMemberCardHaveHeathIssueIds.length) {
+        while (i < baan.nongCampMemberCardHaveHealthIssueIds.length) {
           const campMemberCard = await CampMemberCard.findById(
-            baan.nongCampMemberCardHaveHeathIssueIds[i++]
+            baan.nongCampMemberCardHaveHealthIssueIds[i++]
           );
           if (!campMemberCard || userIds.includes(campMemberCard.userId)) {
             continue;
           }
-          const healthIssue = await HeathIssue.findById(
+          const healthIssue = await HealthIssue.findById(
             campMemberCard.healthIssueId
           );
           if (!healthIssue) {

@@ -5,7 +5,7 @@ import { getUser } from "../../middleware/auth";
 import { Id } from "../../models/interface";
 import Baan from "../../models/Baan";
 import CampMemberCard from "../../models/CampMemberCard";
-import HeathIssue from "../../models/HeathIssue";
+import HealthIssue from "../../models/HealthIssue";
 import NongCamp from "../../models/NongCamp";
 import Part from "../../models/Part";
 import PeeCamp from "../../models/PeeCamp";
@@ -227,15 +227,15 @@ export async function addNong(req: express.Request, res: express.Response) {
       user.campMemberCardIds.push(campMemberCard._id);
       newNongPassIds = swop(user._id, null, newNongPassIds);
       if (user.healthIssueId) {
-        baan.nongHeathIssueIds.push(user.healthIssueId);
-        const heathIssue = await HeathIssue.findById(user.healthIssueId);
-        baan.nongCampMemberCardHaveHeathIssueIds.push(campMemberCard._id);
-        if (heathIssue) {
-          await heathIssue.updateOne({
+        baan.nongHealthIssueIds.push(user.healthIssueId);
+        const healthIssue = await HealthIssue.findById(user.healthIssueId);
+        baan.nongCampMemberCardHaveHealthIssueIds.push(campMemberCard._id);
+        if (healthIssue) {
+          await healthIssue.updateOne({
             campMemberCardIds: swop(
               null,
               campMemberCard._id,
-              heathIssue.campMemberCardIds
+              healthIssue.campMemberCardIds
             ),
           });
         }
@@ -263,12 +263,12 @@ export async function addNong(req: express.Request, res: express.Response) {
     await baan.updateOne({
       nongCampMemberCardIds: baan.nongCampMemberCardIds,
       nongShirtSize: baan.nongShirtSize,
-      nongHeathIssueIds: baan.nongHeathIssueIds,
+      nongHealthIssueIds: baan.nongHealthIssueIds,
       nongIds: baan.nongIds,
       mapCampMemberCardIdByUserId: baan.mapCampMemberCardIdByUserId,
       nongSleepIds: baanNongSleepIds,
-      nongCampMemberCardHaveHeathIssueIds:
-        baan.nongCampMemberCardHaveHeathIssueIds,
+      nongCampMemberCardHaveHealthIssueIds:
+        baan.nongCampMemberCardHaveHealthIssueIds,
       nongHaveBottleIds: baanNongHaveBottleIds,
     });
     await nongCamp.updateOne({
@@ -390,19 +390,19 @@ export async function addPeeRaw(members: Id[], baanId: Id) {
       camp.peeIds.push(user._id);
       part.peeIds.push(user._id);
       if (user.healthIssueId) {
-        baan.peeHeathIssueIds.push(user.healthIssueId);
-        part.peeHeathIssueIds.push(user.healthIssueId);
-        const heathIssue = await HeathIssue.findById(user.healthIssueId);
-        if (heathIssue) {
-          await heathIssue.updateOne({
+        baan.peeHealthIssueIds.push(user.healthIssueId);
+        part.peeHealthIssueIds.push(user.healthIssueId);
+        const healthIssue = await HealthIssue.findById(user.healthIssueId);
+        if (healthIssue) {
+          await healthIssue.updateOne({
             campMemberCardIds: swop(
               null,
               campMemberCard._id,
-              heathIssue.campMemberCardIds
+              healthIssue.campMemberCardIds
             ),
           });
-          baan.peeCampMemberCardHaveHeathIssueIds.push(campMemberCard._id);
-          part.peeCampMemberCardHaveHeathIssueIds.push(campMemberCard._id);
+          baan.peeCampMemberCardHaveHealthIssueIds.push(campMemberCard._id);
+          part.peeCampMemberCardHaveHealthIssueIds.push(campMemberCard._id);
         }
       }
       const userSize = user.shirtSize as "S" | "M" | "L" | "XL" | "XXL" | "3XL";
@@ -434,12 +434,12 @@ export async function addPeeRaw(members: Id[], baanId: Id) {
       });
       await part.updateOne({
         mapCampMemberCardIdByUserId: part.mapCampMemberCardIdByUserId,
-        peeHeathIssueIds: part.peeHeathIssueIds,
+        peeHealthIssueIds: part.peeHealthIssueIds,
         peeIds: part.peeIds,
         peeCampMemberCardIds: part.peeCampMemberCardIds,
         peeShirtSize: part.peeShirtSize,
-        peeCampMemberCardHaveHeathIssueIds:
-          part.peeCampMemberCardHaveHeathIssueIds,
+        peeCampMemberCardHaveHealthIssueIds:
+          part.peeCampMemberCardHaveHealthIssueIds,
         peeSleepIds: ifIsTrue(
           sleepAtCamp,
           user._id,
@@ -466,14 +466,14 @@ export async function addPeeRaw(members: Id[], baanId: Id) {
       peeMapIdLtoG: camp.peeMapIdLtoG,
     });
     await baan.updateOne({
-      peeHeathIssueIds: baan.peeHeathIssueIds,
+      peeHealthIssueIds: baan.peeHealthIssueIds,
       peeIds: baan.peeIds,
       peeCampMemberCardIds: baan.peeCampMemberCardIds,
       mapCampMemberCardIdByUserId: baan.mapCampMemberCardIdByUserId,
       peeShirtSize: baan.peeShirtSize,
       peeSleepIds: baanPeeSleepIds,
-      peeCampMemberCardHaveHeathIssueIds:
-        baan.peeCampMemberCardHaveHeathIssueIds,
+      peeCampMemberCardHaveHealthIssueIds:
+        baan.peeCampMemberCardHaveHealthIssueIds,
       peeHaveBottleIds: baanPeeHaveBottleIds,
     });
     return true;
@@ -561,17 +561,17 @@ export async function addPetoRaw(
     part.petoCampMemberCardIds.push(campMemberCard._id);
     user.campMemberCardIds.push(campMemberCard._id);
     if (user.healthIssueId) {
-      part.petoHeathIssueIds.push(user.healthIssueId);
-      const heathIssue = await HeathIssue.findById(user.healthIssueId);
-      if (heathIssue) {
-        await heathIssue.updateOne({
+      part.petoHealthIssueIds.push(user.healthIssueId);
+      const healthIssue = await HealthIssue.findById(user.healthIssueId);
+      if (healthIssue) {
+        await healthIssue.updateOne({
           campMemberCardIds: swop(
             null,
             campMemberCard._id,
-            heathIssue.campMemberCardIds
+            healthIssue.campMemberCardIds
           ),
         });
-        part.petoCampMemberCardHaveHeathIssueIds.push(campMemberCard._id);
+        part.petoCampMemberCardHaveHealthIssueIds.push(campMemberCard._id);
       }
     }
     const userSize = user.shirtSize;
@@ -598,14 +598,14 @@ export async function addPetoRaw(
     peeMapIdLtoG: camp.peeMapIdLtoG,
   });
   await part.updateOne({
-    petoHeathIssueIds: part.petoHeathIssueIds,
+    petoHealthIssueIds: part.petoHealthIssueIds,
     petoIds: part.petoIds,
     petoCampMemberCardIds: part.petoCampMemberCardIds,
     petoShirtSize: part.petoShirtSize,
     mapCampMemberCardIdByUserId: part.mapCampMemberCardIdByUserId,
     petoSleepIds: part.petoSleepIds,
-    petoCampMemberCardHaveHeathIssueIds:
-      part.petoCampMemberCardHaveHeathIssueIds,
+    petoCampMemberCardHaveHealthIssueIds:
+      part.petoCampMemberCardHaveHealthIssueIds,
     petoHaveBottleIds: partPetoHaveBottleIds,
   });
   sendRes(res, true);

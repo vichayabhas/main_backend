@@ -10,13 +10,13 @@ import {
   updateBottle,
   changeModeToPee,
   updateSleep,
-  getHeathIssue,
+  getHealthIssue,
   checkTel,
   getUsers,
   getCampMemberCard,
   updateTimeOffset,
   getTimeOffset,
-  updateHeath,
+  updateHealth,
   signId,
   verifyEmail,
   checkPassword,
@@ -44,13 +44,13 @@ router.put("/updateProfile/", protect, updateProfile); //
 router.put("/updateBottle/", protect, updateBottle); //
 router.post("/changeModeToPee/", protect, pee, changeModeToPee); //
 router.put("/updateSleep/", protect, updateSleep); //
-router.get("/getHeathIssue/params/:id", getHeathIssue); //
+router.get("/getHealthIssue/params/:id", getHealthIssue); //
 router.get("/checkTel/params/:id", protect, checkTel); //
 router.get("/getUser/params/:id", getUsers); //
 router.get("/getCampMemberCard/params/:id", getCampMemberCard); //
 router.put("/updateTimeOffset/", protect, updateTimeOffset); //
 router.get("/getTimeOffset/params/:id", getTimeOffset); //
-router.put("/updateHeath/", protect, updateHeath); //
+router.put("/updateHealth/", protect, updateHealth); //
 router.post("/signId/", protect, signId); //
 router.post("/verifyEmail/", protect, verifyEmail); //
 router.post("/checkPassword/", protect, checkPassword); //

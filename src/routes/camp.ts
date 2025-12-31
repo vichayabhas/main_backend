@@ -31,6 +31,9 @@ import {
   getCoopData,
   getAllNongRegister,
   getRegisterData,
+  getOverrideHealthIssue,
+  updateOverrideHealthIssue,
+  getAuthPartForPage,
 } from "../controllers/camp/authPart";
 import { changeBaan, changePart } from "../controllers/camp/change";
 import {
@@ -252,4 +255,7 @@ router.delete("/deleteItem/params/:id", protect, deleteItem); //
 router.delete("/deleteOrder/params/:id", protect, deleteOrder); //
 router.get("/getOrderForAdmin/params/:id", protect, getOrderForAdmin); //
 router.put("/completeOrder/params/:id", protect, completeOrder); //
+router.get("/getOverrideHealthIssue/params/:id", getOverrideHealthIssue); //
+router.put("/updateOverrideHealthIssue/", protect, updateOverrideHealthIssue); //
+router.get("/getAuthPartForPage/params/:id", protect, getAuthPartForPage); //
 export default router;

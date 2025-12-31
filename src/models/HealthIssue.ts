@@ -19,8 +19,8 @@ const PeeCampSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
-  isWearing:getDefaultBoolean(false),
-  spicy:getDefaultBoolean(false),
+  isWearing: getDefaultBoolean(false),
+  spicy: getDefaultBoolean(false),
   foodConcern: {
     type: String,
     default: "",

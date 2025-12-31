@@ -293,6 +293,13 @@ export async function updateBaanRaw(
       nongSendMessage,
       canReadMirror,
       canWriteMirror,
+      canNongSeeAdvanceNongData,
+      canNongSeeAdvancePeeData,
+      canNongSeeJobData,
+      canNongSeeNongExtra,
+      canNongSeePeeExtra,
+      canPeeSeeAdvanceNongData,
+      canPeeSeeAdvancePeeData,
     } = update;
     const baan = await Baan.findById(baanId);
     if (!baan) {
@@ -380,6 +387,13 @@ export async function updateBaanRaw(
       nongSendMessage,
       canReadMirror,
       canWriteMirror,
+      canNongSeeAdvanceNongData,
+      canNongSeeAdvancePeeData,
+      canNongSeeJobData,
+      canNongSeeNongExtra,
+      canNongSeePeeExtra,
+      canPeeSeeAdvanceNongData,
+      canPeeSeeAdvancePeeData,
     });
     const data = await Baan.findById(baan._id);
     if (!data) {
