@@ -11,7 +11,6 @@ import {
 } from "../controllers/camp/actionPlan";
 import {
   nongRegister,
-  staffRegister,
   interview,
   pass,
   sure,
@@ -20,7 +19,10 @@ import {
   addPee,
   kickPee,
   kickNong,
-} from "../controllers/camp/admidsion";
+  addStaffToCamp,
+  updateStaffRegister,
+  staffRegisterCamp,
+} from "../controllers/camp/admission";
 import {
   getShowRegisters,
   getAllUserCamp,
@@ -57,6 +59,7 @@ import {
   getPetoCampData,
   getPartForUpdate,
   getCampState,
+  getDataForStaffUpdateRegister,
 } from "../controllers/camp/getCampData";
 import {
   editQuestion,
@@ -133,7 +136,7 @@ router.get("/baan/params/:id", getBaan); //
 router.get("/part/params/:id", getPart); //
 router.get("/partName/params/:id", getPartName); //
 router.post("/nongRegisterCamp/", protect, nongRegister); //
-router.post("/staffRegisterCamp/params/:id", protect, pee, staffRegister); //
+router.post("/staffRegisterCamp/", protect, pee, staffRegisterCamp); //
 router.get("/getNongsFromBaanId/params/:id", getNongsFromBaanId); //
 router.get("/getPeesFromBaanId/params/:id", getPeesFromBaanId); //
 router.get("/getPeesFromPartId/params/:id", getPeesFromPartId); //
@@ -258,4 +261,11 @@ router.put("/completeOrder/params/:id", protect, completeOrder); //
 router.get("/getOverrideHealthIssue/params/:id", getOverrideHealthIssue); //
 router.put("/updateOverrideHealthIssue/", protect, updateOverrideHealthIssue); //
 router.get("/getAuthPartForPage/params/:id", protect, getAuthPartForPage); //
+router.post("/addStaffToCamp/", protect, addStaffToCamp); //
+router.put("/updateStaffRegister/", protect, updateStaffRegister); //
+router.get(
+  "/getDataForStaffUpdateRegister/params/:id",
+  protect,
+  getDataForStaffUpdateRegister
+); //
 export default router;

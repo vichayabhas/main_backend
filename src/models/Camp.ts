@@ -188,5 +188,16 @@ const campSchema = new mongoose.Schema({
   itemIds: arrayObjectId,
   canNongSeeBaanOrder: getDefaultBoolean(false),
   scoreIds: arrayObjectId,
+  staffRegisters: {
+    type: Map,
+    default: new Map(),
+    of: [mongoose.Schema.ObjectId],
+  },
+  // petoRegisters: {
+  //   type: Map,
+  //   default: new Map(),
+  //   of: [mongoose.Schema.ObjectId],
+  // },
+  maxRegister: dataNumberReq,
 });
 export default mongoose.model("Camp", campSchema);

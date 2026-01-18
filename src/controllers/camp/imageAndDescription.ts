@@ -11,6 +11,7 @@ import {
   InterImageAndDescription,
   EditImageAndDescriptionContainer,
   GetImageAndDescriptionsPackForUpdate,
+  Mode,
 } from "../../models/interface";
 import Part from "../../models/Part";
 import PeeCamp from "../../models/PeeCamp";
@@ -22,8 +23,13 @@ export async function createImageAndDescriptionContainer(
   req: express.Request,
   res: express.Response
 ) {
-  const { baanId, children, types, name }: CreateImageAndDescriptionContainer =
-    req.body;
+  const {
+    baanId,
+    children,
+    types,
+    name,
+    mode,
+  }: CreateImageAndDescriptionContainer = req.body;
   const baan = await Baan.findById(baanId);
   const user = await getUser(req);
   if (!baan || !user) {
@@ -102,6 +108,7 @@ export async function createImageAndDescriptionContainer(
     baanId,
     types,
     name,
+    mode,
   });
   for (const { imageUrl, description, order } of children) {
     const child = await ImageAndDescription.create({
@@ -122,12 +129,14 @@ export async function createImageAndDescriptionContainer(
     imageAndDescriptionContainerIds,
   });
   const imageAndDescriptionContainers = await getImageAndDescriptionsRaw(
-    imageAndDescriptionContainerIds
+    imageAndDescriptionContainerIds,
+    "pee"
   );
   res.status(200).json(imageAndDescriptionContainers);
 }
 export async function getImageAndDescriptionsRaw(
-  imageAndDescriptionContainerIds: Id[]
+  imageAndDescriptionContainerIds: Id[],
+  role: Mode
 ) {
   let i = 0;
   const out: ShowImageAndDescriptions[] = [];
@@ -138,7 +147,7 @@ export async function getImageAndDescriptionsRaw(
     if (!container) {
       continue;
     }
-    const { name, types, _id, childIds, baanId } = container;
+    const { name, types, _id, childIds, baanId, mode } = container;
     const baan = await Baan.findById(baanId);
     if (!baan) {
       continue;
@@ -154,7 +163,11 @@ export async function getImageAndDescriptionsRaw(
       }
       children.push(imageAndDescription);
     }
-    out.push({ name, types, _id, children, baanId });
+    if (mode == "pee" && role == "nong") {
+      continue;
+    }
+
+    out.push({ name, types, _id, children, baanId, mode });
   }
   return out;
 }
@@ -162,7 +175,7 @@ export async function editImageAndDescription(
   req: express.Request,
   res: express.Response
 ) {
-  const { types, name, _id, children }: EditImageAndDescriptionContainer =
+  const { types, name, _id, children, mode }: EditImageAndDescriptionContainer =
     req.body;
   const container = await ImageAndDescriptionContainer.findById(_id);
   if (!container) {
@@ -264,9 +277,10 @@ export async function editImageAndDescription(
   while (i < removeIds.length) {
     await ImageAndDescription.findByIdAndDelete(removeIds[i++]);
   }
-  await container.updateOne({ types, name, childIds: ids });
+  await container.updateOne({ types, name, childIds: ids, mode });
   const data = await getImageAndDescriptionsRaw(
-    baan.imageAndDescriptionContainerIds
+    baan.imageAndDescriptionContainerIds,
+    "pee"
   );
   res.status(200).json(data);
 }
@@ -365,8 +379,11 @@ export async function deleteImageAndDescription(
     imageAndDescriptionContainerIds,
   });
   await container.deleteOne();
-  const data=await getImageAndDescriptionsRaw(imageAndDescriptionContainerIds)
-  res.status(200).json(data)
+  const data = await getImageAndDescriptionsRaw(
+    imageAndDescriptionContainerIds,
+    "pee"
+  );
+  res.status(200).json(data);
 }
 export async function getImageAndDescriptions(
   req: express.Request,
@@ -450,7 +467,8 @@ export async function getImageAndDescriptions(
     }
   }
   const imageAndDescriptionContainers = await getImageAndDescriptionsRaw(
-    baan.imageAndDescriptionContainerIds
+    baan.imageAndDescriptionContainerIds,
+    "pee"
   );
   const out: GetImageAndDescriptionsPackForUpdate = {
     imageAndDescriptionContainers,

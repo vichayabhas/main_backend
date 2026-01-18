@@ -31,7 +31,7 @@ import PartNameContainer from "../../models/PartNameContainer";
 import Place from "../../models/Place";
 import { getUser } from "../../middleware/auth";
 import Building from "../../models/Building";
-import { addPetoRaw, addPeeRaw } from "../camp/admidsion";
+import { addPetoRaw, addPeeRaw } from "../camp/admission";
 import { changeBaanRaw } from "../camp/change";
 import { getAuthTypes } from "../camp/getCampData";
 import {
@@ -720,6 +720,7 @@ export async function updateCamp(req: express.Request, res: express.Response) {
     canReadTimeOnMirror,
     nongCall,
     canNongSeeBaanOrder,
+    maxRegister,
   }: UpdateCamp = req.body;
   if (camp.nongDataLock != nongDataLock) {
     if (nongDataLock) {
@@ -768,6 +769,7 @@ export async function updateCamp(req: express.Request, res: express.Response) {
     canReadTimeOnMirror,
     nongCall,
     canNongSeeBaanOrder,
+    maxRegister,
   });
   for (const { id, auths } of updatePart) {
     const part = await Part.findById(id);

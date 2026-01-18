@@ -2,8 +2,6 @@ import express from "express";
 import {
   BookingGewertzSquareRoom,
   GetGewertzSquareBooking,
-  gewertzSquareAvailableTimes,
-  gewertzSquareMaxContinue,
   GewertzSquareRegister,
   GewertzSquareRoomType,
   Id,
@@ -28,11 +26,11 @@ function isAvailableGewertzSquareRoom(
   if (oldRooms.includes(room)) {
     return false;
   }
-  if (room == 'Demo floor' || room == "E-III") {
+  if (room == "Demo floor" || room == "E-III") {
     return true;
   }
   const oldRooms2 = oldRooms.filter(
-    (oldRoom) => oldRoom != 'Demo floor' && oldRoom != "E-III"
+    (oldRoom) => oldRoom != "Demo floor" && oldRoom != "E-III"
   );
   if (oldRooms2.length == 0) {
     return true;
@@ -69,6 +67,64 @@ function isAvailableGewertzSquareRoom(
     }
   }
 }
+function checkTimeRange(start: Date, end: Date) {
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+
+  const startHour = startDate.getHours();
+  const startMinute = startDate.getMinutes();
+
+  const endHour = endDate.getHours();
+  const endMinute = endDate.getMinutes();
+
+  const startEarly = startHour < 8 || (startHour === 8 && startMinute === 0);
+
+  const endAfterFive = endHour > 17 || (endHour === 17 && endMinute === 0);
+
+  return {
+    startEarly,
+    endAfterFive,
+  };
+}
+function isGreaterThan3Hours(start: Date, end: Date) {
+  const durationMs = new Date(end).getTime() - new Date(start).getTime();
+  const THREE_HOURS = 3 * 60 * 60 * 1000;
+  return durationMs > THREE_HOURS;
+}
+function coversWeekend(start: Date, end: Date) {
+  const current = new Date(start);
+  const endDate = new Date(end);
+
+  // Normalize to midnight to safely iterate days
+  current.setHours(0, 0, 0, 0);
+
+  while (current <= endDate) {
+    const day = current.getDay();
+    if (day === 0 || day === 6) {
+      return true;
+    }
+    current.setDate(current.getDate() + 1);
+  }
+  return false;
+}
+function checkIsOverlap(
+  newBooking: BookingGewertzSquareRoom,
+  oldBooking: BookingGewertzSquareRoom
+): boolean {
+  if (
+    new Date(oldBooking.start) <= new Date(newBooking.start) &&
+    new Date(newBooking.start) < new Date(oldBooking.end)
+  ) {
+    return true;
+  }
+  if (
+    new Date(oldBooking.start) < new Date(newBooking.end) &&
+    new Date(newBooking.end) <= new Date(oldBooking.end)
+  ) {
+    return true;
+  }
+  return false;
+}
 export async function bookingGewertzSquareRoom(
   req: express.Request,
   res: express.Response
@@ -85,65 +141,45 @@ export async function bookingGewertzSquareRoom(
     sendRes(res, false);
     return;
   }
-  const {
-    day,
-    month,
-    year,
-    room,
-    tel,
-    time,
-    period,
-  }: BookingGewertzSquareRoom = req.body;
+  const { start, end, room, tel }: BookingGewertzSquareRoom = req.body;
+  let approved = false;
 
-  if (
-    time + period - 1 >
-    gewertzSquareAvailableTimes[gewertzSquareAvailableTimes.length - 1]
-  ) {
-    sendRes(res, false);
-    return;
-  }
   let i = 0;
-  while (i < gewertzSquareMaxContinue) {
-    const oldBookings = await GewertzSquareBooking.find({
-      day,
-      month,
-      year,
-      time: time - i,
-    });
-    const oldBookings2 = oldBookings.filter(
-      (oldBooking) => oldBooking.period > i
-    );
-    if (!isAvailableGewertzSquareRoom(oldBookings2, room)) {
-      sendRes(res, false);
-      return;
-    }
-    if (time - ++i < gewertzSquareAvailableTimes[0]) {
-      break;
-    }
+  const allBookings = await GewertzSquareBooking.find();
+  if (
+    isAvailableGewertzSquareRoom(
+      allBookings.filter((old) =>
+        checkIsOverlap({ start, end, room, tel, approved }, old)
+      ),
+      room
+    )
+  ) {
+    approved = true;
   }
-  i = 0;
-  while (i < period - 1) {
-    const oldBookings = await GewertzSquareBooking.find({
-      day,
-      month,
-      year,
-      time: time + ++i,
-    });
-    if (!isAvailableGewertzSquareRoom(oldBookings, room)) {
-      sendRes(res, false);
-      return;
-    }
+  if (coversWeekend(start, end)) {
+    approved = false;
+  }
+  if (isGreaterThan3Hours(start, end)) {
+    approved = false;
+  }
+  if (new Date(end).getTime() < new Date(start).getTime()) {
+    approved = false;
+  }
+  const { startEarly, endAfterFive } = checkTimeRange(start, end);
+  if (startEarly || endAfterFive) {
+    approved = false;
+  }
+  if (user.user.extraAuth.includes("gewertz square admin")) {
+    approved = true;
   }
   const booking = await GewertzSquareBooking.create({
     tel,
-    time,
-    period,
-    day,
-    month,
-    year,
     userId: user.user._id,
     userType,
     room,
+    start,
+    end,
+    approved,
   });
   const gewertzSquareBookingIds = swop(
     null,
@@ -182,9 +218,15 @@ export async function bookingGewertzSquareRoom(
     }
     own.push(buf);
   }
+  const displayOffset = await TimeOffset.findById(user.user.displayOffsetId);
+  const selectOffset = await TimeOffset.findById(user.user.selectOffsetId);
   const buffer: GetGewertzSquareBooking = {
     all,
     own,
+    displayOffset: displayOffset
+      ? displayOffset
+      : { day: 0, hour: 0, minute: 0 },
+    selectOffset: selectOffset ? selectOffset : { day: 0, hour: 0, minute: 0 },
   };
   res.status(200).json(buffer);
 }
@@ -196,7 +238,12 @@ export async function getGewertzSquareBooking(
   const all = await GewertzSquareBooking.find();
 
   if (!userRaw) {
-    const buffer: GetGewertzSquareBooking = { all, own: [] };
+    const buffer: GetGewertzSquareBooking = {
+      all,
+      own: [],
+      selectOffset: { day: 0, hour: 0, minute: 0 },
+      displayOffset: { day: 0, hour: 0, minute: 0 },
+    };
     res.status(200).json(buffer);
     return;
   }
@@ -213,9 +260,15 @@ export async function getGewertzSquareBooking(
     }
     own.push(buf);
   }
+  const displayOffset = await TimeOffset.findById(user.displayOffsetId);
+  const selectOffset = await TimeOffset.findById(user.selectOffsetId);
   const buffer: GetGewertzSquareBooking = {
     all,
     own,
+    displayOffset: displayOffset
+      ? displayOffset
+      : { day: 0, hour: 0, minute: 0 },
+    selectOffset: selectOffset ? selectOffset : { day: 0, hour: 0, minute: 0 },
   };
   res.status(200).json(buffer);
 }
@@ -233,75 +286,48 @@ export async function updateBookingGewertzSquareRoom(
     sendRes(res, false);
     return;
   }
-  const {
-    day,
-    month,
-    year,
-    room,
-    tel,
-    time,
-    period,
-    _id,
-  }: UpdateBookingGewertzSquareRoom = req.body;
-  if (
-    time + period - 1 >
-    gewertzSquareAvailableTimes[gewertzSquareAvailableTimes.length - 1]
-  ) {
-    sendRes(res, false);
-    return;
-  }
-  let i = 0;
-  while (i < gewertzSquareMaxContinue) {
-    const oldBookings = await GewertzSquareBooking.find({
-      day,
-      month,
-      year,
-      time: time - i,
-    });
-    const oldBookings2 = oldBookings.filter(
-      (oldBooking) =>
-        oldBooking.period > i && oldBooking._id.toString() != _id.toString()
+  const { room, tel, start, end, _id }: UpdateBookingGewertzSquareRoom =
+    req.body;
+  let approved = false;
+
+  const allBookings = await GewertzSquareBooking.find();
+  const allBookingOverlap = allBookings.filter((old) => {
+    return (
+      checkIsOverlap({ start, end, room, tel, approved }, old) &&
+      !isIdEqual(_id, old._id)
     );
-    if (!isAvailableGewertzSquareRoom(oldBookings2, room)) {
-      sendRes(res, false);
-      return;
-    }
-    if (time - ++i < gewertzSquareAvailableTimes[0]) {
-      break;
-    }
+  });
+  if (isAvailableGewertzSquareRoom(allBookingOverlap, room)) {
+    approved = true;
   }
-  i = 0;
-  while (i < period - 1) {
-    const oldBookings = await GewertzSquareBooking.find({
-      day,
-      month,
-      year,
-      time: time + ++i,
-    });
-    if (
-      !isAvailableGewertzSquareRoom(
-        oldBookings.filter(
-          (oldBooking) => oldBooking._id.toString() != _id.toString()
-        ),
-        room
-      )
-    ) {
-      sendRes(res, false);
-      return;
-    }
+
+  if (coversWeekend(start, end)) {
+    approved = false;
+  }
+  if (isGreaterThan3Hours(start, end)) {
+    approved = false;
+  }
+
+  if (new Date(end).getTime() < new Date(start).getTime()) {
+    approved = false;
+  }
+  const { startEarly, endAfterFive } = checkTimeRange(start, end);
+  if (startEarly || endAfterFive) {
+    approved = false;
+  }
+  if (user.extraAuth.includes("gewertz square admin")) {
+    approved = true;
   }
   await GewertzSquareBooking.findByIdAndUpdate(_id, {
     tel,
-    time,
-    period,
-    day,
-    month,
-    year,
+    start,
+    end,
     room,
+    approved,
   });
   const all = await GewertzSquareBooking.find();
   const own: InterGewertzSquareBooking[] = [];
-  i = 0;
+  let i = 0;
   while (i < user.gewertzSquareBookingIds.length) {
     const buf = await GewertzSquareBooking.findById(
       user.gewertzSquareBookingIds[i++]
@@ -311,9 +337,15 @@ export async function updateBookingGewertzSquareRoom(
     }
     own.push(buf);
   }
+  const displayOffset = await TimeOffset.findById(user.displayOffsetId);
+  const selectOffset = await TimeOffset.findById(user.selectOffsetId);
   const buffer: GetGewertzSquareBooking = {
     all,
     own,
+    displayOffset: displayOffset
+      ? displayOffset
+      : { day: 0, hour: 0, minute: 0 },
+    selectOffset: selectOffset ? selectOffset : { day: 0, hour: 0, minute: 0 },
   };
   res.status(200).json(buffer);
 }
@@ -408,9 +440,13 @@ export async function deleteBookingGewertzSquareRoom(
     }
     own.push(buf);
   }
+  const displayOffset = await TimeOffset.findById(user.displayOffsetId);
+  const selectOffset = await TimeOffset.findById(user.selectOffsetId);
   const buffer: GetGewertzSquareBooking = {
     all,
     own,
+    displayOffset: displayOffset || { day: 0, hour: 0, minute: 0 },
+    selectOffset: selectOffset || { day: 0, hour: 0, minute: 0 },
   };
   res.status(200).json(buffer);
 }
@@ -523,4 +559,54 @@ export async function updateGewertzSquareAccount(
     return;
   }
   sendRes(res, false);
+}
+export async function approveBookingGewertzSquareRoom(
+  req: express.Request,
+  res: express.Response
+) {
+  const userRaw = await getGewertzSquareUser(req);
+  if (!userRaw) {
+    sendRes(res, false);
+    return;
+  }
+  const { user } = userRaw;
+  if (!user.departureAuths.includes("วิศวกรรมไฟฟ้า (Electrical Engineering)")) {
+    sendRes(res, false);
+    return;
+  }
+
+  const booking = await GewertzSquareBooking.findById(req.params.id);
+  if (!booking) {
+    sendRes(res, false);
+    return;
+  }
+  if (!user.extraAuth.includes("gewertz square admin")) {
+    sendRes(res, false);
+    return;
+  }
+  const gewertzSquareBookingIds: Id[] = user.gewertzSquareBookingIds;
+  await booking.updateOne({ approved: true });
+
+  const all = await GewertzSquareBooking.find();
+  const own: InterGewertzSquareBooking[] = [];
+  let i = 0;
+
+  while (i < gewertzSquareBookingIds.length) {
+    const buf = await GewertzSquareBooking.findById(
+      gewertzSquareBookingIds[i++]
+    );
+    if (!buf) {
+      continue;
+    }
+    own.push(buf);
+  }
+  const displayOffset = await TimeOffset.findById(user.displayOffsetId);
+  const selectOffset = await TimeOffset.findById(user.selectOffsetId);
+  const buffer: GetGewertzSquareBooking = {
+    all,
+    own,
+    displayOffset: displayOffset || { day: 0, hour: 0, minute: 0 },
+    selectOffset: selectOffset || { day: 0, hour: 0, minute: 0 },
+  };
+  res.status(200).json(buffer);
 }

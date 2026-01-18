@@ -72,11 +72,11 @@ export async function getNotification(
               id: campMemberCard._id.toString(),
               message: "",
               notificationEveryMinute: -1,
-              countDown: 1,
+              countDown: -1,
             },
             {
               types: "คุยกันในบ้าน",
-              countDown: 1,
+              countDown: -1,
               notificationEveryMinute: -1,
               message: "",
               id: baan._id.toString(),
@@ -98,21 +98,21 @@ export async function getNotification(
           notification.push(
             {
               id: baan._id.toString(),
-              countDown: 1,
+              countDown: -1,
               message: "",
               notificationEveryMinute: -1,
               types: "คุยกันในบ้าน",
             },
             {
               id: baan._id.toString(),
-              countDown: 1,
+              countDown: -1,
               message: "",
               notificationEveryMinute: -1,
               types: "น้องคุยส่วนตัวกับพี่",
             },
             {
               id: camp.partPeeBaanId?.toString() || "",
-              countDown: 1,
+              countDown: -1,
               message: "",
               notificationEveryMinute: -1,
               types: "พี่บ้านคุยกัน",
@@ -122,7 +122,7 @@ export async function getNotification(
             if (user.notifyOnlyYourPart) {
               notification.push({
                 id: part._id.toString(),
-                countDown: 1,
+                countDown: -1,
                 message: "",
                 notificationEveryMinute: -1,
                 types: "คุยกันในฝ่าย",
@@ -130,7 +130,7 @@ export async function getNotification(
             } else {
               notification.push({
                 id: peeCamp.campId.toString(),
-                countDown: 1,
+                countDown: -1,
                 message: "",
                 notificationEveryMinute: -1,
                 types: "คุยกันในฝ่าย",
@@ -138,7 +138,7 @@ export async function getNotification(
             }
             notification.push({
               id: peeCamp.baanId.toString(),
-              countDown: 1,
+              countDown: -1,
               message: "",
               notificationEveryMinute: -1,
               types: "พี่คุยกันในบ้าน",
@@ -158,7 +158,7 @@ export async function getNotification(
           }
           notification.push({
             id: camp.partPeeBaanId?.toString() as string,
-            countDown: 1,
+            countDown: -1,
             message: "",
             notificationEveryMinute: -1,
             types: "พี่บ้านคุยกัน",
@@ -167,7 +167,7 @@ export async function getNotification(
             if (user.notifyOnlyYourPart) {
               notification.push({
                 id: part._id.toString(),
-                countDown: 1,
+                countDown: -1,
                 message: "",
                 notificationEveryMinute: -1,
                 types: "คุยกันในฝ่าย",
@@ -175,7 +175,7 @@ export async function getNotification(
             } else {
               notification.push({
                 id: petoCamp.campId.toString(),
-                countDown: 1,
+                countDown: -1,
                 message: "",
                 notificationEveryMinute: -1,
                 types: "คุยกันในฝ่าย",

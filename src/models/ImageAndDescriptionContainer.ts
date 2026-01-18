@@ -10,6 +10,11 @@ const LostAndFoundSchema = new mongoose.Schema({
     enum: imageAndDescriptionTypes,
   },
   name: dataString,
+  mode: {
+    type: String,
+    required: true,
+    enum: ["pee", "nong"],
+  },
 });
 export default mongoose.model(
   "ImageAndDescriptionContainer",

@@ -33,6 +33,8 @@ import {
   GetOverrideHealthIssue,
   UpdateOverrideHealthIssue,
   GetAuthPartForPage,
+  ShowStaffRegister,
+  BasicPart,
 } from "../../models/interface";
 import Part from "../../models/Part";
 import {
@@ -71,6 +73,7 @@ import {
 import { getHealthIssuePack } from "../randomThing/meal";
 import { getBaanJobsRaw } from "./jobAssign";
 import TimeOffset from "../../models/TimeOffset";
+import StaffRegister from "../../models/StaffRegister";
 export async function getRegisterData(
   req: express.Request,
   res: express.Response
@@ -123,6 +126,51 @@ export async function getRegisterDataRaw(
   if (!peeRegisters || !nongRegister) {
     return null;
   }
+  const peeRegister: ShowStaffRegister[] = [];
+  const petoRegister: ShowStaffRegister[] = [];
+  const staffRegisterBuffers: {
+    userId: string;
+    staffRegisterIds: Id[];
+  }[] = [];
+  camp.staffRegisters.forEach((staffRegisterIds, userId) => {
+    staffRegisterBuffers.push({ userId, staffRegisterIds });
+  });
+  i = 0;
+  while (i < staffRegisterBuffers.length) {
+    const staffRegisterBuffer = staffRegisterBuffers[i++];
+    const user = await User.findById(staffRegisterBuffer.userId);
+    if (!user) {
+      continue;
+    }
+    let j = 0;
+    const parts: { link: string; part: BasicPart; rank: number }[] = [];
+    while (j < staffRegisterBuffer.staffRegisterIds.length) {
+      const staffRegister = await StaffRegister.findById(
+        staffRegisterBuffer.staffRegisterIds[j++]
+      );
+      if (!staffRegister) {
+        continue;
+      }
+      const { partId, rank, link } = staffRegister;
+      const part = await Part.findById(partId);
+      if (!part) {
+        continue;
+      }
+      parts.push({ link, part, rank });
+    }
+    if (
+      (user.role === "peto" || user.role === "admin") &&
+      camp.memberStructure == "nong->highSchool,pee->1year,peto->2upYear"
+    ) {
+      petoRegister.push({ user, parts });
+    } else {
+      peeRegister.push({ user, parts });
+    }
+  }
+  const partPeeBaan = await Part.findById(camp.partPeeBaanId);
+  if (!partPeeBaan) {
+    return null;
+  }
   return {
     partBoardIdString: camp.partBoardId?.toString() || "",
     partMap,
@@ -131,6 +179,9 @@ export async function getRegisterDataRaw(
     camp,
     regisBaans,
     regisParts,
+    peeRegister,
+    petoRegister,
+    partPeeBaan,
   };
 }
 
@@ -313,7 +364,7 @@ export async function getAllWelfare(
   req: express.Request,
   res: express.Response
 ) {
-  const camp: InterCampBack | null = await Camp.findById(req.params.id);
+  const camp = await Camp.findById(req.params.id);
   if (!camp) {
     sendRes(res, false);
     return;

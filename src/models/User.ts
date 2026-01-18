@@ -151,6 +151,7 @@ const UserSchema = new mongoose.Schema({
     default: [],
   },
   notifyOnlyYourPart: getDefaultBoolean(true),
+  staffRegisterInCampIds: arrayObjectId,
 });
 UserSchema.pre("save", async function (next) {
   const salt = await bcrypt.genSalt(10);

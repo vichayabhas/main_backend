@@ -53,8 +53,8 @@ router.get("/getTimeOffset/params/:id", getTimeOffset); //
 router.put("/updateHealth/", protect, updateHealth); //
 router.post("/signId/", protect, signId); //
 router.post("/verifyEmail/", protect, verifyEmail); //
-router.post("/checkPassword/", protect, checkPassword); //
-router.post("/bypassRole/", protect, bypassRole); //
+router.post("/checkPassword/", checkPassword); //
+router.post("/bypassRole/", bypassRole); //
 router.get("/getOwnRegisterCampDatas/params/:id", getOwnRegisterCampDatas); //
 router.post("/universityStaffRegister/", universityStaffRegister); //
 router.post("/universityStaffLogin/", universityStaffLogin); //

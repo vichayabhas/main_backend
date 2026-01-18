@@ -20,6 +20,7 @@ import {
   BasicPart,
   CampState,
   GetGroupContainer,
+  GetDataForStaffUpdateRegister,
 } from "../../models/interface";
 import NameContainer from "../../models/NameContainer";
 import NongCamp from "../../models/NongCamp";
@@ -44,8 +45,9 @@ import { getBaanJobsRaw, getPartJobsRaw } from "./jobAssign";
 import { getMirrorRaw } from "./mirror";
 import { getGroupContainerRaw } from "./subGroup";
 import { getItemsRaw, getOrdersRaw } from "./order";
+import StaffRegister from "../../models/StaffRegister";
 export async function getShowPlaceRaw(
-  placeId: Id | null
+  placeId: Id | null,
 ): Promise<ShowPlace | null> {
   if (placeId) {
     const place = await Place.findById(placeId);
@@ -207,7 +209,7 @@ export async function getPartName(req: express.Request, res: express.Response) {
 
 export async function getNongsFromBaanId(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const out = await getNongsFromBaanIdRaw(stringToId(req.params.id));
   res.status(200).json(out);
@@ -225,7 +227,7 @@ export async function getNongsFromBaanIdRaw(baanId: Id) {
   let i = 0;
   while (i < baan.nongCampMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
-      baan.nongCampMemberCardIds[i++]
+      baan.nongCampMemberCardIds[i++],
     );
     if (!campMemberCard) {
       continue;
@@ -258,7 +260,7 @@ export async function getNongsFromBaanIdRaw(baanId: Id) {
     let isWearing = false;
     let spicy = false;
     const healthIssue = await HealthIssue.findById(
-      campMemberCard.healthIssueId
+      campMemberCard.healthIssueId,
     );
     if (healthIssue) {
       isWearing = healthIssue.isWearing;
@@ -291,7 +293,7 @@ export async function getNongsFromBaanIdRaw(baanId: Id) {
 }
 export async function getPeesFromBaanId(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const out = await getPeesFromBaanIdRaw(stringToId(req.params.id));
   res.status(200).json(out);
@@ -309,7 +311,7 @@ export async function getPeesFromBaanIdRaw(baanId: Id) {
   let i = 0;
   while (i < baan.peeCampMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
-      baan.peeCampMemberCardIds[i++]
+      baan.peeCampMemberCardIds[i++],
     );
     if (!campMemberCard) {
       continue;
@@ -342,7 +344,7 @@ export async function getPeesFromBaanIdRaw(baanId: Id) {
     let isWearing = false;
     let spicy = false;
     const healthIssue = await HealthIssue.findById(
-      campMemberCard.healthIssueId
+      campMemberCard.healthIssueId,
     );
     if (healthIssue) {
       isWearing = healthIssue.isWearing;
@@ -375,7 +377,7 @@ export async function getPeesFromBaanIdRaw(baanId: Id) {
 }
 export async function getPeesFromPartId(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const out = await getPeesFromPartIdRaw(stringToId(req.params.id));
   res.status(200).json(out);
@@ -393,7 +395,7 @@ export async function getPeesFromPartIdRaw(partId: Id) {
   let i = 0;
   while (i < part.peeCampMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
-      part.peeCampMemberCardIds[i++]
+      part.peeCampMemberCardIds[i++],
     );
     if (!campMemberCard) {
       continue;
@@ -426,7 +428,7 @@ export async function getPeesFromPartIdRaw(partId: Id) {
     let isWearing = false;
     let spicy = false;
     const healthIssue = await HealthIssue.findById(
-      campMemberCard.healthIssueId
+      campMemberCard.healthIssueId,
     );
     if (healthIssue) {
       isWearing = healthIssue.isWearing;
@@ -459,7 +461,7 @@ export async function getPeesFromPartIdRaw(partId: Id) {
 }
 export async function getPetosFromPartId(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const out = await getPetosFromPartIdRaw(stringToId(req.params.id));
   res.status(200).json(out);
@@ -477,7 +479,7 @@ export async function getPetosFromPartIdRaw(partId: Id) {
   let i = 0;
   while (i < part.petoCampMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
-      part.petoCampMemberCardIds[i++]
+      part.petoCampMemberCardIds[i++],
     );
     if (!campMemberCard) {
       continue;
@@ -510,7 +512,7 @@ export async function getPetosFromPartIdRaw(partId: Id) {
     let isWearing = false;
     let spicy = false;
     const healthIssue = await HealthIssue.findById(
-      campMemberCard.healthIssueId
+      campMemberCard.healthIssueId,
     );
     if (healthIssue) {
       isWearing = healthIssue.isWearing;
@@ -544,7 +546,7 @@ export async function getPetosFromPartIdRaw(partId: Id) {
 export async function getMealsByHealthIssue(
   healthIssue: HealthIssueBody | null,
   mealIds: Id[],
-  campMemberCard: InterCampMemberCard
+  campMemberCard: InterCampMemberCard,
 ) {
   const output: GetMeals[] = [];
   let i = 0;
@@ -672,7 +674,7 @@ export async function getMealsByHealthIssue(
   return output;
 }
 async function getTimeOffsetRaw(
-  timeOffsetId: Id
+  timeOffsetId: Id,
 ): Promise<UpdateTimeOffsetRaw> {
   const timeOffset = await TimeOffset.findById(timeOffsetId);
   if (!timeOffset) {
@@ -686,7 +688,7 @@ async function getTimeOffsetRaw(
 }
 export async function getNongCampData(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const camp = await Camp.findById(req.params.id);
   const user = await getUser(req);
@@ -695,7 +697,7 @@ export async function getNongCampData(
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
   if (!campMemberCard) {
     sendRes(res, false);
@@ -718,10 +720,14 @@ export async function getNongCampData(
   const meals = await getMealsByHealthIssue(
     healthIssue,
     camp.mealIds,
-    campMemberCard
+    campMemberCard,
   );
   const nongs = await getNongsFromBaanIdRaw(baan._id);
   const pees = await getPeesFromBaanIdRaw(baan._id);
+  const imageAndDescriptions = await getImageAndDescriptionsRaw(
+    baan.imageAndDescriptionContainerIds,
+    "nong",
+  );
   const displayOffset = await getTimeOffsetRaw(user.displayOffsetId);
   const defaultGroup = await getGroupContainerRaw(baan.defaultGroupId);
   const groups: GetGroupContainer[] = [];
@@ -769,12 +775,13 @@ export async function getNongCampData(
     campMemberCardOrders,
     baanOrders,
     baanJobs,
+    imageAndDescriptions,
   };
   res.status(200).json(buffer);
 }
 export async function getPeeCampData(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const camp = await Camp.findById(req.params.id);
   const user = await getUser(req);
@@ -783,7 +790,7 @@ export async function getPeeCampData(
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
   if (!campMemberCard) {
     sendRes(res, false);
@@ -809,14 +816,15 @@ export async function getPeeCampData(
   const meals = await getMealsByHealthIssue(
     healthIssue,
     camp.mealIds,
-    campMemberCard
+    campMemberCard,
   );
   const nongBaans = await getNongsFromBaanIdRaw(baan._id);
   const peeBaans = await getPeesFromBaanIdRaw(baan._id);
   const peeParts = await getPeesFromPartIdRaw(part._id);
   const petoParts = await getPetosFromPartIdRaw(part._id);
   const imageAndDescriptions = await getImageAndDescriptionsRaw(
-    baan.imageAndDescriptionContainerIds
+    baan.imageAndDescriptionContainerIds,
+    "pee",
   );
   const displayOffset = await getTimeOffsetRaw(user.displayOffsetId);
   const selectOffset = await getTimeOffsetRaw(user.selectOffsetId);
@@ -881,7 +889,7 @@ export async function getPeeCampData(
 }
 export async function getPetoCampData(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const camp = await Camp.findById(req.params.id);
   const user = await getUser(req);
@@ -890,7 +898,7 @@ export async function getPetoCampData(
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
   if (!campMemberCard) {
     sendRes(res, false);
@@ -911,12 +919,12 @@ export async function getPetoCampData(
   const meals = await getMealsByHealthIssue(
     healthIssue,
     camp.mealIds,
-    campMemberCard
+    campMemberCard,
   );
   const pees = await getPeesFromPartIdRaw(part._id);
   const petos = await getPetosFromPartIdRaw(part._id);
   let displayOffset: UpdateTimeOffsetRaw | null = await TimeOffset.findById(
-    user.displayOffsetId
+    user.displayOffsetId,
   );
   if (!displayOffset) {
     displayOffset = {
@@ -926,7 +934,7 @@ export async function getPetoCampData(
     };
   }
   let selectOffset: UpdateTimeOffsetRaw | null = await TimeOffset.findById(
-    user.selectOffsetId
+    user.selectOffsetId,
   );
   if (!selectOffset) {
     selectOffset = {
@@ -971,7 +979,7 @@ export async function getPetoCampData(
 }
 export async function getPartForUpdate(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const part = await Part.findById(req.params.id);
   if (!part) {
@@ -1011,7 +1019,7 @@ export async function getParts(req: express.Request, res: express.Response) {
 }
 export async function getCampState(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const camp = await Camp.findById(req.params.id);
@@ -1073,6 +1081,8 @@ export async function getCampState(
       link: camp.peePassIds.get(user._id.toString())?.toString() || "",
       user,
     };
+  } else if (user.staffRegisterInCampIds.includes(camp._id)) {
+    out = { camp, questions, state: "staffRegister", link: "", user };
   } else {
     out = { camp, questions, state: "notRegister", link: "", user };
   }
@@ -1080,14 +1090,14 @@ export async function getCampState(
 }
 export async function getAuthTypes(
   userId: Id,
-  campId: Id
+  campId: Id,
 ): Promise<AuthType[] | null> {
   const camp = await Camp.findById(campId);
   if (!camp) {
     return null;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(userId.toString())
+    camp.mapCampMemberCardIdByUserId.get(userId.toString()),
   );
   if (!campMemberCard) {
     return null;
@@ -1121,7 +1131,7 @@ export async function getAuthTypes(
 }
 export async function getLinkRegister(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const campId: string = req.params.id;
@@ -1131,4 +1141,57 @@ export async function getLinkRegister(
     return;
   }
   res.status(200).json({ link: camp.nongPendingIds.get(user.id) });
+}
+export async function getDataForStaffUpdateRegister(
+  req: express.Request,
+  res: express.Response,
+) {
+  const user = await getUser(req);
+  const campId: string = req.params.id;
+  const camp = await Camp.findById(campId);
+  if (!user || !camp) {
+    sendRes(res, false);
+    return;
+  }
+  const staffRegisterIds = camp.staffRegisters.get(user._id.toString());
+  if (staffRegisterIds === undefined) {
+    sendRes(res, false);
+    return;
+  }
+  const staffRegisters: { part: BasicPart; rank: number; link: string }[] = [];
+  let i = 0;
+  while (i < staffRegisterIds.length) {
+    const staffRegisterId = staffRegisterIds[i++];
+    const staffRegister = await StaffRegister.findById(staffRegisterId);
+    if (!staffRegister) {
+      continue;
+    }
+    const part = await Part.findById(staffRegister.partId);
+    if (!part) {
+      continue;
+    }
+    staffRegisters.push({
+      part,
+      rank: staffRegister.rank,
+      link: staffRegister.link,
+    });
+  }
+  i = 0;
+  const parts: BasicPart[] = [];
+  while (i < camp.partIds.length) {
+    const part = await Part.findById(camp.partIds[i++]);
+    if (!part) {
+      continue;
+    }
+    parts.push(part);
+  }
+  const data: GetDataForStaffUpdateRegister = {
+    camp,
+    parts,
+    oldStaffRegister: {
+      user,
+      parts: staffRegisters,
+    },
+  };
+  res.status(200).json(data);
 }

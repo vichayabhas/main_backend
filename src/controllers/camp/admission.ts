@@ -2,7 +2,7 @@ import Camp from "../../models/Camp";
 import { ifIsTrue, sendRes, startSize, stringToId, swop } from "../setup";
 import express from "express";
 import { getUser } from "../../middleware/auth";
-import { Id } from "../../models/interface";
+import { AddStaffToCamp, Id, StaffRegisterCamp } from "../../models/interface";
 import Baan from "../../models/Baan";
 import CampMemberCard from "../../models/CampMemberCard";
 import HealthIssue from "../../models/HealthIssue";
@@ -13,6 +13,8 @@ import PetoCamp from "../../models/PetoCamp";
 import User from "../../models/User";
 import { answerAllQuestion } from "./questionAndAnswer";
 import { getRegisterDataRaw } from "./authPart";
+import mongoose from "mongoose";
+import StaffRegister from "../../models/StaffRegister";
 export async function interview(req: express.Request, res: express.Response) {
   const { members, campId } = req.body;
   await interviewRaw(members, campId);
@@ -28,7 +30,7 @@ async function interviewRaw(members: Id[], campId: Id) {
   while (i < members.length) {
     camp.nongInterviewIds.set(
       members[i].toString(),
-      camp.nongPendingIds.get(members[i].toString()) as string
+      camp.nongPendingIds.get(members[i].toString()) as string,
     );
     camp.nongPendingIds.delete(members[i++].toString());
   }
@@ -46,7 +48,7 @@ async function passRaw(members: Id[], campId: Id) {
   while (i < members.length) {
     camp.nongPassIds.set(
       members[i].toString(),
-      camp.nongInterviewIds.get(members[i].toString()) as string
+      camp.nongInterviewIds.get(members[i].toString()) as string,
     );
     camp.nongInterviewIds.delete(members[i++].toString());
     if (camp.registerModel === "noPaid") {
@@ -235,7 +237,7 @@ export async function addNong(req: express.Request, res: express.Response) {
             campMemberCardIds: swop(
               null,
               campMemberCard._id,
-              healthIssue.campMemberCardIds
+              healthIssue.campMemberCardIds,
             ),
           });
         }
@@ -351,7 +353,7 @@ export async function addPeeRaw(members: Id[], baanId: Id) {
         continue;
       }
       const peeCamp = await PeeCamp.findById(
-        baan?.mapPeeCampIdByPartId.get(part.id)
+        baan?.mapPeeCampIdByPartId.get(part.id),
       );
       if (!peeCamp) {
         continue;
@@ -398,7 +400,7 @@ export async function addPeeRaw(members: Id[], baanId: Id) {
             campMemberCardIds: swop(
               null,
               campMemberCard._id,
-              healthIssue.campMemberCardIds
+              healthIssue.campMemberCardIds,
             ),
           });
           baan.peeCampMemberCardHaveHealthIssueIds.push(campMemberCard._id);
@@ -408,7 +410,7 @@ export async function addPeeRaw(members: Id[], baanId: Id) {
       const userSize = user.shirtSize as "S" | "M" | "L" | "XL" | "XXL" | "3XL";
       part.peeShirtSize.set(
         userSize,
-        (part.peeShirtSize.get(userSize) as number) + 1
+        (part.peeShirtSize.get(userSize) as number) + 1,
       );
       size.set(userSize, (size.get(userSize) as number) + 1);
       user.peeCampIds.push(peeCamp._id);
@@ -429,7 +431,7 @@ export async function addPeeRaw(members: Id[], baanId: Id) {
         authPartIds: ifIsTrue(
           part.auths.length > 0,
           part._id,
-          user.authPartIds
+          user.authPartIds,
         ),
       });
       await part.updateOne({
@@ -444,13 +446,13 @@ export async function addPeeRaw(members: Id[], baanId: Id) {
           sleepAtCamp,
           user._id,
           part.peeSleepIds,
-          baanPeeSleepIds
+          baanPeeSleepIds,
         ),
         peeHaveBottleIds: ifIsTrue(
           user.haveBottle,
           user._id,
           part.peeHaveBottleIds,
-          baanPeeHaveBottleIds
+          baanPeeHaveBottleIds,
         ),
       });
     }
@@ -489,16 +491,16 @@ export async function addPeto(req: express.Request, res: express.Response) {
 export async function addPetoRaw(
   member: Id[],
   partId: Id,
-  res: express.Response
+  res?: express.Response,
 ) {
   const part = await Part.findById(partId);
   if (!part) {
-    sendRes(res, false);
+    if (res) sendRes(res, false);
     return;
   }
   const camp = await Camp.findById(part.campId);
   if (!camp) {
-    sendRes(res, false);
+    if (res) sendRes(res, false);
     return;
   }
   const partPetoHaveBottleIds = part.petoHaveBottleIds;
@@ -506,7 +508,7 @@ export async function addPetoRaw(
   const size: Map<"S" | "M" | "L" | "XL" | "XXL" | "3XL", number> = startSize();
   const petoCamp = await PetoCamp.findById(part.petoModelId);
   if (!petoCamp) {
-    sendRes(res, false);
+    if (res) sendRes(res, false);
     return;
   }
   let i = 0;
@@ -568,7 +570,7 @@ export async function addPetoRaw(
           campMemberCardIds: swop(
             null,
             campMemberCard._id,
-            healthIssue.campMemberCardIds
+            healthIssue.campMemberCardIds,
           ),
         });
         part.petoCampMemberCardHaveHealthIssueIds.push(campMemberCard._id);
@@ -608,40 +610,39 @@ export async function addPetoRaw(
       part.petoCampMemberCardHaveHealthIssueIds,
     petoHaveBottleIds: partPetoHaveBottleIds,
   });
-  sendRes(res, true);
+  if (res) sendRes(res, true);
 }
-export async function staffRegister(
+export async function staffRegisterCamp(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
-  const partId = stringToId(req.params.id);
-  const part = await Part.findById(partId);
   const user = await getUser(req);
-  if (!user || !part) {
+  const data: StaffRegisterCamp = req.body;
+  const camp = await Camp.findById(data.campId);
+  if (!user || !camp) {
     sendRes(res, false);
     return;
   }
-  const camp = await Camp.findById(part.campId);
-  if (!camp) {
-    sendRes(res, false);
-    return;
-  }
-  if (
-    user.role === "pee" ||
-    camp.memberStructure != "nong->highSchool,pee->1year,peto->2upYear"
-  ) {
-    camp.peePassIds.set(user.id, partId);
-    await camp.updateOne({ peePassIds: camp.peePassIds });
-    res.status(200).json({
-      success: true,
+  await user.updateOne({
+    staffRegisterInCampIds: swop(null, camp._id, user.staffRegisterInCampIds),
+  });
+  const staffRegisterIds: Id[] = [];
+  let i = 0;
+  while (i < data.parts.length) {
+    const staffRegister = await StaffRegister.create({
+      ...data.parts[i++],
+      userId: user._id,
     });
-  } else {
-    await addPetoRaw([user._id], part._id, res);
+    staffRegisterIds.push(staffRegister._id);
   }
+  camp.staffRegisters.set(user._id.toString(), staffRegisterIds);
+  await camp.updateOne({
+    staffRegisters: camp.staffRegisters,
+  });
 }
 export async function nongRegister(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   try {
     const { campId, link, answer } = req.body;
@@ -673,4 +674,159 @@ export async function nongRegister(
       success: false,
     });
   }
+}
+export async function addStaffToCamp(
+  req: express.Request,
+  res: express.Response,
+) {
+  const user = await getUser(req);
+  const data: AddStaffToCamp = req.body;
+  const camp = await Camp.findById(data.campId);
+  if (!user || !camp) {
+    sendRes(res, false);
+    return;
+  }
+  const campMemberCard = await CampMemberCard.findById(
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
+  );
+  if (!campMemberCard) {
+    sendRes(res, false);
+    return;
+  }
+  let partId: Id;
+  switch (campMemberCard.role) {
+    case "nong": {
+      sendRes(res, false);
+      return;
+    }
+    case "pee": {
+      const peeCamp = await PeeCamp.findById(campMemberCard.campModelId);
+      if (!peeCamp) {
+        sendRes(res, false);
+        return;
+      }
+      partId = peeCamp.partId;
+      break;
+    }
+    case "peto": {
+      const petoCamp = await PetoCamp.findById(campMemberCard.campModelId);
+      if (!petoCamp) {
+        sendRes(res, false);
+        return;
+      }
+      partId = new mongoose.Types.ObjectId(petoCamp.partId?.toString());
+      break;
+    }
+  }
+  const part = await Part.findById(partId);
+  if (
+    !part ||
+    (!camp.boardIds.includes(user._id) && !part.auths.includes("ทะเบียน"))
+  ) {
+    sendRes(res, false);
+    return;
+  }
+  const petoMapUserIdByPartId: Map<Id, Id[]> = new Map();
+  let i = 0;
+  while (i < data.petoPartRegisters.length) {
+    const { userId, partId } = data.petoPartRegisters[i++];
+    const user = await User.findById(userId);
+    if (!user) {
+      continue;
+    }
+    await user.updateOne({
+      staffRegisterInCampIds: swop(camp._id, null, user.staffRegisterInCampIds),
+    });
+    const userIds = petoMapUserIdByPartId.get(userId);
+    if (userIds) {
+      petoMapUserIdByPartId.set(partId, [...userIds, userId]);
+    } else {
+      petoMapUserIdByPartId.set(partId, [userId]);
+    }
+    const staffRegisterIds = camp.staffRegisters.get(userId.toString());
+    if (!staffRegisterIds) {
+      continue;
+    }
+    let j = 0;
+    while (j < staffRegisterIds.length) {
+      const staffRegisterId = staffRegisterIds[j++];
+      await StaffRegister.findByIdAndDelete(staffRegisterId);
+    }
+    camp.staffRegisters.delete(userId.toString());
+  }
+  const petoPartRegisterBuffers: { partId: Id; userIds: Id[] }[] = [];
+  petoMapUserIdByPartId.forEach((userIds, partId) => {
+    petoPartRegisterBuffers.push({ partId, userIds });
+  });
+  i = 0;
+  while (i < petoPartRegisterBuffers.length) {
+    const { partId, userIds } = petoPartRegisterBuffers[i++];
+    await addPetoRaw(userIds, partId);
+  }
+  i = 0;
+  while (i < data.peePartRegisters.length) {
+    const { userId, partId } = data.peePartRegisters[i++];
+    camp.peePassIds.set(userId.toString(), partId);
+    const staffRegisterIds = camp.staffRegisters.get(userId.toString());
+    if (!staffRegisterIds) {
+      continue;
+    }
+    let j = 0;
+    while (j < staffRegisterIds.length) {
+      const staffRegisterId = staffRegisterIds[j++];
+      await StaffRegister.findByIdAndDelete(staffRegisterId);
+    }
+    camp.staffRegisters.delete(userId.toString());
+    const user = await User.findById(userId);
+    if (!user) {
+      continue;
+    }
+    await user.updateOne({
+      staffRegisterInCampIds: swop(camp._id, null, user.staffRegisterInCampIds),
+    });
+  }
+  await camp.updateOne({
+    peePassIds: camp.peePassIds,
+    staffRegisters: camp.staffRegisters,
+  });
+  const dataOut = await getRegisterDataRaw(camp._id);
+  res.status(200).json(dataOut);
+}
+export async function updateStaffRegister(
+  req: express.Request,
+  res: express.Response,
+) {
+  const data: StaffRegisterCamp = req.body;
+  const user = await getUser(req);
+  const camp = await Camp.findById(data.campId);
+  if (!user || !camp) {
+    sendRes(res, false);
+    return;
+  }
+  let staffRegisterIds = camp.staffRegisters.get(user._id.toString());
+  if (staffRegisterIds == undefined) {
+    staffRegisterIds = [];
+  }
+  console.log("hhhhhhhhhhhhhhhhhh");
+  let i = 0;
+  while (i < staffRegisterIds.length) {
+    const staffRegisterId = staffRegisterIds[i++];
+    await StaffRegister.findByIdAndDelete(staffRegisterId);
+  }
+  staffRegisterIds = [];
+  i = 0;
+  console.log(data.parts);
+  while (i < data.parts.length) {
+    const staffRegister = await StaffRegister.create({
+      ...data.parts[i++],
+      userId: user._id,
+    });
+    staffRegisterIds.push(staffRegister._id);
+  }
+  console.log(staffRegisterIds);
+  camp.staffRegisters.set(user._id.toString(), staffRegisterIds);
+  await camp.updateOne({
+    staffRegisters: camp.staffRegisters,
+  });
+  sendRes(res, true);
 }

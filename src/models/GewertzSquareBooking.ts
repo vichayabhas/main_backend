@@ -1,20 +1,13 @@
 import mongoose from "mongoose";
-import { dataId, dataNumberReq, dataString } from "../controllers/setup";
 import {
-  gewertzSquareAvailableTimes,
-  gewertzSquareRoomTypes,
-  userTypes,
-} from "./interface";
+  dataDate,
+  dataId,
+  dataString,
+  getDefaultBoolean,
+} from "../controllers/setup";
+import { gewertzSquareRoomTypes, userTypes } from "./interface";
 
 const Schema = new mongoose.Schema({
-  day: dataNumberReq,
-  month: dataNumberReq,
-  year: dataNumberReq,
-  time: {
-    type: Number,
-    enum: gewertzSquareAvailableTimes,
-    required: true,
-  },
   room: {
     type: String,
     enum: gewertzSquareRoomTypes,
@@ -27,6 +20,8 @@ const Schema = new mongoose.Schema({
     required: true,
   },
   tel: dataString,
-  period: dataNumberReq,
+  start: dataDate,
+  end: dataDate,
+  approved: getDefaultBoolean(false),
 });
 export default mongoose.model("GewertzSquareBooking", Schema);
