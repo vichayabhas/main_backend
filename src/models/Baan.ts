@@ -107,5 +107,6 @@ const BaanSchema = new mongoose.Schema({
   canNongSeePeeExtra: getDefaultBoolean(false),
   canPeeSeeAdvanceNongData: getDefaultBoolean(false),
   canPeeSeeAdvancePeeData: getDefaultBoolean(false),
+  campDictIds: arrayObjectId,
 });
 export default mongoose.model("Baan", BaanSchema);

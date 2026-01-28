@@ -122,6 +122,14 @@ import {
   getOrderForAdmin,
   completeOrder,
 } from "../controllers/camp/order";
+import {
+  createCampDict,
+  deleteCampDict,
+  getBaanDictsForUpdate,
+  getCampDictsForUpdate,
+  getPartDictsForUpdate,
+  updateCampDict,
+} from "../controllers/camp/campDict";
 //import { registerGroup } from "../controllers/camp/น้องแสน";
 
 const router = express.Router();
@@ -147,7 +155,7 @@ router.get(
   "/getActionPlanByPartId/params/:id",
   protect,
   pee,
-  getActionPlanByPartId
+  getActionPlanByPartId,
 ); //
 router.post("/createActionPlan/", protect, pee, createActionPlan); //
 router.get("/getActionPlan/params/:id", protect, pee, getActionPlan); //
@@ -158,7 +166,7 @@ router.get("/getWorkingItems/", protect, pee, getWorkingItems); //
 router.get(
   "/getWorkingItemByPartId/params/:id",
   protect,
-  getWorkingItemByPartId
+  getWorkingItemByPartId,
 ); //
 router.get("/getWorkingItem/params/:id", protect, pee, getWorkingItem); //
 router.put("/updateWorkingItem/params/:id", protect, pee, updateWorkingItem); //
@@ -183,7 +191,7 @@ router.get("/getAllQuestion/params/:id", protect, getAllQuestion); //
 router.delete(
   "/deleteChoiceQuestion/params/:id",
   protect,
-  deleteChoiceQuestion
+  deleteChoiceQuestion,
 ); //
 router.delete("/deleteTextQuestion/params/:id", protect, deleteTextQuestion); //
 router.post("/plusActionPlan/", protect, plusActionPlan); //
@@ -191,7 +199,7 @@ router.post("/peeAnswerQuestion/", protect, peeAnswerQuestion); //
 router.get(
   "/getAllAnswerAndQuestion/params/:id",
   protect,
-  getAllAnswerAndQuestion
+  getAllAnswerAndQuestion,
 ); //
 router.post("/scoreTextQuestions/", protect, scoreTextQuestions); //
 router.get("/getCoopData/params/:id", getCoopData); //
@@ -200,7 +208,7 @@ router.get("/getActionPlanByCampId/params/:id", protect, getActionPlanByCampId);
 router.get(
   "/getWorkingItemByCampId/params/:id",
   protect,
-  getWorkingItemByCampId
+  getWorkingItemByCampId,
 ); //
 router.get("/getParts/params/:id", protect, getParts); //
 router.get("/getNongCampData/params/:id", protect, getNongCampData); //
@@ -212,18 +220,18 @@ router.get("/getCampState/params/:id", protect, getCampState); //
 router.post(
   "/createImageAndDescriptionContainer/",
   protect,
-  createImageAndDescriptionContainer
+  createImageAndDescriptionContainer,
 ); //
 router.put("/editImageAndDescription/", protect, editImageAndDescription); //
 router.delete(
   "/deleteImageAndDescription/params/:id",
   protect,
-  deleteImageAndDescription
+  deleteImageAndDescription,
 ); //
 router.get(
   "/getImageAndDescriptions/params/:id",
   protect,
-  getImageAndDescriptions
+  getImageAndDescriptions,
 ); //
 router.post("/createJob", protect, createJob); //
 router.put("/updateJobAssign", protect, updateJobAssign); //
@@ -237,7 +245,7 @@ router.put("/updateSubGroup/", protect, updateSubGroup); //
 router.delete(
   "/deleteGroupContainer/params/:id",
   protect,
-  deleteGroupContainer
+  deleteGroupContainer,
 ); //
 router.delete("/deleteSubGroup/params/:id", protect, deleteSubGroup); //
 router.get("/getGroupContainerForAdmin/params/:id", getGroupContainerForAdmin); //
@@ -266,6 +274,12 @@ router.put("/updateStaffRegister/", protect, updateStaffRegister); //
 router.get(
   "/getDataForStaffUpdateRegister/params/:id",
   protect,
-  getDataForStaffUpdateRegister
+  getDataForStaffUpdateRegister,
 ); //
+router.post("/createCampDict/", protect, createCampDict); //
+router.put("/updateCampDict/", protect, updateCampDict); //
+router.delete("/deleteCampDict/params/:id", protect, deleteCampDict); //
+router.get("/getCampDictsForUpdate/params/:id", getCampDictsForUpdate); //
+router.get("/getBaanDictsForUpdate/params/:id", getBaanDictsForUpdate); //
+router.get("/getPartDictsForUpdate/params/:id", getPartDictsForUpdate);//
 export default router;

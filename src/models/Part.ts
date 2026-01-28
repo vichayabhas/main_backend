@@ -49,5 +49,6 @@ const PartSchema = new mongoose.Schema({
   },
   jobIds: arrayObjectId,
   orderIds: arrayObjectId,
+  campDictIds: arrayObjectId,
 });
 export default mongoose.model("Part", PartSchema);

@@ -35,6 +35,7 @@ import {
   GetAuthPartForPage,
   ShowStaffRegister,
   BasicPart,
+  AuthType,
 } from "../../models/interface";
 import Part from "../../models/Part";
 import {
@@ -76,7 +77,7 @@ import TimeOffset from "../../models/TimeOffset";
 import StaffRegister from "../../models/StaffRegister";
 export async function getRegisterData(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const out = await getRegisterDataRaw(stringToId(req.params.id));
   if (!out) {
@@ -87,7 +88,7 @@ export async function getRegisterData(
 }
 
 export async function getRegisterDataRaw(
-  campId: Id
+  campId: Id,
 ): Promise<RegisterData | null> {
   const camp = await Camp.findById(campId);
   if (!camp) {
@@ -146,7 +147,7 @@ export async function getRegisterDataRaw(
     const parts: { link: string; part: BasicPart; rank: number }[] = [];
     while (j < staffRegisterBuffer.staffRegisterIds.length) {
       const staffRegister = await StaffRegister.findById(
-        staffRegisterBuffer.staffRegisterIds[j++]
+        staffRegisterBuffer.staffRegisterIds[j++],
       );
       if (!staffRegister) {
         continue;
@@ -187,7 +188,7 @@ export async function getRegisterDataRaw(
 
 export async function getAllNongRegister(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const out = getAllNongRegisterRaw(stringToId(req.params.id));
   if (!out) {
@@ -314,7 +315,7 @@ async function getShowRegistersRaw(campId: Id) {
 }
 export async function getAllUserCamp(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const out: MyMap[] = [];
@@ -362,7 +363,7 @@ export async function getAllUserCamp(
 }
 export async function getAllWelfare(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const camp = await Camp.findById(req.params.id);
   if (!camp) {
@@ -432,13 +433,13 @@ export async function getAllWelfare(
     let j = 0;
     while (j < baan.nongCampMemberCardHaveHealthIssueIds.length) {
       const campMemberCard = await CampMemberCard.findById(
-        baan.nongCampMemberCardHaveHealthIssueIds[j++]
+        baan.nongCampMemberCardHaveHealthIssueIds[j++],
       );
       if (!campMemberCard) {
         continue;
       }
       const healthIssue = await HealthIssue.findById(
-        campMemberCard.healthIssueId
+        campMemberCard.healthIssueId,
       );
       const user = await User.findById(campMemberCard.userId);
       if (!healthIssue || !user) {
@@ -453,25 +454,25 @@ export async function getAllWelfare(
         isWelfareValid(buffer),
         buffer,
         welfareBaan.nongHealths,
-        nongHealths
+        nongHealths,
       );
       campNongSpicyS = ifIsPlus(healthIssue.spicy, campNongSpicyS);
       baanNongSpicyS = ifIsPlus(healthIssue.spicy, baanNongSpicyS);
       campNongHalalS = ifIsPlus(
         healthIssue.foodLimit == "อิสลาม",
-        campNongHalalS
+        campNongHalalS,
       );
       baanNongHalalS = ifIsPlus(
         healthIssue.foodLimit == "อิสลาม",
-        baanNongHalalS
+        baanNongHalalS,
       );
       campNongVegetarians = ifIsPlus(
         healthIssue.foodLimit == "มังสวิรัติ",
-        campNongVegetarians
+        campNongVegetarians,
       );
       baanNongVegetarians = ifIsPlus(
         healthIssue.foodLimit == "มังสวิรัติ",
-        baanNongVegetarians
+        baanNongVegetarians,
       );
       campNongVegans = ifIsPlus(healthIssue.foodLimit == "เจ", campNongVegans);
       baanNongVegans = ifIsPlus(healthIssue.foodLimit == "เจ", baanNongVegans);
@@ -481,13 +482,13 @@ export async function getAllWelfare(
     j = 0;
     while (j < baan.peeCampMemberCardHaveHealthIssueIds.length) {
       const campMemberCard = await CampMemberCard.findById(
-        baan.peeCampMemberCardHaveHealthIssueIds[j++]
+        baan.peeCampMemberCardHaveHealthIssueIds[j++],
       );
       if (!campMemberCard) {
         continue;
       }
       const healthIssue = await HealthIssue.findById(
-        campMemberCard.healthIssueId
+        campMemberCard.healthIssueId,
       );
       const user = await User.findById(campMemberCard.userId);
       if (!healthIssue || !user) {
@@ -502,25 +503,25 @@ export async function getAllWelfare(
         isWelfareValid(buffer),
         buffer,
         welfareBaan.peeHealths,
-        peeHealths
+        peeHealths,
       );
       campPeeSpicyS = ifIsPlus(healthIssue.spicy, campPeeSpicyS);
       baanPeeSpicyS = ifIsPlus(healthIssue.spicy, baanPeeSpicyS);
       campPeeHalalS = ifIsPlus(
         healthIssue.foodLimit == "อิสลาม",
-        campPeeHalalS
+        campPeeHalalS,
       );
       baanPeeHalalS = ifIsPlus(
         healthIssue.foodLimit == "อิสลาม",
-        baanPeeHalalS
+        baanPeeHalalS,
       );
       campPeeVegetarians = ifIsPlus(
         healthIssue.foodLimit == "มังสวิรัติ",
-        campPeeVegetarians
+        campPeeVegetarians,
       );
       baanPeeVegetarians = ifIsPlus(
         healthIssue.foodLimit == "มังสวิรัติ",
-        baanPeeVegetarians
+        baanPeeVegetarians,
       );
       campPeeVegans = ifIsPlus(healthIssue.foodLimit == "เจ", campPeeVegans);
       baanPeeVegans = ifIsPlus(healthIssue.foodLimit == "เจ", baanPeeVegans);
@@ -599,13 +600,13 @@ export async function getAllWelfare(
     let j = 0;
     while (j < part.petoCampMemberCardHaveHealthIssueIds.length) {
       const campMemberCard = await CampMemberCard.findById(
-        part.petoCampMemberCardHaveHealthIssueIds[j++]
+        part.petoCampMemberCardHaveHealthIssueIds[j++],
       );
       if (!campMemberCard) {
         continue;
       }
       const healthIssue = await HealthIssue.findById(
-        campMemberCard.healthIssueId
+        campMemberCard.healthIssueId,
       );
       const user = await User.findById(campMemberCard.userId);
       if (!healthIssue || !user) {
@@ -620,25 +621,25 @@ export async function getAllWelfare(
         isWelfareValid(buffer),
         buffer,
         welfarePart.petoHealths,
-        petoHealths
+        petoHealths,
       );
       campPetoSpicyS = ifIsPlus(healthIssue.spicy, campPetoSpicyS);
       partPetoSpicyS = ifIsPlus(healthIssue.spicy, partPetoSpicyS);
       campPetoHalalS = ifIsPlus(
         healthIssue.foodLimit == "อิสลาม",
-        campPetoHalalS
+        campPetoHalalS,
       );
       partPetoHalalS = ifIsPlus(
         healthIssue.foodLimit == "อิสลาม",
-        partPetoHalalS
+        partPetoHalalS,
       );
       campPetoVegetarians = ifIsPlus(
         healthIssue.foodLimit == "มังสวิรัติ",
-        campPetoVegetarians
+        campPetoVegetarians,
       );
       partPetoVegetarians = ifIsPlus(
         healthIssue.foodLimit == "มังสวิรัติ",
-        partPetoVegetarians
+        partPetoVegetarians,
       );
       campPetoVegans = ifIsPlus(healthIssue.foodLimit == "เจ", campPetoVegans);
       partPetoVegans = ifIsPlus(healthIssue.foodLimit == "เจ", partPetoVegans);
@@ -648,13 +649,13 @@ export async function getAllWelfare(
     j = 0;
     while (j < part.peeHealthIssueIds.length) {
       const campMemberCard = await CampMemberCard.findById(
-        part.peeCampMemberCardHaveHealthIssueIds[j++]
+        part.peeCampMemberCardHaveHealthIssueIds[j++],
       );
       if (!campMemberCard) {
         continue;
       }
       const healthIssue = await HealthIssue.findById(
-        campMemberCard.healthIssueId
+        campMemberCard.healthIssueId,
       );
       const user = await User.findById(campMemberCard.userId);
       if (!user || !healthIssue) {
@@ -668,16 +669,16 @@ export async function getAllWelfare(
       welfarePart.peeHealths = ifIsTrue(
         isWelfareValid(buffer),
         buffer,
-        welfarePart.peeHealths
+        welfarePart.peeHealths,
       );
       partPeeSpicyS = ifIsPlus(healthIssue.spicy, partPeeSpicyS);
       partPeeHalalS = ifIsPlus(
         healthIssue.foodLimit == "อิสลาม",
-        partPeeHalalS
+        partPeeHalalS,
       );
       partPeeVegetarians = ifIsPlus(
         healthIssue.foodLimit == "มังสวิรัติ",
-        partPeeVegetarians
+        partPeeVegetarians,
       );
       partPeeVegans = ifIsPlus(healthIssue.foodLimit == "เจ", partPeeVegans);
       partPeeIsWearings = ifIsPlus(healthIssue.isWearing, partPeeIsWearings);
@@ -807,7 +808,7 @@ export async function getAllWelfare(
 function addSleepMember(
   user: BasicUser,
   boys: BasicUser[],
-  girls: BasicUser[]
+  girls: BasicUser[],
 ) {
   switch (user.gender) {
     case "Male": {
@@ -822,7 +823,7 @@ function addSleepMember(
 }
 export async function getAllPlanData(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const camp = await Camp.findById(req.params.id);
   if (!camp) {
@@ -984,7 +985,7 @@ export async function getAllPlanData(
 }
 export async function planUpdateCamp(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const update: UpdateAllPlanData = req.body;
   const user = await getUser(req);
@@ -1113,7 +1114,7 @@ export async function planUpdateCamp(
 }
 export async function plusActionPlan(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const input: { campId: Id; plus: number } = req.body;
   const user = await getUser(req);
@@ -1138,7 +1139,7 @@ function isHaveExtra(input: HealthIssuePack): boolean {
 }
 export async function getHealthIssueForAct(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const camp = await Camp.findById(req.params.id);
   if (!camp) {
@@ -1161,12 +1162,12 @@ export async function getHealthIssueForAct(
       nongHealths: await getHealthIssuePack(
         baan.nongCampMemberCardHaveHealthIssueIds,
         isHaveExtra,
-        nongHealths
+        nongHealths,
       ),
       peeHealths: await getHealthIssuePack(
         baan.peeCampMemberCardHaveHealthIssueIds,
         isHaveExtra,
-        peeHealths
+        peeHealths,
       ),
       petoHealths: [],
     };
@@ -1183,12 +1184,12 @@ export async function getHealthIssueForAct(
       nongHealths: [],
       peeHealths: await getHealthIssuePack(
         part.peeCampMemberCardHaveHealthIssueIds,
-        isHaveExtra
+        isHaveExtra,
       ),
       petoHealths: await getHealthIssuePack(
         part.petoCampMemberCardHaveHealthIssueIds,
         isHaveExtra,
-        petoHealths
+        petoHealths,
       ),
     };
     partHealthIssuePacks.push(welfarePart);
@@ -1223,7 +1224,7 @@ function isCoopValid(input: HealthIssuePack): boolean {
 }
 export async function getMedicalHealthIssue(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const camp = await Camp.findById(req.params.id);
   if (!camp) {
@@ -1246,12 +1247,12 @@ export async function getMedicalHealthIssue(
       nongHealths: await getHealthIssuePack(
         baan.nongCampMemberCardHaveHealthIssueIds,
         isMedicalValid,
-        nongHealths
+        nongHealths,
       ),
       peeHealths: await getHealthIssuePack(
         baan.peeCampMemberCardHaveHealthIssueIds,
         isMedicalValid,
-        peeHealths
+        peeHealths,
       ),
       petoHealths: [],
     };
@@ -1268,12 +1269,12 @@ export async function getMedicalHealthIssue(
       nongHealths: [],
       peeHealths: await getHealthIssuePack(
         part.peeCampMemberCardHaveHealthIssueIds,
-        isMedicalValid
+        isMedicalValid,
       ),
       petoHealths: await getHealthIssuePack(
         part.petoCampMemberCardHaveHealthIssueIds,
         isMedicalValid,
-        petoHealths
+        petoHealths,
       ),
     };
     partHealthIssuePacks.push(welfarePart);
@@ -1307,11 +1308,11 @@ export async function getCoopData(req: express.Request, res: express.Response) {
   const normal = await Place.findById(baan.normalPlaceId);
   const nongHealths = await getHealthIssuePack(
     baan.nongCampMemberCardHaveHealthIssueIds,
-    isCoopValid
+    isCoopValid,
   );
   const peeHealths = await getHealthIssuePack(
     baan.peeCampMemberCardHaveHealthIssueIds,
-    isCoopValid
+    isCoopValid,
   );
   const baanJobs = await getBaanJobsRaw(baan.jobIds, null);
   const nongs = await getNongsFromBaanIdRaw(baan._id);
@@ -1332,7 +1333,7 @@ export async function getCoopData(req: express.Request, res: express.Response) {
 }
 export async function getShowRegisters(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const out = await getShowRegistersRaw(stringToId(req.params.id));
   if (!out) {
@@ -1342,7 +1343,7 @@ export async function getShowRegisters(
   res.status(200).json(out);
 }
 export async function getOverrideHealthIssueRaw(
-  baanId: Id
+  baanId: Id,
 ): Promise<GetOverrideHealthIssue | null> {
   const baan = await Baan.findById(baanId);
   if (!baan) {
@@ -1357,7 +1358,7 @@ export async function getOverrideHealthIssueRaw(
   let i = 0;
   while (i < baan.nongCampMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
-      baan.nongCampMemberCardIds[i++]
+      baan.nongCampMemberCardIds[i++],
     );
     if (!campMemberCard) {
       continue;
@@ -1367,7 +1368,7 @@ export async function getOverrideHealthIssueRaw(
       continue;
     }
     const healthIssue = await HealthIssue.findById(
-      campMemberCard.healthIssueId
+      campMemberCard.healthIssueId,
     );
     nongs.push({
       user,
@@ -1378,7 +1379,7 @@ export async function getOverrideHealthIssueRaw(
   i = 0;
   while (i < baan.peeCampMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
-      baan.peeCampMemberCardIds[i++]
+      baan.peeCampMemberCardIds[i++],
     );
     if (!campMemberCard) {
       continue;
@@ -1388,7 +1389,7 @@ export async function getOverrideHealthIssueRaw(
       continue;
     }
     const healthIssue = await HealthIssue.findById(
-      campMemberCard.healthIssueId
+      campMemberCard.healthIssueId,
     );
     pees.push({
       user,
@@ -1400,7 +1401,7 @@ export async function getOverrideHealthIssueRaw(
 }
 export async function getOverrideHealthIssue(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const out = await getOverrideHealthIssueRaw(stringToId(req.params.id));
   if (!out) {
@@ -1411,7 +1412,7 @@ export async function getOverrideHealthIssue(
 }
 export async function updateOverrideHealthIssue(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const input: UpdateOverrideHealthIssue = req.body;
   const user = await getUser(req);
@@ -1426,7 +1427,7 @@ export async function updateOverrideHealthIssue(
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
   if (!campMemberCard) {
     sendRes(res, false);
@@ -1490,7 +1491,7 @@ export async function updateOverrideHealthIssue(
 }
 export async function getAuthPartForPage(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const part = await Part.findById(req.params.id);
@@ -1504,7 +1505,7 @@ export async function getAuthPartForPage(
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
   if (!campMemberCard) {
     sendRes(res, false);
@@ -1525,4 +1526,35 @@ export async function getAuthPartForPage(
       : { day: 0, hour: 0, minute: 0 },
   };
   res.status(200).json(out);
+}
+export async function isHaveThisAuth(
+  campId: Id,
+  userId: Id,
+  authType: AuthType,
+) {
+  const camp = await Camp.findById(campId);
+  if (!camp) return false;
+  const campMemberCard = await CampMemberCard.findById(
+    camp.mapCampMemberCardIdByUserId.get(userId.toString()),
+  );
+  if (!campMemberCard) return false;
+  switch (campMemberCard.role) {
+    case "nong": {
+      return false;
+    }
+    case "pee": {
+      const peeCamp = await PeeCamp.findById(campMemberCard.campModelId);
+      if (!peeCamp) return false;
+      const part = await Part.findById(peeCamp.partId);
+      if (!part) return false;
+      return part.auths.includes(authType) || camp.boardIds.includes(userId);
+    }
+    case "peto": {
+      const petoCamp = await PetoCamp.findById(campMemberCard.campModelId);
+      if (!petoCamp) return false;
+      const part = await Part.findById(petoCamp.partId);
+      if (!part) return false;
+      return part.auths.includes(authType) || camp.boardIds.includes(userId);
+    }
+  }
 }

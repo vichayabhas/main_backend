@@ -199,5 +199,6 @@ const campSchema = new mongoose.Schema({
   //   of: [mongoose.Schema.ObjectId],
   // },
   maxRegister: dataNumberReq,
+  campDictIds: arrayObjectId,
 });
 export default mongoose.model("Camp", campSchema);

@@ -46,6 +46,7 @@ import { getMirrorRaw } from "./mirror";
 import { getGroupContainerRaw } from "./subGroup";
 import { getItemsRaw, getOrdersRaw } from "./order";
 import StaffRegister from "../../models/StaffRegister";
+import { getCampDictsRaw } from "./campDict";
 export async function getShowPlaceRaw(
   placeId: Id | null,
 ): Promise<ShowPlace | null> {
@@ -744,6 +745,8 @@ export async function getNongCampData(
   const campMemberCardOrders = await getOrdersRaw(campMemberCard.orderIds);
   const baanOrders = await getOrdersRaw(baan.orderIds);
   const baanJobs = await getBaanJobsRaw(baan.jobIds, null);
+  const campDicts = await getCampDictsRaw(camp.campDictIds);
+  const baanDicts = await getCampDictsRaw(baan.campDictIds);
   const buffer: GetNongData = {
     baan,
     camp,
@@ -776,6 +779,8 @@ export async function getNongCampData(
     baanOrders,
     baanJobs,
     imageAndDescriptions,
+    campDicts,
+    baanDicts,
   };
   res.status(200).json(buffer);
 }
@@ -845,6 +850,9 @@ export async function getPeeCampData(
   const campMemberCardOrders = await getOrdersRaw(campMemberCard.orderIds);
   const partOrders = await getOrdersRaw(part.orderIds);
   const baanOrders = await getOrdersRaw(baan.orderIds);
+  const campDicts = await getCampDictsRaw(camp.campDictIds);
+  const partDicts = await getCampDictsRaw(part.campDictIds);
+  const baanDicts = await getCampDictsRaw(baan.campDictIds);
   const buffer: GetPeeData = {
     baan,
     camp,
@@ -884,6 +892,9 @@ export async function getPeeCampData(
     baanOrders,
     partOrders,
     campMemberCardOrders,
+    campDicts,
+    partDicts,
+    baanDicts,
   };
   res.status(200).json(buffer);
 }
@@ -947,6 +958,8 @@ export async function getPetoCampData(
   const items = await getItemsRaw(camp.itemIds);
   const campMemberCardOrders = await getOrdersRaw(campMemberCard.orderIds);
   const partOrders = await getOrdersRaw(part.orderIds);
+  const campDicts = await getCampDictsRaw(camp.campDictIds);
+  const partDicts = await getCampDictsRaw(part.campDictIds);
   const buffer: GetPetoData = {
     camp,
     part,
@@ -974,6 +987,8 @@ export async function getPetoCampData(
     items,
     partOrders,
     campMemberCardOrders,
+    campDicts,
+    partDicts,
   };
   res.status(200).json(buffer);
 }
