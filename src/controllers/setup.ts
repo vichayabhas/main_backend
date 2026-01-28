@@ -55,7 +55,7 @@ export function swop(olds: Id | null, news: Id | null, array: Id[]): Id[] {
 export function calculate(
   input: unknown | number | undefined,
   plus: unknown | number | undefined,
-  minus: unknown | number | undefined
+  minus: unknown | number | undefined,
 ) {
   return (input as number) + (plus as number) - (minus as number);
 }
@@ -65,7 +65,7 @@ export function sendRes(res: express.Response, success: boolean) {
   res.status(success ? 200 : 400).json({ success });
 }
 export function sizeMapToJson(
-  input: Map<"S" | "M" | "L" | "XL" | "XXL" | "3XL", number>
+  input: Map<"S" | "M" | "L" | "XL" | "XXL" | "3XL", number>,
 ): InterSize {
   const out: InterSize = {
     _id: null,
@@ -81,7 +81,7 @@ export function sizeMapToJson(
 export function sizeJsonMod(
   size: "S" | "M" | "L" | "XL" | "XXL" | "3XL",
   count: number,
-  input: InterSize
+  input: InterSize,
 ): InterSize {
   switch (size) {
     case "S": {
@@ -169,7 +169,7 @@ export function conPartBackToFront(input: InterPartBack): InterPartFront {
     petoShirtSize: sizeMapToJson(petoShirtSize),
     placeId,
     mapCampMemberCardIdByUserId: mapObjectIdToMyMap(
-      mapCampMemberCardIdByUserId
+      mapCampMemberCardIdByUserId,
     ),
     partName,
     peeSleepIds,
@@ -210,7 +210,7 @@ export function removeDuplicate(input: Id[], compare: Id[]): Id[] {
   });
 }
 export function notEmpty<TValue>(
-  value: TValue | null | undefined
+  value: TValue | null | undefined,
 ): value is TValue {
   if (value === null || value === undefined) return false;
   return true;
@@ -274,7 +274,7 @@ export function ifIsTrue<T>(
   id: T,
   array1: T[],
   array2?: T[],
-  array3?: T[]
+  array3?: T[],
 ) {
   if (input) {
     array1.push(id);

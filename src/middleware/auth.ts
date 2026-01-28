@@ -10,7 +10,7 @@ const testJwt = buf;
 export async function protect(
   req: express.Request,
   res: express.Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   let token: string | null | undefined;
   if (
@@ -49,7 +49,7 @@ export function authorize(...roles: string[]) {
   return async (
     req: express.Request,
     res: express.Response,
-    next: NextFunction
+    next: NextFunction,
   ) => {
     let token: string | null | undefined;
     if (
@@ -106,7 +106,7 @@ export async function getUser(req: express.Request) {
 export async function modePee(
   req: express.Request,
   res: express.Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   const user = await getUser(req);
   if (user?.mode != "pee") {
@@ -121,7 +121,7 @@ export async function modePee(
 export async function admin(
   req: express.Request,
   res: express.Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   const user = await getUser(req);
 
@@ -137,7 +137,7 @@ export async function admin(
 export async function pee(
   req: express.Request,
   res: express.Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   const user = await getUser(req);
   if (!user) {
@@ -155,7 +155,7 @@ export async function pee(
 export async function authCamp(
   req: express.Request,
   res: express.Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   const user = await getUser(req);
 
@@ -170,7 +170,7 @@ export async function authCamp(
 export async function peto(
   req: express.Request,
   res: express.Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   const user = await getUser(req);
   if (!["peto", "admin"].includes(user?.role as string)) {
@@ -183,12 +183,12 @@ export async function peto(
 }
 export function isLogin(
   withIn: express.RequestHandler,
-  withOut: express.RequestHandler | null
+  withOut: express.RequestHandler | null,
 ) {
   return async (
     req: express.Request,
     res: express.Response,
-    next: NextFunction
+    next: NextFunction,
   ) => {
     let token: string | null | undefined;
     if (
@@ -233,7 +233,7 @@ export function isLogin(
 export async function isPass(
   req: express.Request,
   res: express.Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   console.log();
   next();

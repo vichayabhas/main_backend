@@ -15,7 +15,7 @@ import { getAuthTypes } from "../camp/getCampData";
 import { sendRes, swop, resError } from "../setup";
 
 async function fillLostAndFound(
-  input: InterLostAndFound
+  input: InterLostAndFound,
 ): Promise<ShowLostAndFound | null> {
   const { _id, name, buildingId, placeId, userId, detail, campId, type } =
     input;
@@ -48,7 +48,7 @@ async function fillLostAndFound(
 
 export async function addLostAndFound(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const { campId, type, name, detail, placeId } = req.body;
   const user = await getUser(req);
@@ -92,7 +92,7 @@ export async function addLostAndFound(
 }
 export async function deleteLostAndFound(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const lostAndFound = await LostAndFound.findById(req.params.id);
@@ -138,7 +138,7 @@ export async function deleteLostAndFound(
 }
 export async function getLostAndFounds(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   if (!user) {
@@ -181,7 +181,7 @@ export async function getLostAndFounds(
 }
 export async function getLostAndFound(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const lostAndFound = await LostAndFound.findById(req.params.id);
   if (!lostAndFound) {

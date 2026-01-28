@@ -19,7 +19,7 @@ import GewertzSquareUser from "../models/GewertzSquareUser";
 import GewertzSquareBooking from "../models/GewertzSquareBooking";
 export async function universityStaffRegister(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   try {
     const {
@@ -36,12 +36,12 @@ export async function universityStaffRegister(
     let fridayActEn: boolean = false;
     let extraAuth: ExtraAuths[] = [];
     const gewertzSquareUser = await GewertzSquareUser.findOne({ email }).select(
-      "+password"
+      "+password",
     );
     if (gewertzSquareUser) {
       const isMatch = await bcrypt.compare(
         password,
-        gewertzSquareUser.password
+        gewertzSquareUser.password,
       );
       if (!isMatch) {
         res.status(401).json({
@@ -77,7 +77,7 @@ export async function universityStaffRegister(
         const userType: UserType = "universityStaff";
         await GewertzSquareBooking.findByIdAndUpdate(
           gewertzSquareBookingIds[i++],
-          { userType, userId: user._id }
+          { userType, userId: user._id },
         );
       }
       await gewertzSquareUser.deleteOne();
@@ -92,7 +92,7 @@ export async function universityStaffRegister(
 }
 export async function universityStaffLogin(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const { email, password } = req.body;
   if (!email || !password) {
@@ -126,7 +126,7 @@ export async function universityStaffLogin(
 const sendTokenResponse = (
   id: Id,
   statusCode: number,
-  res: express.Response
+  res: express.Response,
 ) => {
   const token = jwt.sign({ id }, buf, {
     expiresIn: process.env.JWT_EXPIRE,
@@ -134,7 +134,7 @@ const sendTokenResponse = (
   const options = {
     expires: new Date(
       Date.now() +
-        parseInt(process.env.JWT_COOKIE_EXPIRE || "0") * 24 * 60 * 60 * 1000
+        parseInt(process.env.JWT_COOKIE_EXPIRE || "0") * 24 * 60 * 60 * 1000,
     ),
     httpOnly: true,
   };
@@ -146,7 +146,7 @@ const sendTokenResponse = (
 const testJwt = buf;
 export async function getUniversityStaffMe(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   let token: string | null | undefined;
 
@@ -171,7 +171,7 @@ export async function getUniversityStaffMe(
 }
 export async function updateUniversityStaff(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const input: UpdateUniversityStaff = req.body;
   const user = await getUniversityStaff(req);

@@ -27,7 +27,7 @@ import User from "../../models/User";
 import { sendRes, swop, getSystemInfoRaw, stringToId } from "../setup";
 export async function createPartChat(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const create: CreatePeeChat = req.body;
   const user = await getUser(req);
@@ -42,7 +42,7 @@ export async function createPartChat(
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
   if (!campMemberCard || campMemberCard.role === "nong") {
     sendRes(res, false);
@@ -81,7 +81,7 @@ export async function createPartChat(
   i = 0;
   while (i < campMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
-      campMemberCardIds[i++]
+      campMemberCardIds[i++],
     );
     if (!campMemberCard) {
       continue;
@@ -278,7 +278,7 @@ export async function deleteChatRaw(chatId: Id) {
     case "น้องคุยส่วนตัวกับพี่": {
       while (i < chat.campMemberCardIds.length) {
         const campMemberCard = await CampMemberCard.findById(
-          chat.campMemberCardIds[i++]
+          chat.campMemberCardIds[i++],
         );
         if (!campMemberCard) {
           continue;
@@ -299,7 +299,7 @@ export async function deleteChatRaw(chatId: Id) {
     case "คุยกันในบ้าน": {
       while (i < chat.campMemberCardIds.length) {
         const campMemberCard = await CampMemberCard.findById(
-          chat.campMemberCardIds[i++]
+          chat.campMemberCardIds[i++],
         );
         if (!campMemberCard) {
           continue;
@@ -320,7 +320,7 @@ export async function deleteChatRaw(chatId: Id) {
     case "คุยกันในฝ่าย": {
       while (i < chat.campMemberCardIds.length) {
         const campMemberCard = await CampMemberCard.findById(
-          chat.campMemberCardIds[i++]
+          chat.campMemberCardIds[i++],
         );
         if (!campMemberCard) {
           continue;
@@ -346,7 +346,7 @@ export async function deleteChatRaw(chatId: Id) {
     case "พี่คุยกันในบ้าน": {
       while (i < chat.campMemberCardIds.length) {
         const campMemberCard = await CampMemberCard.findById(
-          chat.campMemberCardIds[i++]
+          chat.campMemberCardIds[i++],
         );
         if (!campMemberCard) {
           continue;
@@ -367,7 +367,7 @@ export async function deleteChatRaw(chatId: Id) {
     case "พี่บ้านคุยกัน": {
       while (i < chat.campMemberCardIds.length) {
         const campMemberCard = await CampMemberCard.findById(
-          chat.campMemberCardIds[i++]
+          chat.campMemberCardIds[i++],
         );
         if (!campMemberCard) {
           continue;
@@ -396,11 +396,11 @@ export async function deleteChatRaw(chatId: Id) {
 }
 export async function createNongChat(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const create: CreateNongChat = req.body;
   const campMemberCardHost = await CampMemberCard.findById(
-    create.CampMemberCard
+    create.CampMemberCard,
   );
   const user = await getUser(req);
   if (!campMemberCardHost || !user || campMemberCardHost.role !== "nong") {
@@ -419,7 +419,7 @@ export async function createNongChat(
     return;
   }
   const campMemberCardSender = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
   if (!campMemberCardSender) {
     sendRes(res, false);
@@ -440,7 +440,7 @@ export async function createNongChat(
   let i = 0;
   while (i < baan.peeCampMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
-      baan.peeCampMemberCardIds[i++]
+      baan.peeCampMemberCardIds[i++],
     );
     if (!campMemberCard) {
       continue;
@@ -461,14 +461,14 @@ export async function createNongChat(
     campMemberCardIds: swop(
       null,
       campMemberCardHost._id,
-      chat.campMemberCardIds
+      chat.campMemberCardIds,
     ),
   });
   res.status(201).json(showChat);
 }
 export async function createPeeBaanChat(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const create: CreateBaanChat = req.body;
   const baan = await Baan.findById(create.baanId);
@@ -483,7 +483,7 @@ export async function createPeeBaanChat(
     return;
   }
   const campMemberCardSender = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
   if (!campMemberCardSender) {
     sendRes(res, false);
@@ -504,7 +504,7 @@ export async function createPeeBaanChat(
   let i = 0;
   while (i < baan.peeCampMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
-      baan.peeCampMemberCardIds[i++]
+      baan.peeCampMemberCardIds[i++],
     );
     if (!campMemberCard) {
       continue;
@@ -523,7 +523,7 @@ export async function createPeeBaanChat(
 }
 export async function createNongBaanChat(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const create: CreateBaanChat = req.body;
   const baan = await Baan.findById(create.baanId);
@@ -538,7 +538,7 @@ export async function createNongBaanChat(
     return;
   }
   const campMemberCardSender = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
   if (!campMemberCardSender) {
     sendRes(res, false);
@@ -556,7 +556,7 @@ export async function createNongBaanChat(
   let i = 0;
   while (i < baan.peeCampMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
-      baan.peeCampMemberCardIds[i++]
+      baan.peeCampMemberCardIds[i++],
     );
     if (!campMemberCard) {
       continue;
@@ -569,7 +569,7 @@ export async function createNongBaanChat(
   i = 0;
   while (i < baan.nongCampMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
-      baan.nongCampMemberCardIds[i++]
+      baan.nongCampMemberCardIds[i++],
     );
     if (!campMemberCard) {
       continue;
@@ -590,7 +590,7 @@ export async function createNongBaanChat(
 }
 export async function getAllChatFromCampId(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const camp = await Camp.findById(req.params.id);
@@ -619,7 +619,7 @@ export async function getAllChatFromCampId(
     res.status(200).json(output);
   } else {
     const campMemberCard = await CampMemberCard.findById(
-      camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+      camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
     );
     if (!campMemberCard) {
       sendRes(res, false);
@@ -627,7 +627,7 @@ export async function getAllChatFromCampId(
     }
     const chats = await getShowChatFromChatIds(
       campMemberCard.allChatIds,
-      getModeBySituation(user.mode, campMemberCard.role, true)
+      getModeBySituation(user.mode, campMemberCard.role, true),
     );
     const output: ChatReady = {
       chats,
@@ -684,7 +684,7 @@ export async function getPartChat(req: express.Request, res: express.Response) {
 }
 export async function getNongBaanChat(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const camp = await Camp.findById(req.params.id);
   const user = await getUser(req);
@@ -693,7 +693,7 @@ export async function getNongBaanChat(
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
   if (!campMemberCard) {
     sendRes(res, false);
@@ -718,7 +718,7 @@ export async function getNongBaanChat(
       }
       const chats = await getShowChatFromChatIds(
         baan.nongChatIds,
-        getModeBySituation(user.mode, "nong", true)
+        getModeBySituation(user.mode, "nong", true),
       );
       const output: ChatReady = {
         chats,
@@ -779,7 +779,7 @@ export async function getNongBaanChat(
 }
 export async function getPeeBaanChat(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const camp = await Camp.findById(req.params.id);
   const user = await getUser(req);
@@ -788,7 +788,7 @@ export async function getPeeBaanChat(
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
   if (!campMemberCard || campMemberCard.role !== "pee" || user.mode == "nong") {
     sendRes(res, false);
@@ -857,8 +857,8 @@ export async function getNongChat(req: express.Request, res: express.Response) {
     getModeBySituation(
       user.mode,
       campMemberCard.userId.equals(user._id) ? "nong" : "pee",
-      true
-    )
+      true,
+    ),
   );
   const timeOffset = await TimeOffset.findById(user.displayOffsetId);
   if (!timeOffset || !host) {
@@ -870,7 +870,7 @@ export async function getNongChat(req: express.Request, res: express.Response) {
     mode: getModeBySituation(
       user.mode,
       campMemberCard.userId.equals(user._id) ? "nong" : "pee",
-      true
+      true,
     ),
     sendType: {
       id: campMemberCard._id,
@@ -893,7 +893,7 @@ export function getSystemInfo(req: express.Request, res: express.Response) {
 function getModeBySituation(
   mode: Mode,
   role: RoleCamp,
-  isHidePart: boolean
+  isHidePart: boolean,
 ): Mode {
   if (!isHidePart) {
     return "pee";
@@ -905,7 +905,7 @@ function getModeBySituation(
 }
 export async function getPartPeebaanChat(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const camp = await Camp.findById(req.params.id);
   const user = await getUser(req);

@@ -15,7 +15,7 @@ import express from "express";
 
 export async function getWorkingItemByPartId(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   try {
     const part = await Part.findById(req.params.id);
@@ -41,7 +41,7 @@ export async function getWorkingItemByPartId(
     let j = 0;
     while (j < part.workItemIds.length) {
       const workItem: InterWorkingItem | null = await WorkItem.findById(
-        part.workItemIds[j++]
+        part.workItemIds[j++],
       );
       if (!workItem) {
         continue;
@@ -98,7 +98,7 @@ export async function getWorkingItemByPartId(
 }
 export async function createWorkingItem(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const { name, link, partId, fromId, password }: CreateWorkingItem = req.body;
   const user = await getUser(req);
@@ -130,7 +130,7 @@ export async function createWorkingItem(
 }
 export async function updateWorkingItem(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   try {
     const { status, link, name } = req.body;
@@ -155,7 +155,7 @@ export async function updateWorkingItem(
 }
 export async function deleteWorkingItem(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   try {
     const workItem = await WorkItem.findById(req.params.id);
@@ -174,7 +174,7 @@ export async function deleteWorkingItem(
 }
 export async function getWorkingItems(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   try {
     const data: InterWorkingItem[] = [];
@@ -199,7 +199,7 @@ export async function getWorkingItems(
           let k = 0;
           while (k < part.workItemIds.length) {
             const workItem: InterWorkingItem | null = await WorkItem.findById(
-              part.workItemIds[k++]
+              part.workItemIds[k++],
             );
             if (!workItem) {
               continue;
@@ -224,7 +224,7 @@ export async function getWorkingItems(
           let k = 0;
           while (k < part.workItemIds.length) {
             const workItem: InterWorkingItem | null = await WorkItem.findById(
-              part.workItemIds[k++]
+              part.workItemIds[k++],
             );
             if (!workItem) {
               continue;
@@ -247,11 +247,11 @@ export async function getWorkingItems(
 }
 export async function getWorkingItem(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   try {
     const workItem: InterWorkingItem | null = await WorkItem.findById(
-      req.params.id
+      req.params.id,
     );
     const user = await getUser(req);
     if (!workItem || !user) {
@@ -307,7 +307,7 @@ export async function getWorkingItem(
 
 export async function getWorkingItemByCampId(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   try {
     const camp = await Camp.findById(req.params.id);
@@ -334,7 +334,7 @@ export async function getWorkingItemByCampId(
       let k = 0;
       while (k < part.workItemIds.length) {
         const workItem: InterWorkingItem | null = await WorkItem.findById(
-          part.workItemIds[k++]
+          part.workItemIds[k++],
         );
         if (!workItem) {
           continue;
@@ -352,7 +352,7 @@ export async function getWorkingItemByCampId(
   }
 }
 async function getTriggerWorkItem(
-  partId: Id
+  partId: Id,
 ): Promise<TriggerWorkingItem | null> {
   const part = await Part.findById(partId);
   if (!part) {
@@ -381,7 +381,7 @@ async function getTriggerWorkItem(
     let j = 0;
     while (j < part.workItemIds.length) {
       const workItem: InterWorkingItem | null = await WorkItem.findById(
-        part.workItemIds[j++]
+        part.workItemIds[j++],
       );
       if (!workItem) {
         continue;

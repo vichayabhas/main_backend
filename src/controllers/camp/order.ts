@@ -178,7 +178,7 @@ export async function createOrder(req: express.Request, res: express.Response) {
       const order = await Order.create(input);
       const campMemberCardOrderIds = ifIsHave(
         order._id,
-        campMemberCard.orderIds
+        campMemberCard.orderIds,
       );
       const fromOrderIds = ifIsHave(order._id, part.orderIds);
       await campMemberCard.updateOne({ orderIds: campMemberCardOrderIds });
@@ -218,7 +218,7 @@ export async function createOrder(req: express.Request, res: express.Response) {
       const order = await Order.create(input);
       const campMemberCardOrderIds = ifIsHave(
         order._id,
-        campMemberCard.orderIds
+        campMemberCard.orderIds,
       );
       const fromOrderIds = ifIsHave(order._id, baan.orderIds);
       await campMemberCard.updateOne({ orderIds: campMemberCardOrderIds });
@@ -307,7 +307,7 @@ export async function deleteItem(req: express.Request, res: express.Response) {
       continue;
     }
     const campMemberCard = await CampMemberCard.findById(
-      order.campMemberCardId
+      order.campMemberCardId,
     );
     if (!campMemberCard) {
       continue;
@@ -384,7 +384,7 @@ export async function deleteOrder(req: express.Request, res: express.Response) {
       const campMemberCardOrderIds = swop(
         order._id,
         null,
-        campMemberCard.orderIds
+        campMemberCard.orderIds,
       );
       await campMemberCard.updateOne({
         orderIds: campMemberCardOrderIds,
@@ -425,7 +425,7 @@ export async function deleteOrder(req: express.Request, res: express.Response) {
       const campMemberCardOrderIds = swop(
         order._id,
         null,
-        campMemberCard.orderIds
+        campMemberCard.orderIds,
       );
       await campMemberCard.updateOne({
         orderIds: campMemberCardOrderIds,
@@ -457,7 +457,7 @@ export async function deleteOrder(req: express.Request, res: express.Response) {
 }
 export async function getOrderForAdmin(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const camp = await Camp.findById(req.params.id);
@@ -482,7 +482,7 @@ export async function getOrderForAdmin(
 }
 export async function completeOrder(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const order = await Order.findById(req.params.id);

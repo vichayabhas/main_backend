@@ -10,7 +10,7 @@ import PeeCamp from "../models/PeeCamp";
 import PetoCamp from "../models/PetoCamp";
 export async function getNotification(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const notification: GetNotification[] = [];
@@ -51,7 +51,7 @@ export async function getNotification(
     i = 0;
     while (i < user.campMemberCardIds.length) {
       const campMemberCard = await CampMemberCard.findById(
-        user.campMemberCardIds[i++]
+        user.campMemberCardIds[i++],
       );
       if (!campMemberCard) {
         continue;
@@ -80,7 +80,7 @@ export async function getNotification(
               notificationEveryMinute: -1,
               message: "",
               id: baan._id.toString(),
-            }
+            },
           );
           break;
         }
@@ -116,7 +116,7 @@ export async function getNotification(
               message: "",
               notificationEveryMinute: -1,
               types: "พี่บ้านคุยกัน",
-            }
+            },
           );
           if (user.mode == "pee") {
             if (user.notifyOnlyYourPart) {
@@ -191,7 +191,7 @@ export async function getNotification(
     "https://website-api.airvisual.com/v1/stations/s7ygLWXNth22qrdZH/measurements?units.temperature=celsius&units",
     {
       cache: "no-store",
-    }
+    },
   );
   const data: ReceiveAirQuality = await fetchData.json();
   data.measurements.hourly.filter((item) => {

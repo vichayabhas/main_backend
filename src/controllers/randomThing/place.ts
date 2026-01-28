@@ -10,7 +10,7 @@ import { swop, sendRes } from "../setup";
 
 export async function getAllBuilding(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const buildings = await Building.find();
   res.status(200).json(buildings);
@@ -26,7 +26,7 @@ export async function createPlace(req: express.Request, res: express.Response) {
 }
 export async function saveDeletePlace(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const place = await Place.findById(req.params.id);
   if (
@@ -45,14 +45,14 @@ export async function saveDeletePlace(
 }
 export async function createBuilding(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const building = await Building.create({ name: req.params.id });
   res.status(201).json(building);
 }
 export async function saveDeleteBuilding(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const building = await Building.findById(req.params.id);
   if (building?.placeIds.length) {
@@ -88,7 +88,7 @@ export async function getBuilding(req: express.Request, res: express.Response) {
 
 export async function getShowPlace(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const place = await Place.findById(req.params.id);
   if (!place) {
@@ -110,7 +110,7 @@ export async function getShowPlace(
 }
 export async function getAllPlaceDataSetups(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const buildings = await Building.find();
   const data: GetAllPlaceDataSetup[] = [];

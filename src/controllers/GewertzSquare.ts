@@ -20,7 +20,7 @@ import jwt from "jsonwebtoken";
 import GewertzSquareUser from "../models/GewertzSquareUser";
 function isAvailableGewertzSquareRoom(
   oldBookings: InterGewertzSquareBooking[],
-  room: GewertzSquareRoomType
+  room: GewertzSquareRoomType,
 ) {
   const oldRooms = oldBookings.map(({ room }) => room);
   if (oldRooms.includes(room)) {
@@ -30,7 +30,7 @@ function isAvailableGewertzSquareRoom(
     return true;
   }
   const oldRooms2 = oldRooms.filter(
-    (oldRoom) => oldRoom != "Demo floor" && oldRoom != "E-III"
+    (oldRoom) => oldRoom != "Demo floor" && oldRoom != "E-III",
   );
   if (oldRooms2.length == 0) {
     return true;
@@ -109,7 +109,7 @@ function coversWeekend(start: Date, end: Date) {
 }
 function checkIsOverlap(
   newBooking: BookingGewertzSquareRoom,
-  oldBooking: BookingGewertzSquareRoom
+  oldBooking: BookingGewertzSquareRoom,
 ): boolean {
   if (
     new Date(oldBooking.start) <= new Date(newBooking.start) &&
@@ -127,7 +127,7 @@ function checkIsOverlap(
 }
 export async function bookingGewertzSquareRoom(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getGewertzSquareUser(req);
   if (!user) {
@@ -149,9 +149,9 @@ export async function bookingGewertzSquareRoom(
   if (
     isAvailableGewertzSquareRoom(
       allBookings.filter((old) =>
-        checkIsOverlap({ start, end, room, tel, approved }, old)
+        checkIsOverlap({ start, end, room, tel, approved }, old),
       ),
-      room
+      room,
     )
   ) {
     approved = true;
@@ -184,7 +184,7 @@ export async function bookingGewertzSquareRoom(
   const gewertzSquareBookingIds = swop(
     null,
     booking._id,
-    user.user.gewertzSquareBookingIds
+    user.user.gewertzSquareBookingIds,
   );
   switch (userType) {
     case "student": {
@@ -211,7 +211,7 @@ export async function bookingGewertzSquareRoom(
   i = 0;
   while (i < gewertzSquareBookingIds.length) {
     const buf = await GewertzSquareBooking.findById(
-      gewertzSquareBookingIds[i++]
+      gewertzSquareBookingIds[i++],
     );
     if (!buf) {
       continue;
@@ -232,7 +232,7 @@ export async function bookingGewertzSquareRoom(
 }
 export async function getGewertzSquareBooking(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const userRaw = await getGewertzSquareUser(req);
   const all = await GewertzSquareBooking.find();
@@ -253,7 +253,7 @@ export async function getGewertzSquareBooking(
   let i = 0;
   while (i < user.gewertzSquareBookingIds.length) {
     const buf = await GewertzSquareBooking.findById(
-      user.gewertzSquareBookingIds[i++]
+      user.gewertzSquareBookingIds[i++],
     );
     if (!buf) {
       continue;
@@ -274,7 +274,7 @@ export async function getGewertzSquareBooking(
 }
 export async function updateBookingGewertzSquareRoom(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const userRaw = await getGewertzSquareUser(req);
   if (!userRaw) {
@@ -330,7 +330,7 @@ export async function updateBookingGewertzSquareRoom(
   let i = 0;
   while (i < user.gewertzSquareBookingIds.length) {
     const buf = await GewertzSquareBooking.findById(
-      user.gewertzSquareBookingIds[i++]
+      user.gewertzSquareBookingIds[i++],
     );
     if (!buf) {
       continue;
@@ -352,7 +352,7 @@ export async function updateBookingGewertzSquareRoom(
 
 export async function deleteBookingGewertzSquareRoom(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const userRaw = await getGewertzSquareUser(req);
   if (!userRaw) {
@@ -389,7 +389,7 @@ export async function deleteBookingGewertzSquareRoom(
       gewertzSquareBookingIds = swop(
         booking._id,
         null,
-        user.gewertzSquareBookingIds
+        user.gewertzSquareBookingIds,
       );
       await user.updateOne({ gewertzSquareBookingIds });
       break;
@@ -403,7 +403,7 @@ export async function deleteBookingGewertzSquareRoom(
       gewertzSquareBookingIds = swop(
         booking._id,
         null,
-        user.gewertzSquareBookingIds
+        user.gewertzSquareBookingIds,
       );
       await user.updateOne({ gewertzSquareBookingIds });
       break;
@@ -417,7 +417,7 @@ export async function deleteBookingGewertzSquareRoom(
       gewertzSquareBookingIds = swop(
         booking._id,
         null,
-        user.gewertzSquareBookingIds
+        user.gewertzSquareBookingIds,
       );
       await user.updateOne({ gewertzSquareBookingIds });
       break;
@@ -433,7 +433,7 @@ export async function deleteBookingGewertzSquareRoom(
   await booking.deleteOne();
   while (i < gewertzSquareBookingIds.length) {
     const buf = await GewertzSquareBooking.findById(
-      gewertzSquareBookingIds[i++]
+      gewertzSquareBookingIds[i++],
     );
     if (!buf) {
       continue;
@@ -452,7 +452,7 @@ export async function deleteBookingGewertzSquareRoom(
 }
 export async function gewertzSquareRegister(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   try {
     const {
@@ -484,7 +484,7 @@ export async function gewertzSquareRegister(
 }
 export async function gewertzSquareLogin(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const { email, password } = req.body;
   if (!email || !password) {
@@ -524,7 +524,7 @@ export async function gewertzSquareLogin(
 const sendTokenResponse = (
   id: Id,
   statusCode: number,
-  res: express.Response
+  res: express.Response,
 ) => {
   const token = jwt.sign({ id }, buf, {
     expiresIn: process.env.JWT_EXPIRE,
@@ -532,7 +532,7 @@ const sendTokenResponse = (
   const options = {
     expires: new Date(
       Date.now() +
-        parseInt(process.env.JWT_COOKIE_EXPIRE || "0") * 24 * 60 * 60 * 1000
+        parseInt(process.env.JWT_COOKIE_EXPIRE || "0") * 24 * 60 * 60 * 1000,
     ),
     httpOnly: true,
   };
@@ -543,14 +543,14 @@ const sendTokenResponse = (
 };
 export async function getGewertzSquareUserMe(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getGewertzSquareUser(req);
   res.status(200).json(user);
 }
 export async function updateGewertzSquareAccount(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getGewertzSquareUser(req);
   if (user) {
@@ -562,7 +562,7 @@ export async function updateGewertzSquareAccount(
 }
 export async function approveBookingGewertzSquareRoom(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const userRaw = await getGewertzSquareUser(req);
   if (!userRaw) {
@@ -593,7 +593,7 @@ export async function approveBookingGewertzSquareRoom(
 
   while (i < gewertzSquareBookingIds.length) {
     const buf = await GewertzSquareBooking.findById(
-      gewertzSquareBookingIds[i++]
+      gewertzSquareBookingIds[i++],
     );
     if (!buf) {
       continue;

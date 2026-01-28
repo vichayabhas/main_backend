@@ -105,7 +105,7 @@ async function getUserLikeSong(userIds: Id[]) {
       const songId = user.likeSongIds[j++];
       songList.set(
         songId.toString(),
-        (songList.get(songId.toString()) as number) + 1
+        (songList.get(songId.toString()) as number) + 1,
       );
     }
   }
@@ -132,7 +132,7 @@ async function addBaanSongRaw(baanId: Id, songIds: Id[], userId: Id) {
     return null;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(userId.toString())
+    camp.mapCampMemberCardIdByUserId.get(userId.toString()),
   );
   if (!campMemberCard) {
     return null;
@@ -217,7 +217,7 @@ async function addBaanSongRaw(baanId: Id, songIds: Id[], userId: Id) {
 
 async function getShowSongRaw(
   song: InterSong,
-  userId: Id | null
+  userId: Id | null,
 ): Promise<ShowSong> {
   let i = 0;
   const campNames: string[] = [];
@@ -239,7 +239,7 @@ async function getShowSongRaw(
       continue;
     }
     const campMemberCard = await CampMemberCard.findById(
-      baan.mapCampMemberCardIdByUserId.get(userId.toString())
+      baan.mapCampMemberCardIdByUserId.get(userId.toString()),
     );
     if (!campMemberCard) {
       continue;
@@ -248,7 +248,7 @@ async function getShowSongRaw(
       case "nong": {
         if (baan.nongIds.includes(userId)) {
           baanRelates.push(
-            `${camp.nongCall} ${camp.groupName}${baan.name} จากค่าย ${camp.campName}`
+            `${camp.nongCall} ${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
           );
         }
         break;
@@ -256,7 +256,7 @@ async function getShowSongRaw(
       case "pee": {
         if (baan.peeIds.includes(userId)) {
           baanRelates.push(
-            `พี่${camp.groupName} ${camp.groupName}${baan.name} จากค่าย ${camp.campName}`
+            `พี่${camp.groupName} ${camp.groupName}${baan.name} จากค่าย ${camp.campName}`,
           );
         }
         break;
@@ -277,7 +277,7 @@ async function getShowSongRaw(
       continue;
     }
     const campMemberCard = await CampMemberCard.findById(
-      camp.mapCampMemberCardIdByUserId.get(userId.toString())
+      camp.mapCampMemberCardIdByUserId.get(userId.toString()),
     );
     if (!campMemberCard) {
       continue;
@@ -313,7 +313,7 @@ async function getShowSongRaw(
 }
 export async function getMenuSongs(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const songs = await Song.find();
@@ -372,7 +372,7 @@ export async function getMenuSongs(
       }
       if (auths.includes("pr/studio")) {
         const campMemberCard = await CampMemberCard.findById(
-          camp.mapCampMemberCardIdByUserId.get(user._id)
+          camp.mapCampMemberCardIdByUserId.get(user._id),
         );
         if (!campMemberCard) {
           continue;
@@ -416,7 +416,7 @@ export async function getMenuSongs(
       }
       if (auths.includes("หัวหน้าพี่เลี้ยง")) {
         const campMemberCard = await CampMemberCard.findById(
-          camp.mapCampMemberCardIdByUserId.get(user._id)
+          camp.mapCampMemberCardIdByUserId.get(user._id),
         );
         if (!campMemberCard) {
           continue;
@@ -524,7 +524,7 @@ export async function getShowSong(req: express.Request, res: express.Response) {
       }
       if (auths.includes("pr/studio")) {
         const campMemberCard = await CampMemberCard.findById(
-          camp.mapCampMemberCardIdByUserId.get(user._id)
+          camp.mapCampMemberCardIdByUserId.get(user._id),
         );
         if (!campMemberCard) {
           continue;
@@ -568,7 +568,7 @@ export async function getShowSong(req: express.Request, res: express.Response) {
       }
       if (auths.includes("หัวหน้าพี่เลี้ยง")) {
         const campMemberCard = await CampMemberCard.findById(
-          camp.mapCampMemberCardIdByUserId.get(user._id)
+          camp.mapCampMemberCardIdByUserId.get(user._id),
         );
         if (!campMemberCard) {
           continue;
@@ -677,7 +677,7 @@ async function addCampSongRaw(campId: Id, songIds: Id[], userId: Id) {
 }
 export async function updateSongPage(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const input: UpdateSongPage = req.body;
@@ -711,7 +711,7 @@ export async function updateSongPage(
 }
 export async function getShowCampSongs(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const camp = await Camp.findById(req.params.id);
@@ -768,7 +768,7 @@ export async function getShowCampSongs(
 }
 export async function getShowBaanSongs(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const baan = await Baan.findById(req.params.id);
   const user = await getUser(req);
@@ -837,7 +837,7 @@ export async function getShowBaanSongs(
 }
 export async function getAuthSongs(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const camp: InterCampBack | null = await Camp.findById(req.params.id);
@@ -846,7 +846,7 @@ export async function getAuthSongs(
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id)
+    camp.mapCampMemberCardIdByUserId.get(user._id),
   );
   if (!campMemberCard) {
     sendRes(res, false);
@@ -872,7 +872,7 @@ export async function getAuthSongs(
     authCamp = true;
   } else if (auths.includes("pr/studio")) {
     const campMemberCard = await CampMemberCard.findById(
-      camp.mapCampMemberCardIdByUserId.get(user._id)
+      camp.mapCampMemberCardIdByUserId.get(user._id),
     );
     if (!campMemberCard) {
       sendRes(res, false);
@@ -913,7 +913,7 @@ export async function getAuthSongs(
     }
   } else if (auths.includes("หัวหน้าพี่เลี้ยง")) {
     const campMemberCard = await CampMemberCard.findById(
-      camp.mapCampMemberCardIdByUserId.get(user._id)
+      camp.mapCampMemberCardIdByUserId.get(user._id),
     );
     if (!campMemberCard) {
       sendRes(res, false);

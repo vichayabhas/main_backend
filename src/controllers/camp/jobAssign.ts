@@ -42,7 +42,7 @@ export async function createJob(req: express.Request, res: express.Response) {
         return;
       }
       const campMemberCard = await CampMemberCard.findById(
-        camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+        camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
       );
       if (!campMemberCard) {
         sendRes(res, false);
@@ -162,7 +162,7 @@ export async function createJob(req: express.Request, res: express.Response) {
         return;
       }
       const campMemberCard = await CampMemberCard.findById(
-        camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+        camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
       );
       if (!campMemberCard) {
         sendRes(res, false);
@@ -245,7 +245,7 @@ export async function createJob(req: express.Request, res: express.Response) {
 }
 export async function getBaanJobsRaw(
   jobIds: Id[],
-  userId: Id | null
+  userId: Id | null,
 ): Promise<GetJob[]> {
   interface BasicUserWithTime {
     user: BasicUser;
@@ -278,7 +278,7 @@ export async function getBaanJobsRaw(
         continue;
       }
       const campMemberCard = await CampMemberCard.findById(
-        timeRegister.campMemberCardId
+        timeRegister.campMemberCardId,
       );
       if (!campMemberCard) {
         continue;
@@ -295,17 +295,17 @@ export async function getBaanJobsRaw(
       ifIsTrue(
         user.gender == "Male",
         { user, time: timeRegister.time },
-        maleRaws
+        maleRaws,
       );
       ifIsTrue(
         user.gender == "Female",
         { user, time: timeRegister.time },
-        femaleRaws
+        femaleRaws,
       );
       switch (job.reqType) {
         case "ไม่กำหนด": {
           const sorted = allRaws.sort(
-            (a, b) => a.time.getTime() - b.time.getTime()
+            (a, b) => a.time.getTime() - b.time.getTime(),
           );
           let k = 0;
           while (k < sorted.length && k < job.sum) {
@@ -322,10 +322,10 @@ export async function getBaanJobsRaw(
         }
         case "เท่านั้น": {
           const sortedMales = maleRaws.sort(
-            (a, b) => a.time.getTime() - b.time.getTime()
+            (a, b) => a.time.getTime() - b.time.getTime(),
           );
           const sortedFemales = femaleRaws.sort(
-            (a, b) => a.time.getTime() - b.time.getTime()
+            (a, b) => a.time.getTime() - b.time.getTime(),
           );
           let m = 0;
           while (m < sortedMales.length && m < job.male) {
@@ -353,10 +353,10 @@ export async function getBaanJobsRaw(
         }
         case "ให้ความสำคัญ": {
           const sortedMales = maleRaws.sort(
-            (a, b) => a.time.getTime() - b.time.getTime()
+            (a, b) => a.time.getTime() - b.time.getTime(),
           );
           const sortedFemales = femaleRaws.sort(
-            (a, b) => a.time.getTime() - b.time.getTime()
+            (a, b) => a.time.getTime() - b.time.getTime(),
           );
           let m = 0;
           while (m < sortedMales.length && m < job.male) {
@@ -418,7 +418,7 @@ export async function getBaanJobsRaw(
 }
 export async function getPartJobsRaw(
   jobIds: Id[],
-  userId: Id | null
+  userId: Id | null,
 ): Promise<GetJob[]> {
   interface BasicUserWithTime {
     user: BasicUser;
@@ -447,7 +447,7 @@ export async function getPartJobsRaw(
         continue;
       }
       const campMemberCard = await CampMemberCard.findById(
-        timeRegister.campMemberCardId
+        timeRegister.campMemberCardId,
       );
       if (!campMemberCard) {
         continue;
@@ -464,17 +464,17 @@ export async function getPartJobsRaw(
       ifIsTrue(
         user.gender == "Male",
         { user, time: timeRegister.time },
-        maleRaws
+        maleRaws,
       );
       ifIsTrue(
         user.gender == "Female",
         { user, time: timeRegister.time },
-        femaleRaws
+        femaleRaws,
       );
       switch (job.reqType) {
         case "ไม่กำหนด": {
           const sorted = allRaws.sort(
-            (a, b) => a.time.getTime() - b.time.getTime()
+            (a, b) => a.time.getTime() - b.time.getTime(),
           );
           let k = 0;
           while (k < sorted.length && k < job.sum) {
@@ -491,10 +491,10 @@ export async function getPartJobsRaw(
         }
         case "เท่านั้น": {
           const sortedMales = maleRaws.sort(
-            (a, b) => a.time.getTime() - b.time.getTime()
+            (a, b) => a.time.getTime() - b.time.getTime(),
           );
           const sortedFemales = femaleRaws.sort(
-            (a, b) => a.time.getTime() - b.time.getTime()
+            (a, b) => a.time.getTime() - b.time.getTime(),
           );
           let m = 0;
           while (m < sortedMales.length && m < job.male) {
@@ -522,10 +522,10 @@ export async function getPartJobsRaw(
         }
         case "ให้ความสำคัญ": {
           const sortedMales = maleRaws.sort(
-            (a, b) => a.time.getTime() - b.time.getTime()
+            (a, b) => a.time.getTime() - b.time.getTime(),
           );
           const sortedFemales = femaleRaws.sort(
-            (a, b) => a.time.getTime() - b.time.getTime()
+            (a, b) => a.time.getTime() - b.time.getTime(),
           );
           let m = 0;
           while (m < sortedMales.length && m < job.male) {
@@ -587,7 +587,7 @@ export async function getPartJobsRaw(
 }
 export async function updateJobAssign(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const input: UpdateJobAssign = req.body;
   const { name, reqType, _id, types } = input;
@@ -615,7 +615,7 @@ export async function updateJobAssign(
         return;
       }
       const campMemberCard = await CampMemberCard.findById(
-        camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+        camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
       );
       if (!campMemberCard) {
         sendRes(res, false);
@@ -698,7 +698,7 @@ export async function updateJobAssign(
         return;
       }
       const campMemberCard = await CampMemberCard.findById(
-        camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+        camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
       );
       if (!campMemberCard) {
         sendRes(res, false);
@@ -802,7 +802,7 @@ export async function registerJob(req: express.Request, res: express.Response) {
       i = 0;
       while (i < input.removeTimeRegisterIds.length) {
         const timeRegister = await TimeRegister.findById(
-          input.removeTimeRegisterIds[i++]
+          input.removeTimeRegisterIds[i++],
         );
         if (!timeRegister) {
           continue;
@@ -856,7 +856,7 @@ export async function registerJob(req: express.Request, res: express.Response) {
       i = 0;
       while (i < input.removeTimeRegisterIds.length) {
         const timeRegister = await TimeRegister.findById(
-          input.removeTimeRegisterIds[i++]
+          input.removeTimeRegisterIds[i++],
         );
         if (!timeRegister) {
           continue;
@@ -886,7 +886,7 @@ export async function registerJob(req: express.Request, res: express.Response) {
 }
 export async function deleteBaanJob(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const baanJob = await BaanJob.findById(req.params.id);
@@ -905,7 +905,7 @@ export async function deleteBaanJob(
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
   if (!campMemberCard) {
     sendRes(res, false);
@@ -964,7 +964,7 @@ export async function deleteBaanJob(
         continue;
       }
       const campMemberCard = await CampMemberCard.findById(
-        timeRegister.campMemberCardId
+        timeRegister.campMemberCardId,
       );
       if (!campMemberCard) {
         continue;
@@ -997,7 +997,7 @@ export async function deleteBaanJob(
 }
 export async function deletePartJob(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const job = await JobAssign.findById(req.params.id);
@@ -1016,7 +1016,7 @@ export async function deletePartJob(
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
   if (!campMemberCard) {
     sendRes(res, false);
@@ -1059,7 +1059,7 @@ export async function deletePartJob(
       continue;
     }
     const campMemberCard = await CampMemberCard.findById(
-      timeRegister.campMemberCardId
+      timeRegister.campMemberCardId,
     );
     if (!campMemberCard) {
       continue;

@@ -21,7 +21,7 @@ import express from "express";
 
 export async function createImageAndDescriptionContainer(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const {
     baanId,
@@ -42,7 +42,7 @@ export async function createImageAndDescriptionContainer(
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
   if (!campMemberCard) {
     sendRes(res, false);
@@ -123,26 +123,26 @@ export async function createImageAndDescriptionContainer(
   const imageAndDescriptionContainerIds = swop(
     null,
     container._id,
-    baan.imageAndDescriptionContainerIds
+    baan.imageAndDescriptionContainerIds,
   );
   await baan.updateOne({
     imageAndDescriptionContainerIds,
   });
   const imageAndDescriptionContainers = await getImageAndDescriptionsRaw(
     imageAndDescriptionContainerIds,
-    "pee"
+    "pee",
   );
   res.status(200).json(imageAndDescriptionContainers);
 }
 export async function getImageAndDescriptionsRaw(
   imageAndDescriptionContainerIds: Id[],
-  role: Mode
+  role: Mode,
 ) {
   let i = 0;
   const out: ShowImageAndDescriptions[] = [];
   while (i < imageAndDescriptionContainerIds.length) {
     const container = await ImageAndDescriptionContainer.findById(
-      imageAndDescriptionContainerIds[i++]
+      imageAndDescriptionContainerIds[i++],
     );
     if (!container) {
       continue;
@@ -156,7 +156,7 @@ export async function getImageAndDescriptionsRaw(
     let j = 0;
     while (j < childIds.length) {
       const imageAndDescription = await ImageAndDescription.findById(
-        childIds[j++]
+        childIds[j++],
       );
       if (!imageAndDescription) {
         continue;
@@ -173,7 +173,7 @@ export async function getImageAndDescriptionsRaw(
 }
 export async function editImageAndDescription(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const { types, name, _id, children, mode }: EditImageAndDescriptionContainer =
     req.body;
@@ -194,7 +194,7 @@ export async function editImageAndDescription(
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
   if (!campMemberCard) {
     sendRes(res, false);
@@ -261,7 +261,7 @@ export async function editImageAndDescription(
     const { _id: childId, imageUrl, description, order } = children[i++];
     let imageAndDescription = await ImageAndDescription.findByIdAndUpdate(
       childId,
-      { imageUrl, description, order }
+      { imageUrl, description, order },
     );
     if (!imageAndDescription) {
       imageAndDescription = await ImageAndDescription.create({
@@ -280,13 +280,13 @@ export async function editImageAndDescription(
   await container.updateOne({ types, name, childIds: ids, mode });
   const data = await getImageAndDescriptionsRaw(
     baan.imageAndDescriptionContainerIds,
-    "pee"
+    "pee",
   );
   res.status(200).json(data);
 }
 export async function deleteImageAndDescription(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const container = await ImageAndDescriptionContainer.findById(req.params.id);
   if (!container) {
@@ -305,7 +305,7 @@ export async function deleteImageAndDescription(
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
   if (!campMemberCard) {
     sendRes(res, false);
@@ -373,7 +373,7 @@ export async function deleteImageAndDescription(
   const imageAndDescriptionContainerIds = swop(
     container._id,
     null,
-    baan.imageAndDescriptionContainerIds
+    baan.imageAndDescriptionContainerIds,
   );
   await baan.updateOne({
     imageAndDescriptionContainerIds,
@@ -381,13 +381,13 @@ export async function deleteImageAndDescription(
   await container.deleteOne();
   const data = await getImageAndDescriptionsRaw(
     imageAndDescriptionContainerIds,
-    "pee"
+    "pee",
   );
   res.status(200).json(data);
 }
 export async function getImageAndDescriptions(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const baan = await Baan.findById(req.params.id);
   if (!baan) {
@@ -405,7 +405,7 @@ export async function getImageAndDescriptions(
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
   if (!campMemberCard) {
     sendRes(res, false);
@@ -468,7 +468,7 @@ export async function getImageAndDescriptions(
   }
   const imageAndDescriptionContainers = await getImageAndDescriptionsRaw(
     baan.imageAndDescriptionContainerIds,
-    "pee"
+    "pee",
   );
   const out: GetImageAndDescriptionsPackForUpdate = {
     imageAndDescriptionContainers,

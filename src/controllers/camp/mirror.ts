@@ -28,12 +28,12 @@ import User from "../../models/User";
 // export async function deleteMirrorBaan
 export async function createMirrorUser(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const input: CreateMirror = req.body;
   const user = await getUser(req);
   const myCampMemberCard = await CampMemberCard.findById(
-    input.senderCampMemberCardId
+    input.senderCampMemberCardId,
   );
   if (
     !user ||
@@ -75,7 +75,9 @@ export async function createMirrorUser(
     return;
   }
 
-  const receiverCampMemberCard = await CampMemberCard.findById(input.receiverId);
+  const receiverCampMemberCard = await CampMemberCard.findById(
+    input.receiverId,
+  );
   if (!receiverCampMemberCard) {
     sendRes(res, false);
     return;
@@ -93,12 +95,12 @@ export async function createMirrorUser(
     mirrorReceiverIds: swop(
       null,
       mirror._id,
-      receiverCampMemberCard.mirrorReceiverIds
+      receiverCampMemberCard.mirrorReceiverIds,
     ),
   });
   const campMemberCard1 = await CampMemberCard.findById(myCampMemberCard._id);
   const campMemberCard2 = await CampMemberCard.findById(
-    receiverCampMemberCard._id
+    receiverCampMemberCard._id,
   );
   if (!campMemberCard1 || !campMemberCard2) {
     sendRes(res, false);
@@ -108,14 +110,14 @@ export async function createMirrorUser(
     campMemberCard1,
     campMemberCard2,
     user,
-    receiver
+    receiver,
   );
   res.status(200).json(data);
 }
 export async function getMirrorRaw(
   baan: BasicBaan,
   campMemberCard: InterCampMemberCard,
-  user: BasicUser
+  user: BasicUser,
 ): Promise<GetMirrorPack> {
   const userReceivers: GetMirrorUser[] = [];
   const userSenders: GetMirrorUser[] = [];
@@ -151,7 +153,7 @@ export async function getMirrorRaw(
     }
     const { _id, receiverId, senderCampMemberCardId, message, time } = mirror;
     const otherCampMemberCard = await CampMemberCard.findById(
-      senderCampMemberCardId
+      senderCampMemberCardId,
     );
     if (!otherCampMemberCard) {
       continue;
@@ -205,7 +207,7 @@ export async function getMirrorRaw(
     }
     const { _id, receiverId, senderCampMemberCardId, message, time } = mirror;
     const otherCampMemberCard = await CampMemberCard.findById(
-      senderCampMemberCardId
+      senderCampMemberCardId,
     );
     if (!otherCampMemberCard) {
       continue;
@@ -229,7 +231,7 @@ export async function getMirrorRaw(
 }
 export async function updateMirrorUser(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const { message, _id }: UpdateMirror = req.body;
   const user = await getUser(req);
@@ -239,7 +241,7 @@ export async function updateMirrorUser(
     return;
   }
   const myCampMemberCard = await CampMemberCard.findById(
-    mirror.senderCampMemberCardId
+    mirror.senderCampMemberCardId,
   );
   if (
     !user ||
@@ -279,7 +281,9 @@ export async function updateMirrorUser(
     sendRes(res, false);
     return;
   }
-  const receiverCampMemberCard = await CampMemberCard.findById(mirror.receiverId);
+  const receiverCampMemberCard = await CampMemberCard.findById(
+    mirror.receiverId,
+  );
   if (!receiverCampMemberCard) {
     sendRes(res, false);
     return;
@@ -294,13 +298,13 @@ export async function updateMirrorUser(
     myCampMemberCard,
     receiverCampMemberCard,
     user,
-    receiver
+    receiver,
   );
   res.status(200).json(data);
 }
 export async function deleteMirrorUser(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const mirror = await Mirror.findById(req.params.id);
@@ -309,7 +313,7 @@ export async function deleteMirrorUser(
     return;
   }
   const myCampMemberCard = await CampMemberCard.findById(
-    mirror.senderCampMemberCardId
+    mirror.senderCampMemberCardId,
   );
   if (
     !user ||
@@ -349,7 +353,9 @@ export async function deleteMirrorUser(
     sendRes(res, false);
     return;
   }
-  const receiverCampMemberCard = await CampMemberCard.findById(mirror.receiverId);
+  const receiverCampMemberCard = await CampMemberCard.findById(
+    mirror.receiverId,
+  );
   if (!receiverCampMemberCard) {
     sendRes(res, false);
     return;
@@ -366,12 +372,12 @@ export async function deleteMirrorUser(
     mirrorReceiverIds: swop(
       mirror._id,
       null,
-      receiverCampMemberCard.mirrorReceiverIds
+      receiverCampMemberCard.mirrorReceiverIds,
     ),
   });
   const campMemberCard1 = await CampMemberCard.findById(myCampMemberCard._id);
   const campMemberCard2 = await CampMemberCard.findById(
-    receiverCampMemberCard._id
+    receiverCampMemberCard._id,
   );
   if (!campMemberCard1 || !campMemberCard2) {
     sendRes(res, false);
@@ -382,18 +388,18 @@ export async function deleteMirrorUser(
     campMemberCard1,
     campMemberCard2,
     user,
-    receiver
+    receiver,
   );
   res.status(200).json(data);
 }
 export async function createMirrorBaan(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const input: CreateMirror = req.body;
   const user = await getUser(req);
   const myCampMemberCard = await CampMemberCard.findById(
-    input.senderCampMemberCardId
+    input.senderCampMemberCardId,
   );
   if (
     !user ||
@@ -453,7 +459,7 @@ export async function createMirrorBaan(
 
 export async function updateMirrorBaan(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const { message, _id }: UpdateMirror = req.body;
   const user = await getUser(req);
@@ -463,7 +469,7 @@ export async function updateMirrorBaan(
     return;
   }
   const myCampMemberCard = await CampMemberCard.findById(
-    mirror.senderCampMemberCardId
+    mirror.senderCampMemberCardId,
   );
   if (
     !user ||
@@ -509,7 +515,7 @@ export async function updateMirrorBaan(
 }
 export async function deleteMirrorBaan(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const mirror = await Mirror.findById(req.params.id);
@@ -518,7 +524,7 @@ export async function deleteMirrorBaan(
     return;
   }
   const myCampMemberCard = await CampMemberCard.findById(
-    mirror.senderCampMemberCardId
+    mirror.senderCampMemberCardId,
   );
   if (
     !user ||
@@ -578,7 +584,7 @@ export async function deleteMirrorBaan(
 async function triggerMirrorBaan(
   campMemberCard: InterCampMemberCard,
   baan: BasicBaan,
-  user: BasicUser
+  user: BasicUser,
 ): Promise<TriggerMirrorBaan> {
   let i = 0;
   const senders: GetMirrorBaan[] = [];
@@ -612,7 +618,7 @@ async function triggerMirrorBaan(
     }
     const { _id, receiverId, senderCampMemberCardId, message, time } = mirror;
     const otherCampMemberCard = await CampMemberCard.findById(
-      senderCampMemberCardId
+      senderCampMemberCardId,
     );
     if (!otherCampMemberCard) {
       continue;
@@ -643,21 +649,21 @@ async function triggerMirrorUser(
   senderCampMemberCard: InterCampMemberCard,
   receiverCampMemberCard: InterCampMemberCard,
   sender: BasicUser,
-  receiver: BasicUser
+  receiver: BasicUser,
 ): Promise<TriggerMirrorUser> {
   let i = 0;
   const senders: GetMirrorUser[] = [];
   const receivers: GetMirrorUser[] = [];
   while (i < receiverCampMemberCard.mirrorReceiverIds.length) {
     const mirror = await Mirror.findById(
-      receiverCampMemberCard.mirrorReceiverIds[i++]
+      receiverCampMemberCard.mirrorReceiverIds[i++],
     );
     if (!mirror) {
       continue;
     }
     const { _id, receiverId, senderCampMemberCardId, message, time } = mirror;
     const otherCampMemberCard = await CampMemberCard.findById(
-      senderCampMemberCardId
+      senderCampMemberCardId,
     );
     if (!otherCampMemberCard) {
       continue;
@@ -680,7 +686,7 @@ async function triggerMirrorUser(
   i = 0;
   while (i < senderCampMemberCard.mirrorSenderIds.length) {
     const mirror = await Mirror.findById(
-      senderCampMemberCard.mirrorSenderIds[i++]
+      senderCampMemberCard.mirrorSenderIds[i++],
     );
     if (!mirror) {
       continue;

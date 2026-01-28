@@ -281,5 +281,5 @@ router.put("/updateCampDict/", protect, updateCampDict); //
 router.delete("/deleteCampDict/params/:id", protect, deleteCampDict); //
 router.get("/getCampDictsForUpdate/params/:id", getCampDictsForUpdate); //
 router.get("/getBaanDictsForUpdate/params/:id", getBaanDictsForUpdate); //
-router.get("/getPartDictsForUpdate/params/:id", getPartDictsForUpdate);//
+router.get("/getPartDictsForUpdate/params/:id", getPartDictsForUpdate); //
 export default router;

@@ -21,18 +21,13 @@ import {
 import TextAnswer from "../../models/TextAnswer";
 import TextQuestion from "../../models/TextQuestion";
 import User from "../../models/User";
-import {
-  sendRes,
-  swop,
-  stringToId,
-  removeDuplicate,
-} from "../setup";
+import { sendRes, swop, stringToId, removeDuplicate } from "../setup";
 import express from "express";
-import {  getAuthTypes } from "./getCampData";
+import { getAuthTypes } from "./getCampData";
 
 export async function editQuestion(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const edit: EditQuestionPack = req.body;
@@ -153,7 +148,7 @@ export async function editQuestion(
 }
 export async function getAllQuestion(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   if (!user) {
@@ -162,7 +157,7 @@ export async function getAllQuestion(
   }
   const questions = await getAllQuestionRaw(
     stringToId(req.params.id),
-    user._id
+    user._id,
   );
   if (!questions) {
     sendRes(res, false);
@@ -172,7 +167,7 @@ export async function getAllQuestion(
 }
 export async function getAllQuestionRaw(
   campId: Id,
-  userId: Id
+  userId: Id,
 ): Promise<GetAllQuestion | null> {
   const user = await User.findById(userId);
   const camp = await Camp.findById(campId);
@@ -183,7 +178,7 @@ export async function getAllQuestionRaw(
   const choices: GetChoiceQuestion[] = [];
   if (camp.mapAnswerPackIdByUserId.has(user._id.toString())) {
     const answerPack = await AnswerContainer.findById(
-      camp.mapAnswerPackIdByUserId.get(user._id.toString())
+      camp.mapAnswerPackIdByUserId.get(user._id.toString()),
     );
     if (answerPack) {
       const textQuestionIds: Id[] = [];
@@ -301,7 +296,7 @@ export async function getAllQuestionRaw(
       }
       const choiceRemain = removeDuplicate(
         camp.choiceQuestionIds,
-        choiceQuestionIds
+        choiceQuestionIds,
       );
       for (const choiceId of choiceRemain) {
         const choice = await ChoiceQuestion.findById(choiceId);
@@ -462,7 +457,7 @@ export async function getAllQuestionRaw(
 export async function answerAllQuestion(
   answer: AnswerPack,
   userId: Id,
-  role: RoleCamp
+  role: RoleCamp,
 ) {
   const camp = await Camp.findById(answer.campId);
   const user = await User.findById(userId);
@@ -472,7 +467,7 @@ export async function answerAllQuestion(
   const choiceAnswerIds: Id[] = [];
   const textAnswerIds: Id[] = [];
   let answerContainer = await AnswerContainer.findById(
-    camp.mapAnswerPackIdByUserId.get(user._id.toString())
+    camp.mapAnswerPackIdByUserId.get(user._id.toString()),
   );
   if (!answerContainer) {
     answerContainer = await AnswerContainer.create({
@@ -486,18 +481,18 @@ export async function answerAllQuestion(
           nongAnswerPackIds: swop(
             null,
             answerContainer._id,
-            user.nongAnswerPackIds
+            user.nongAnswerPackIds,
           ),
         });
         camp.mapAnswerPackIdByUserId.set(
           user._id.toString(),
-          answerContainer._id
+          answerContainer._id,
         );
         await camp.updateOne({
           nongAnswerPackIds: swop(
             null,
             answerContainer._id,
-            camp.nongAnswerPackIds
+            camp.nongAnswerPackIds,
           ),
           mapAnswerPackIdByUserId: camp.mapAnswerPackIdByUserId,
         });
@@ -508,18 +503,18 @@ export async function answerAllQuestion(
           peeAnswerPackIds: swop(
             null,
             answerContainer._id,
-            user.peeAnswerPackIds
+            user.peeAnswerPackIds,
           ),
         });
         camp.mapAnswerPackIdByUserId.set(
           user._id.toString(),
-          answerContainer._id
+          answerContainer._id,
         );
         await camp.updateOne({
           peeAnswerPackIds: swop(
             null,
             answerContainer._id,
-            camp.peeAnswerPackIds
+            camp.peeAnswerPackIds,
           ),
           mapAnswerPackIdByUserId: camp.mapAnswerPackIdByUserId,
           peeAnswerIds: swop(null, user._id, camp.peeAnswerIds),
@@ -531,18 +526,18 @@ export async function answerAllQuestion(
           peeAnswerPackIds: swop(
             null,
             answerContainer._id,
-            user.peeAnswerPackIds
+            user.peeAnswerPackIds,
           ),
         });
         camp.mapAnswerPackIdByUserId.set(
           user._id.toString(),
-          answerContainer._id
+          answerContainer._id,
         );
         await camp.updateOne({
           peeAnswerPackIds: swop(
             null,
             answerContainer._id,
-            camp.peeAnswerPackIds
+            camp.peeAnswerPackIds,
           ),
           mapAnswerPackIdByUserId: camp.mapAnswerPackIdByUserId,
           peeAnswerIds: swop(null, user._id, camp.peeAnswerIds),
@@ -574,7 +569,7 @@ export async function answerAllQuestion(
   }
   for (const choiceAnswerPack of answer.choiceAnswers) {
     const question1 = await ChoiceQuestion.findById(
-      choiceAnswerPack.questionId
+      choiceAnswerPack.questionId,
     );
     if (!question1) {
       continue;
@@ -715,7 +710,7 @@ export async function answerAllQuestion(
 }
 export async function deleteChoiceQuestion(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const question = await ChoiceQuestion.findById(req.params.id);
   if (!question) {
@@ -750,7 +745,7 @@ export async function deleteChoiceQuestion(
 }
 export async function deleteTextQuestion(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const question = await TextQuestion.findById(req.params.id);
   if (!question) {
@@ -785,7 +780,7 @@ export async function deleteTextQuestion(
 }
 export async function peeAnswerQuestion(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const answer: AnswerPack = req.body;
   const camp = await Camp.findById(answer.campId);
@@ -795,7 +790,7 @@ export async function peeAnswerQuestion(
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
   if (!campMemberCard) {
     sendRes(res, false);
@@ -807,7 +802,7 @@ export async function peeAnswerQuestion(
 
 export async function getAllAnswerAndQuestion(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const camp = await Camp.findById(req.params.id);
   const user = await getUser(req);
@@ -958,13 +953,13 @@ export async function getAllAnswerAndQuestion(
     mainTexts,
     peeAnswers,
     success: true,
-    camp
+    camp,
   };
   res.status(200).json(buffer);
 }
 export async function scoreTextQuestions(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const input: ScoreTextQuestions = req.body;
   const camp = await Camp.findById(input.campId);
@@ -974,7 +969,7 @@ export async function scoreTextQuestions(
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
   if (!campMemberCard || campMemberCard.role == "nong") {
     sendRes(res, false);

@@ -23,7 +23,7 @@ import TimeOffset from "../../models/TimeOffset";
 
 export async function getActionPlanByPartId(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   try {
     const part = await Part.findById(req.params.id);
@@ -49,7 +49,7 @@ export async function getActionPlanByPartId(
     let i = 0;
     while (i < part.actionPlanIds.length) {
       const actionPlan: InterActionPlan | null = await ActionPlan.findById(
-        part.actionPlanIds[i++]
+        part.actionPlanIds[i++],
       );
       if (!actionPlan) {
         continue;
@@ -103,7 +103,7 @@ export async function getActionPlanByPartId(
 }
 export async function createActionPlan(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const {
     action,
@@ -157,7 +157,7 @@ export async function createActionPlan(
 }
 export async function updateActionPlan(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   try {
     const actionPlan = await ActionPlan.findById(req.params.id);
@@ -212,7 +212,7 @@ export async function updateActionPlan(
 }
 export async function deleteActionPlan(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   try {
     const hospital = await ActionPlan.findById(req.params.id);
@@ -252,7 +252,7 @@ export async function deleteActionPlan(
 }
 export async function getActionPlans(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   try {
     const data: ShowActionPlan[] = [];
@@ -302,7 +302,7 @@ export async function getActionPlans(
               const place = await Place.findById(placeIds[l++]);
               const building = await Building.findById(place?.buildingId);
               placeName.push(
-                `${building?.name} ${place?.floor} ${place?.room}`
+                `${building?.name} ${place?.floor} ${place?.room}`,
               );
             }
             data.push({
@@ -363,7 +363,7 @@ export async function getActionPlans(
               const place = await Place.findById(placeIds[l++]);
               const building = await Building.findById(place?.buildingId);
               placeName.push(
-                `${building?.name} ${place?.floor} ${place?.room}`
+                `${building?.name} ${place?.floor} ${place?.room}`,
               );
             }
             data.push({
@@ -396,11 +396,11 @@ export async function getActionPlans(
 
 export async function getActionPlan(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   try {
     const actionPlan: InterActionPlan | null = await ActionPlan.findById(
-      req.params.id
+      req.params.id,
     );
     if (!actionPlan) {
       sendRes(res, false);
@@ -447,7 +447,7 @@ export async function getActionPlan(
 
 export async function getActionPlanByCampId(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   try {
     const camp = await Camp.findById(req.params.id);
@@ -474,7 +474,7 @@ export async function getActionPlanByCampId(
       let j = 0;
       while (j < part.actionPlanIds.length) {
         const actionPlan: InterActionPlan | null = await ActionPlan.findById(
-          part.actionPlanIds[j++]
+          part.actionPlanIds[j++],
         );
         if (!actionPlan) {
           continue;
@@ -529,12 +529,12 @@ export async function getActionPlanByCampId(
 }
 export async function getActionPlanForEdit(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
 
   const actionPlanIn: InterActionPlan | null = await ActionPlan.findById(
-    req.params.id
+    req.params.id,
   );
   if (!actionPlanIn || !user) {
     sendRes(res, false);
@@ -605,7 +605,7 @@ export async function getActionPlanForEdit(
   res.status(200).json(buffer);
 }
 async function getTriggerActionPlan(
-  partId: Id
+  partId: Id,
 ): Promise<TriggerActionPlan | null> {
   const part = await Part.findById(partId);
   if (!part) {
@@ -670,7 +670,7 @@ async function getTriggerActionPlan(
     let j = 0;
     while (j < part.actionPlanIds.length) {
       const actionPlan: InterActionPlan | null = await ActionPlan.findById(
-        part.actionPlanIds[j++]
+        part.actionPlanIds[j++],
       );
       if (!actionPlan) {
         continue;

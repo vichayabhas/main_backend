@@ -39,26 +39,28 @@ async function getMealTrigger(
   campMemberCardIds1: Id[],
   campMemberCardIds2: Id[],
   campMemberCardIds3: Id[],
-  inputs: TriggerCampMemberCard[]
+  inputs: TriggerCampMemberCard[],
 ): Promise<TriggerCampMemberCard[]> {
   const outputs = inputs;
   const campMemberCardIds = campMemberCardIds1.concat(
     campMemberCardIds2,
-    campMemberCardIds3
+    campMemberCardIds3,
   );
   let i = 0;
   while (i < campMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
-      campMemberCardIds[i++]
+      campMemberCardIds[i++],
     );
     if (!campMemberCard) {
       continue;
     }
-    const healthIssue = await HealthIssue.findById(campMemberCard.healthIssueId);
+    const healthIssue = await HealthIssue.findById(
+      campMemberCard.healthIssueId,
+    );
     const meals = await getMealsByHealthIssue(
       healthIssue,
       mealIds,
-      campMemberCard
+      campMemberCard,
     );
     outputs.push({ meals, campMemberCardId: campMemberCard._id });
   }
@@ -74,7 +76,7 @@ async function getMealTriggerByCampRaw(camp: BasicCamp) {
     }
     campMemberCardIds.push(
       ...baan.nongCampMemberCardIds,
-      ...baan.peeCampMemberCardIds
+      ...baan.peeCampMemberCardIds,
     );
   }
   i = 0;
@@ -90,7 +92,7 @@ async function getMealTriggerByCampRaw(camp: BasicCamp) {
     campMemberCardIds,
     [],
     [],
-    []
+    [],
   );
   return outputs;
 }
@@ -163,7 +165,7 @@ export async function createFood(req: express.Request, res: express.Response) {
 }
 export async function getFoodForUpdate(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const food = await Food.findById(req.params.id);
@@ -188,10 +190,10 @@ export async function getFoodForUpdate(
       continue;
     }
     nongCampMemberCardHaveHealthIssueIds.push(
-      ...baan.nongCampMemberCardHaveHealthIssueIds
+      ...baan.nongCampMemberCardHaveHealthIssueIds,
     );
     peeCampMemberCardHaveHealthIssueIds.push(
-      ...baan.peeCampMemberCardHaveHealthIssueIds
+      ...baan.peeCampMemberCardHaveHealthIssueIds,
     );
   }
   i = 0;
@@ -201,28 +203,28 @@ export async function getFoodForUpdate(
       continue;
     }
     petoCampMemberCardHaveHealthIssueIds.push(
-      ...part.petoCampMemberCardHaveHealthIssueIds
+      ...part.petoCampMemberCardHaveHealthIssueIds,
     );
   }
   const nongHealths: HealthIssuePack[] =
     camp.nongDataLock && meal.roles.includes("nong")
       ? await getHealthIssuePack(
           nongCampMemberCardHaveHealthIssueIds,
-          isFoodValid
+          isFoodValid,
         )
       : [];
   const peeHealths: HealthIssuePack[] =
     camp.peeDataLock && meal.roles.includes("pee")
       ? await getHealthIssuePack(
           peeCampMemberCardHaveHealthIssueIds,
-          isFoodValid
+          isFoodValid,
         )
       : [];
   const petoHealths: HealthIssuePack[] =
     camp.petoDataLock && meal.roles.includes("peto")
       ? await getHealthIssuePack(
           petoCampMemberCardHaveHealthIssueIds,
-          isFoodValid
+          isFoodValid,
         )
       : [];
   const {
@@ -258,18 +260,20 @@ export async function getFoodForUpdate(
 export async function getHealthIssuePack(
   campMemberCardIds: Id[],
   isValid: (input: HealthIssuePack) => boolean,
-  optionalArray?: HealthIssuePack[]
+  optionalArray?: HealthIssuePack[],
 ) {
   let i = 0;
   const healthPacks: HealthIssuePack[] = [];
   while (i < campMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
-      campMemberCardIds[i++]
+      campMemberCardIds[i++],
     );
     if (!campMemberCard) {
       continue;
     }
-    const healthIssue = await HealthIssue.findById(campMemberCard.healthIssueId);
+    const healthIssue = await HealthIssue.findById(
+      campMemberCard.healthIssueId,
+    );
     const user = await User.findById(campMemberCard.userId);
     if (!healthIssue || !user) {
       continue;
@@ -308,27 +312,27 @@ export async function updateFood(req: express.Request, res: express.Response) {
   if (input.isWhiteList == food.isWhiteList) {
     const removeNong = removeDuplicate(
       food.nongCampMemberCardIds,
-      input.nongCampMemberCardIds
+      input.nongCampMemberCardIds,
     );
     const addNong = removeDuplicate(
       input.nongCampMemberCardIds,
-      food.nongCampMemberCardIds
+      food.nongCampMemberCardIds,
     );
     const removePee = removeDuplicate(
       food.peeCampMemberCardIds,
-      input.peeCampMemberCardIds
+      input.peeCampMemberCardIds,
     );
     const addPee = removeDuplicate(
       input.peeCampMemberCardIds,
-      food.peeCampMemberCardIds
+      food.peeCampMemberCardIds,
     );
     const removePeto = removeDuplicate(
       food.petoCampMemberCardIds,
-      input.petoCampMemberCardIds
+      input.petoCampMemberCardIds,
     );
     const addPeto = removeDuplicate(
       input.petoCampMemberCardIds,
-      food.petoCampMemberCardIds
+      food.petoCampMemberCardIds,
     );
     let { nongCampMemberCardIds, peeCampMemberCardIds, petoCampMemberCardIds } =
       food;
@@ -341,14 +345,14 @@ export async function updateFood(req: express.Request, res: express.Response) {
       nongCampMemberCardIds = swop(
         campMemberCard._id,
         null,
-        nongCampMemberCardIds
+        nongCampMemberCardIds,
       );
       if (food.isWhiteList) {
         await campMemberCard.updateOne({
           whiteListFoodIds: swop(
             food._id,
             null,
-            campMemberCard.whiteListFoodIds
+            campMemberCard.whiteListFoodIds,
           ),
         });
       } else {
@@ -356,7 +360,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
           blackListFoodIds: swop(
             food._id,
             null,
-            campMemberCard.blackListFoodIds
+            campMemberCard.blackListFoodIds,
           ),
         });
       }
@@ -370,14 +374,14 @@ export async function updateFood(req: express.Request, res: express.Response) {
       nongCampMemberCardIds = swop(
         null,
         campMemberCard._id,
-        nongCampMemberCardIds
+        nongCampMemberCardIds,
       );
       if (input.isWhiteList) {
         await campMemberCard.updateOne({
           whiteListFoodIds: swop(
             null,
             food._id,
-            campMemberCard.whiteListFoodIds
+            campMemberCard.whiteListFoodIds,
           ),
         });
       } else {
@@ -385,7 +389,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
           blackListFoodIds: swop(
             null,
             food._id,
-            campMemberCard.blackListFoodIds
+            campMemberCard.blackListFoodIds,
           ),
         });
       }
@@ -399,14 +403,14 @@ export async function updateFood(req: express.Request, res: express.Response) {
       peeCampMemberCardIds = swop(
         campMemberCard._id,
         null,
-        peeCampMemberCardIds
+        peeCampMemberCardIds,
       );
       if (food.isWhiteList) {
         await campMemberCard.updateOne({
           whiteListFoodIds: swop(
             food._id,
             null,
-            campMemberCard.whiteListFoodIds
+            campMemberCard.whiteListFoodIds,
           ),
         });
       } else {
@@ -414,7 +418,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
           blackListFoodIds: swop(
             food._id,
             null,
-            campMemberCard.blackListFoodIds
+            campMemberCard.blackListFoodIds,
           ),
         });
       }
@@ -428,14 +432,14 @@ export async function updateFood(req: express.Request, res: express.Response) {
       peeCampMemberCardIds = swop(
         null,
         campMemberCard._id,
-        peeCampMemberCardIds
+        peeCampMemberCardIds,
       );
       if (input.isWhiteList) {
         await campMemberCard.updateOne({
           whiteListFoodIds: swop(
             null,
             food._id,
-            campMemberCard.whiteListFoodIds
+            campMemberCard.whiteListFoodIds,
           ),
         });
       } else {
@@ -443,7 +447,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
           blackListFoodIds: swop(
             null,
             food._id,
-            campMemberCard.blackListFoodIds
+            campMemberCard.blackListFoodIds,
           ),
         });
       }
@@ -457,14 +461,14 @@ export async function updateFood(req: express.Request, res: express.Response) {
       petoCampMemberCardIds = swop(
         campMemberCard._id,
         null,
-        petoCampMemberCardIds
+        petoCampMemberCardIds,
       );
       if (food.isWhiteList) {
         await campMemberCard.updateOne({
           whiteListFoodIds: swop(
             food._id,
             null,
-            campMemberCard.whiteListFoodIds
+            campMemberCard.whiteListFoodIds,
           ),
         });
       } else {
@@ -472,7 +476,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
           blackListFoodIds: swop(
             food._id,
             null,
-            campMemberCard.blackListFoodIds
+            campMemberCard.blackListFoodIds,
           ),
         });
       }
@@ -486,14 +490,14 @@ export async function updateFood(req: express.Request, res: express.Response) {
       petoCampMemberCardIds = swop(
         null,
         campMemberCard._id,
-        petoCampMemberCardIds
+        petoCampMemberCardIds,
       );
       if (input.isWhiteList) {
         await campMemberCard.updateOne({
           whiteListFoodIds: swop(
             null,
             food._id,
-            campMemberCard.whiteListFoodIds
+            campMemberCard.whiteListFoodIds,
           ),
         });
       } else {
@@ -501,7 +505,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
           blackListFoodIds: swop(
             null,
             food._id,
-            campMemberCard.blackListFoodIds
+            campMemberCard.blackListFoodIds,
           ),
         });
       }
@@ -540,10 +544,10 @@ export async function updateFood(req: express.Request, res: express.Response) {
         continue;
       }
       nongCampMemberCardHaveHealthIssueIds.push(
-        ...baan.nongCampMemberCardHaveHealthIssueIds
+        ...baan.nongCampMemberCardHaveHealthIssueIds,
       );
       peeCampMemberCardHaveHealthIssueIds.push(
-        ...baan.peeCampMemberCardHaveHealthIssueIds
+        ...baan.peeCampMemberCardHaveHealthIssueIds,
       );
     }
     i = 0;
@@ -553,37 +557,37 @@ export async function updateFood(req: express.Request, res: express.Response) {
         continue;
       }
       petoCampMemberCardHaveHealthIssueIds.push(
-        ...part.petoCampMemberCardHaveHealthIssueIds
+        ...part.petoCampMemberCardHaveHealthIssueIds,
       );
     }
     if (changeListPriority || !listPriority) {
       const nongHealthCampMemberCardIds = removeDuplicate(
         nongCampMemberCardHaveHealthIssueIds,
-        nongChangeCampMemberCardIds
+        nongChangeCampMemberCardIds,
       );
       const peeHealthCampMemberCardIds = removeDuplicate(
         peeCampMemberCardHaveHealthIssueIds,
-        peeChangeCampMemberCardIds
+        peeChangeCampMemberCardIds,
       );
       const petoHealthCampMemberCardIds = removeDuplicate(
         petoCampMemberCardHaveHealthIssueIds,
-        petoChangeCampMemberCardIds
+        petoChangeCampMemberCardIds,
       );
       const healthCampMemberCardIds = nongHealthCampMemberCardIds.concat(
         peeHealthCampMemberCardIds,
-        petoHealthCampMemberCardIds
+        petoHealthCampMemberCardIds,
       );
       i = 0;
       if (changeListPriority) {
         while (i < healthCampMemberCardIds.length) {
           const healthCampMemberCard = await CampMemberCard.findById(
-            healthCampMemberCardIds[i++]
+            healthCampMemberCardIds[i++],
           );
           if (!healthCampMemberCard) {
             continue;
           }
           const healthIssue = await HealthIssue.findById(
-            healthCampMemberCard.healthIssueId
+            healthCampMemberCard.healthIssueId,
           );
           if (!healthIssue) {
             continue;
@@ -598,7 +602,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
           const meals = await getMealsByHealthIssue(
             healthIssue,
             camp.mealIds,
-            healthCampMemberCard
+            healthCampMemberCard,
           );
           triggers.push({
             meals,
@@ -608,13 +612,13 @@ export async function updateFood(req: express.Request, res: express.Response) {
       } else {
         while (i < healthCampMemberCardIds.length) {
           const healthCampMemberCard = await CampMemberCard.findById(
-            healthCampMemberCardIds[i++]
+            healthCampMemberCardIds[i++],
           );
           if (!healthCampMemberCard) {
             continue;
           }
           const healthIssue = await HealthIssue.findById(
-            healthCampMemberCard.healthIssueId
+            healthCampMemberCard.healthIssueId,
           );
           if (!healthIssue) {
             continue;
@@ -628,7 +632,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
           const meals = await getMealsByHealthIssue(
             healthIssue,
             camp.mealIds,
-            healthCampMemberCard
+            healthCampMemberCard,
           );
           triggers.push({
             meals,
@@ -641,7 +645,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
         nongChangeCampMemberCardIds,
         peeChangeCampMemberCardIds,
         petoChangeCampMemberCardIds,
-        triggers
+        triggers,
       );
     }
     const data = await Food.findById(food._id);
@@ -664,7 +668,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
     let i = 0;
     while (i < food.nongCampMemberCardIds.length) {
       const campMemberCard = await CampMemberCard.findById(
-        food.nongCampMemberCardIds[i++]
+        food.nongCampMemberCardIds[i++],
       );
       if (!campMemberCard) {
         continue;
@@ -674,7 +678,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
           whiteListFoodIds: swop(
             food._id,
             null,
-            campMemberCard.whiteListFoodIds
+            campMemberCard.whiteListFoodIds,
           ),
         });
       } else {
@@ -682,7 +686,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
           blackListFoodIds: swop(
             food._id,
             null,
-            campMemberCard.blackListFoodIds
+            campMemberCard.blackListFoodIds,
           ),
         });
       }
@@ -690,7 +694,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
     i = 0;
     while (i < input.nongCampMemberCardIds.length) {
       const campMemberCard = await CampMemberCard.findById(
-        input.nongCampMemberCardIds[i++]
+        input.nongCampMemberCardIds[i++],
       );
       if (!campMemberCard) {
         continue;
@@ -699,19 +703,19 @@ export async function updateFood(req: express.Request, res: express.Response) {
       nongCampMemberCardIds = swop(
         null,
         campMemberCard._id,
-        nongCampMemberCardIds
+        nongCampMemberCardIds,
       );
       nongHealthIssueIds = swop(
         null,
         campMemberCard.healthIssueId,
-        nongHealthIssueIds
+        nongHealthIssueIds,
       );
       if (input.isWhiteList) {
         await campMemberCard.updateOne({
           whiteListFoodIds: swop(
             null,
             food._id,
-            campMemberCard.whiteListFoodIds
+            campMemberCard.whiteListFoodIds,
           ),
         });
       } else {
@@ -719,7 +723,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
           blackListFoodIds: swop(
             null,
             food._id,
-            campMemberCard.blackListFoodIds
+            campMemberCard.blackListFoodIds,
           ),
         });
       }
@@ -727,7 +731,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
     i = 0;
     while (i < food.peeCampMemberCardIds.length) {
       const campMemberCard = await CampMemberCard.findById(
-        food.peeCampMemberCardIds[i++]
+        food.peeCampMemberCardIds[i++],
       );
       if (!campMemberCard) {
         continue;
@@ -737,7 +741,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
           whiteListFoodIds: swop(
             food._id,
             null,
-            campMemberCard.whiteListFoodIds
+            campMemberCard.whiteListFoodIds,
           ),
         });
       } else {
@@ -745,7 +749,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
           blackListFoodIds: swop(
             food._id,
             null,
-            campMemberCard.blackListFoodIds
+            campMemberCard.blackListFoodIds,
           ),
         });
       }
@@ -753,7 +757,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
     i = 0;
     while (i < input.peeCampMemberCardIds.length) {
       const campMemberCard = await CampMemberCard.findById(
-        input.peeCampMemberCardIds[i++]
+        input.peeCampMemberCardIds[i++],
       );
       if (!campMemberCard) {
         continue;
@@ -762,19 +766,19 @@ export async function updateFood(req: express.Request, res: express.Response) {
       peeCampMemberCardIds = swop(
         null,
         campMemberCard._id,
-        peeCampMemberCardIds
+        peeCampMemberCardIds,
       );
       peeHealthIssueIds = swop(
         null,
         campMemberCard.healthIssueId,
-        peeHealthIssueIds
+        peeHealthIssueIds,
       );
       if (input.isWhiteList) {
         await campMemberCard.updateOne({
           whiteListFoodIds: swop(
             null,
             food._id,
-            campMemberCard.whiteListFoodIds
+            campMemberCard.whiteListFoodIds,
           ),
         });
       } else {
@@ -782,7 +786,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
           blackListFoodIds: swop(
             null,
             food._id,
-            campMemberCard.blackListFoodIds
+            campMemberCard.blackListFoodIds,
           ),
         });
       }
@@ -790,7 +794,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
     i = 0;
     while (i < food.petoCampMemberCardIds.length) {
       const campMemberCard = await CampMemberCard.findById(
-        food.petoCampMemberCardIds[i++]
+        food.petoCampMemberCardIds[i++],
       );
       if (!campMemberCard) {
         continue;
@@ -800,7 +804,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
           whiteListFoodIds: swop(
             food._id,
             null,
-            campMemberCard.whiteListFoodIds
+            campMemberCard.whiteListFoodIds,
           ),
         });
       } else {
@@ -808,7 +812,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
           blackListFoodIds: swop(
             food._id,
             null,
-            campMemberCard.blackListFoodIds
+            campMemberCard.blackListFoodIds,
           ),
         });
       }
@@ -816,7 +820,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
     i = 0;
     while (i < input.petoCampMemberCardIds.length) {
       const campMemberCard = await CampMemberCard.findById(
-        input.petoCampMemberCardIds[i++]
+        input.petoCampMemberCardIds[i++],
       );
       if (!campMemberCard) {
         continue;
@@ -825,19 +829,19 @@ export async function updateFood(req: express.Request, res: express.Response) {
       petoCampMemberCardIds = swop(
         null,
         campMemberCard._id,
-        petoCampMemberCardIds
+        petoCampMemberCardIds,
       );
       petoHealthIssueIds = swop(
         null,
         campMemberCard.healthIssueId,
-        petoHealthIssueIds
+        petoHealthIssueIds,
       );
       if (input.isWhiteList) {
         await campMemberCard.updateOne({
           whiteListFoodIds: swop(
             null,
             food._id,
-            campMemberCard.whiteListFoodIds
+            campMemberCard.whiteListFoodIds,
           ),
         });
       } else {
@@ -845,7 +849,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
           blackListFoodIds: swop(
             null,
             food._id,
-            campMemberCard.blackListFoodIds
+            campMemberCard.blackListFoodIds,
           ),
         });
       }
@@ -872,7 +876,7 @@ export async function updateFood(req: express.Request, res: express.Response) {
 }
 export async function getMealByUser(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   if (!user) {
@@ -897,7 +901,7 @@ export async function getMealByUserRaw(userId: Id, mealId: Id) {
     return null;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
   if (!campMemberCard) {
     return null;
@@ -1022,7 +1026,7 @@ async function deleteFoodRaw(foodId: Id): Promise<boolean> {
   let i = 0;
   while (i < food.nongCampMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
-      food.nongCampMemberCardIds[i++]
+      food.nongCampMemberCardIds[i++],
     );
     if (!campMemberCard) {
       continue;
@@ -1040,7 +1044,7 @@ async function deleteFoodRaw(foodId: Id): Promise<boolean> {
   i = 0;
   while (i < food.peeCampMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
-      food.peeCampMemberCardIds[i++]
+      food.peeCampMemberCardIds[i++],
     );
     if (!campMemberCard) {
       continue;
@@ -1058,7 +1062,7 @@ async function deleteFoodRaw(foodId: Id): Promise<boolean> {
   i = 0;
   while (i < food.petoCampMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
-      food.petoCampMemberCardIds[i++]
+      food.petoCampMemberCardIds[i++],
     );
     if (!campMemberCard) {
       continue;
@@ -1185,7 +1189,7 @@ export async function updateMeal(req: express.Request, res: express.Response) {
 }
 export async function getMealForUpdate(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const meal = await Meal.findById(req.params.id);
   const user = await getUser(req);

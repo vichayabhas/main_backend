@@ -73,12 +73,12 @@ export async function register(req: express.Request, res: express.Response) {
     let fridayActEn: boolean = false;
     let extraAuth: ExtraAuths[] = [];
     const gewertzSquareUser = await GewertzSquareUser.findOne({ email }).select(
-      "+password"
+      "+password",
     );
     if (gewertzSquareUser) {
       const isMatch = await bcrypt.compare(
         password,
-        gewertzSquareUser.password
+        gewertzSquareUser.password,
       );
       if (!isMatch) {
         res.status(401).json({
@@ -118,7 +118,7 @@ export async function register(req: express.Request, res: express.Response) {
         const userType: UserType = "student";
         await GewertzSquareBooking.findByIdAndUpdate(
           gewertzSquareBookingIds[i++],
-          { userType, userId: user._id }
+          { userType, userId: user._id },
         );
       }
       await gewertzSquareUser.deleteOne();
@@ -164,7 +164,7 @@ export async function login(req: express.Request, res: express.Response) {
 const sendTokenResponse = (
   id: Id,
   statusCode: number,
-  res: express.Response
+  res: express.Response,
 ) => {
   const token = jwt.sign({ id }, buf, {
     expiresIn: process.env.JWT_EXPIRE,
@@ -172,7 +172,7 @@ const sendTokenResponse = (
   const options = {
     expires: new Date(
       Date.now() +
-        parseInt(process.env.JWT_COOKIE_EXPIRE || "0") * 24 * 60 * 60 * 1000
+        parseInt(process.env.JWT_COOKIE_EXPIRE || "0") * 24 * 60 * 60 * 1000,
     ),
     httpOnly: true,
   };
@@ -231,7 +231,7 @@ export async function updateSize(req: express.Request, res: express.Response) {
     let i = 0;
     while (i < user.campMemberCardIds.length) {
       const campMemberCard = await CampMemberCard.findById(
-        user.campMemberCardIds[i++]
+        user.campMemberCardIds[i++],
       );
       if (!campMemberCard) {
         continue;
@@ -253,11 +253,11 @@ export async function updateSize(req: express.Request, res: express.Response) {
           await campMemberCard.updateOne({ size: shirtSize });
           baan.nongShirtSize.set(
             oldSize,
-            calculate(baan.nongShirtSize.get(oldSize), 0, 1)
+            calculate(baan.nongShirtSize.get(oldSize), 0, 1),
           );
           baan.nongShirtSize.set(
             shirtSize,
-            calculate(baan.nongShirtSize.get(shirtSize), 1, 0)
+            calculate(baan.nongShirtSize.get(shirtSize), 1, 0),
           );
           await baan.updateOne({
             nongShirtSize: baan.nongShirtSize,
@@ -281,19 +281,19 @@ export async function updateSize(req: express.Request, res: express.Response) {
           await campMemberCard.updateOne({ size: shirtSize });
           baan.peeShirtSize.set(
             oldSize,
-            calculate(baan.peeShirtSize.get(oldSize), 0, 1)
+            calculate(baan.peeShirtSize.get(oldSize), 0, 1),
           );
           baan.peeShirtSize.set(
             shirtSize,
-            calculate(baan.peeShirtSize.get(shirtSize), 1, 0)
+            calculate(baan.peeShirtSize.get(shirtSize), 1, 0),
           );
           part.peeShirtSize.set(
             oldSize,
-            calculate(part.peeShirtSize.get(oldSize), 0, 1)
+            calculate(part.peeShirtSize.get(oldSize), 0, 1),
           );
           part.peeShirtSize.set(
             shirtSize,
-            calculate(part.peeShirtSize.get(shirtSize), 1, 0)
+            calculate(part.peeShirtSize.get(shirtSize), 1, 0),
           );
           await baan.updateOne({
             peeShirtSize: baan.peeShirtSize,
@@ -319,11 +319,11 @@ export async function updateSize(req: express.Request, res: express.Response) {
           await campMemberCard.updateOne({ size: shirtSize });
           part.petoShirtSize.set(
             oldSize,
-            calculate(part.petoShirtSize.get(oldSize), 0, 1)
+            calculate(part.petoShirtSize.get(oldSize), 0, 1),
           );
           part.petoShirtSize.set(
             shirtSize,
-            calculate(part.petoShirtSize.get(shirtSize), 1, 0)
+            calculate(part.petoShirtSize.get(shirtSize), 1, 0),
           );
           await part.updateOne({
             petoShirtSize: part.petoShirtSize,
@@ -341,7 +341,7 @@ export async function updateSize(req: express.Request, res: express.Response) {
 }
 export async function getHealthIssue(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   try {
     const data = await HealthIssue.findById(req.params.id);
@@ -360,7 +360,7 @@ export async function getHealthIssue(
 }
 export async function updateHealth(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const healthIssueBody: HealthIssueBody = req.body;
@@ -410,7 +410,7 @@ export async function updateHealth(
       let i = 0;
       while (i < user.campMemberCardIds.length) {
         const campMemberCard = await CampMemberCard.findById(
-          user.campMemberCardIds[i++]
+          user.campMemberCardIds[i++],
         );
         if (!campMemberCard) {
           continue;
@@ -418,7 +418,7 @@ export async function updateHealth(
         switch (campMemberCard.role) {
           case "nong": {
             const nongCamp = await NongCamp.findById(
-              campMemberCard.campModelId
+              campMemberCard.campModelId,
             );
             if (!nongCamp) {
               continue;
@@ -435,12 +435,12 @@ export async function updateHealth(
               nongHealthIssueIds: swop(
                 null,
                 health._id,
-                baan.nongHealthIssueIds
+                baan.nongHealthIssueIds,
               ),
               nongCampMemberCardHaveHealthIssueIds: swop(
                 null,
                 campMemberCard._id,
-                baan.nongCampMemberCardHaveHealthIssueIds
+                baan.nongCampMemberCardHaveHealthIssueIds,
               ),
             });
             campMemberCardIds.push(campMemberCard._id);
@@ -466,7 +466,7 @@ export async function updateHealth(
               peeCampMemberCardHaveHealthIssueIds: swop(
                 null,
                 campMemberCard._id,
-                baan.peeCampMemberCardHaveHealthIssueIds
+                baan.peeCampMemberCardHaveHealthIssueIds,
               ),
             });
             await part.updateOne({
@@ -474,7 +474,7 @@ export async function updateHealth(
               peeCampMemberCardHaveHealthIssueIds: swop(
                 null,
                 campMemberCard._id,
-                part.peeCampMemberCardHaveHealthIssueIds
+                part.peeCampMemberCardHaveHealthIssueIds,
               ),
             });
             campMemberCardIds.push(campMemberCard._id);
@@ -483,7 +483,7 @@ export async function updateHealth(
           }
           case "peto": {
             const petoCamp = await PetoCamp.findById(
-              campMemberCard.campModelId
+              campMemberCard.campModelId,
             );
             if (!petoCamp) {
               continue;
@@ -500,19 +500,19 @@ export async function updateHealth(
               petoCampMemberCardHaveHealthIssueIds: swop(
                 null,
                 campMemberCard._id,
-                part.petoCampMemberCardHaveHealthIssueIds
+                part.petoCampMemberCardHaveHealthIssueIds,
               ),
             });
             await part.updateOne({
               petoHealthIssueIds: swop(
                 null,
                 health._id,
-                part.petoHealthIssueIds
+                part.petoHealthIssueIds,
               ),
               petoCampMemberCardHaveHealthIssueIds: swop(
                 null,
                 campMemberCard._id,
-                part.petoCampMemberCardHaveHealthIssueIds
+                part.petoCampMemberCardHaveHealthIssueIds,
               ),
             });
             campMemberCardIds.push(campMemberCard._id);
@@ -541,7 +541,7 @@ export async function updateHealth(
       let i = 0;
       while (i < old.campMemberCardIds.length) {
         const campMemberCard = await CampMemberCard.findById(
-          old.campMemberCardIds[i++]
+          old.campMemberCardIds[i++],
         );
         if (!campMemberCard) {
           continue;
@@ -549,7 +549,7 @@ export async function updateHealth(
         switch (campMemberCard.role) {
           case "nong": {
             const nongCamp = await NongCamp.findById(
-              campMemberCard.campModelId
+              campMemberCard.campModelId,
             );
             if (!nongCamp) {
               continue;
@@ -564,7 +564,7 @@ export async function updateHealth(
               nongCampMemberCardHaveHealthIssueIds: swop(
                 campMemberCard._id,
                 null,
-                baan.nongCampMemberCardHaveHealthIssueIds
+                baan.nongCampMemberCardHaveHealthIssueIds,
               ),
             });
             await campMemberCard.updateOne({ healthIssueId: null });
@@ -586,7 +586,7 @@ export async function updateHealth(
               peeCampMemberCardHaveHealthIssueIds: swop(
                 campMemberCard._id,
                 null,
-                baan.peeCampMemberCardHaveHealthIssueIds
+                baan.peeCampMemberCardHaveHealthIssueIds,
               ),
             });
             await part.updateOne({
@@ -594,7 +594,7 @@ export async function updateHealth(
               peeCampMemberCardHaveHealthIssueIds: swop(
                 campMemberCard._id,
                 null,
-                part.peeCampMemberCardHaveHealthIssueIds
+                part.peeCampMemberCardHaveHealthIssueIds,
               ),
             });
             await campMemberCard.updateOne({ healthIssueId: null });
@@ -602,7 +602,7 @@ export async function updateHealth(
           }
           case "peto": {
             const petoCamp = await PetoCamp.findById(
-              campMemberCard.campModelId
+              campMemberCard.campModelId,
             );
             if (!petoCamp) {
               continue;
@@ -617,7 +617,7 @@ export async function updateHealth(
               petoCampMemberCardHaveHealthIssueIds: swop(
                 campMemberCard._id,
                 null,
-                part.petoCampMemberCardHaveHealthIssueIds
+                part.petoCampMemberCardHaveHealthIssueIds,
               ),
             });
             await campMemberCard.updateOne({ healthIssueId: null });
@@ -665,7 +665,7 @@ export async function updateHealth(
     let i = 0;
     while (i < old.campMemberCardIds.length) {
       const campMemberCard = await CampMemberCard.findById(
-        old.campMemberCardIds[i++]
+        old.campMemberCardIds[i++],
       );
       if (!campMemberCard) {
         continue;
@@ -685,7 +685,7 @@ export async function updateHealth(
             nongHealthIssueIds: swop(
               old._id,
               health._id,
-              baan.nongHealthIssueIds
+              baan.nongHealthIssueIds,
             ),
           });
           await campMemberCard.updateOne({ healthIssueId: health._id });
@@ -706,14 +706,14 @@ export async function updateHealth(
             peeHealthIssueIds: swop(
               old._id,
               health._id,
-              baan.peeHealthIssueIds
+              baan.peeHealthIssueIds,
             ),
           });
           await part.updateOne({
             peeHealthIssueIds: swop(
               old._id,
               health._id,
-              part.peeHealthIssueIds
+              part.peeHealthIssueIds,
             ),
           });
           await campMemberCard.updateOne({ healthIssueId: health._id });
@@ -733,7 +733,7 @@ export async function updateHealth(
             petoHealthIssueIds: swop(
               old._id,
               health._id,
-              part.petoHealthIssueIds
+              part.petoHealthIssueIds,
             ),
           });
           await campMemberCard.updateOne({ healthIssueId: health._id });
@@ -747,7 +747,7 @@ export async function updateHealth(
   } else {
     const health = await HealthIssue.findByIdAndUpdate(
       user.healthIssueId,
-      healthIssueBody
+      healthIssueBody,
     );
     if (!health) {
       sendRes(res, false);
@@ -756,7 +756,7 @@ export async function updateHealth(
     let i = 0;
     while (i < user.campMemberCardIds.length) {
       const campMemberCard = await CampMemberCard.findById(
-        user.campMemberCardIds[i++]
+        user.campMemberCardIds[i++],
       );
       if (!campMemberCard) {
         continue;
@@ -772,7 +772,7 @@ export async function updateHealth(
 }
 export async function updateBottle(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const old = await getUser(req);
   if (!old) {
@@ -790,7 +790,7 @@ export async function updateBottle(
   let i = 0;
   while (i < user.campMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
-      user.campMemberCardIds[i++]
+      user.campMemberCardIds[i++],
     );
     if (!campMemberCard) {
       continue;
@@ -887,19 +887,19 @@ export async function updateBottle(
 }
 export async function getCampMemberCardByCampId(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const campId: string = req.params.id;
   const camp = await Camp.findById(campId);
   const campMemberCard = await CampMemberCard.findById(
-    camp?.mapCampMemberCardIdByUserId.get(user?.id)
+    camp?.mapCampMemberCardIdByUserId.get(user?.id),
   );
   res.status(200).json(campMemberCard);
 }
 export async function updateProfile(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const { email, tel, name, nickname, lastname } = req.body;
@@ -908,7 +908,7 @@ export async function updateProfile(
 }
 export async function changeModeToPee(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   try {
@@ -951,7 +951,7 @@ export async function checkTel(req: express.Request, res: express.Response) {
       continue;
     }
     const campMemberCard = await CampMemberCard.findById(
-      camp.mapCampMemberCardIdByUserId.get(findUser._id.toString())
+      camp.mapCampMemberCardIdByUserId.get(findUser._id.toString()),
     );
     if (!campMemberCard) {
       continue;
@@ -959,11 +959,11 @@ export async function checkTel(req: express.Request, res: express.Response) {
     switch (campMemberCard.role) {
       case "nong": {
         const findNongCamp = await NongCamp.findById(
-          campMemberCard.campModelId
+          campMemberCard.campModelId,
         );
         const findBaan = await Baan.findById(findNongCamp?.baanId);
         relation.push(
-          `เพื่อนชื่อ${findUser.nickname} จากค่าย${camp.campName} บ้าน${findBaan?.name}`
+          `เพื่อนชื่อ${findUser.nickname} จากค่าย${camp.campName} บ้าน${findBaan?.name}`,
         );
         break;
       }
@@ -971,7 +971,7 @@ export async function checkTel(req: express.Request, res: express.Response) {
         const findPeeCamp = await PeeCamp.findById(campMemberCard.campModelId);
         const findBaan = await Baan.findById(findPeeCamp?.baanId);
         relation.push(
-          `พี่ชื่อ${findUser.nickname} จากค่าย${camp.campName} บ้าน${findBaan?.name}`
+          `พี่ชื่อ${findUser.nickname} จากค่าย${camp.campName} บ้าน${findBaan?.name}`,
         );
         break;
       }
@@ -995,7 +995,7 @@ export async function checkTel(req: express.Request, res: express.Response) {
       continue;
     }
     const campMemberCard = await CampMemberCard.findById(
-      camp.mapCampMemberCardIdByUserId.get(findUser._id.toString())
+      camp.mapCampMemberCardIdByUserId.get(findUser._id.toString()),
     );
     if (!campMemberCard) {
       continue;
@@ -1003,12 +1003,12 @@ export async function checkTel(req: express.Request, res: express.Response) {
     switch (campMemberCard.role) {
       case "nong": {
         const findNongCamp = await NongCamp.findById(
-          campMemberCard.campModelId
+          campMemberCard.campModelId,
         );
 
         const findBaan = await Baan.findById(findNongCamp?.baanId);
         relation.push(
-          `น้อง${findUser.nickname} จากค่าย${camp.campName} บ้าน${findBaan?.name}`
+          `น้อง${findUser.nickname} จากค่าย${camp.campName} บ้าน${findBaan?.name}`,
         );
         break;
       }
@@ -1018,7 +1018,7 @@ export async function checkTel(req: express.Request, res: express.Response) {
         const findBaan = await Baan.findById(findPeeCamp?.baanId);
         const findPart = await Part.findById(findPeeCamp?.partId);
         relation.push(
-          `เพื่อนชื่อ${findUser.nickname} จากค่าย${camp.campName} บ้าน${findBaan?.name} ฝ่าย${findPart?.partName}`
+          `เพื่อนชื่อ${findUser.nickname} จากค่าย${camp.campName} บ้าน${findBaan?.name} ฝ่าย${findPart?.partName}`,
         );
         break;
       }
@@ -1026,7 +1026,7 @@ export async function checkTel(req: express.Request, res: express.Response) {
         const findPeeCamp = await PetoCamp.findById(campMemberCard.campModelId);
         const findPart = await Part.findById(findPeeCamp?.partId);
         relation.push(
-          `พี่ปีโตชื่อ${findUser.nickname} จากค่าย${camp.campName} ฝ่าย${findPart?.partName}`
+          `พี่ปีโตชื่อ${findUser.nickname} จากค่าย${camp.campName} ฝ่าย${findPart?.partName}`,
         );
         break;
       }
@@ -1046,7 +1046,7 @@ export async function checkTel(req: express.Request, res: express.Response) {
       continue;
     }
     const campMemberCard = await CampMemberCard.findById(
-      camp.mapCampMemberCardIdByUserId.get(findUser._id.toString())
+      camp.mapCampMemberCardIdByUserId.get(findUser._id.toString()),
     );
     if (!campMemberCard) {
       continue;
@@ -1054,12 +1054,12 @@ export async function checkTel(req: express.Request, res: express.Response) {
     switch (campMemberCard.role) {
       case "nong": {
         const findNongCamp = await NongCamp.findById(
-          campMemberCard.campModelId
+          campMemberCard.campModelId,
         );
 
         const findBaan = await Baan.findById(findNongCamp?.baanId);
         relation.push(
-          `น้อง${findUser.nickname} จากค่าย${camp.campName} บ้าน${findBaan?.name}`
+          `น้อง${findUser.nickname} จากค่าย${camp.campName} บ้าน${findBaan?.name}`,
         );
         break;
       }
@@ -1068,7 +1068,7 @@ export async function checkTel(req: express.Request, res: express.Response) {
         const findBaan = await Baan.findById(findPeeCamp?.baanId);
         const findPart = await Part.findById(findPeeCamp?.partId);
         relation.push(
-          `น้องปี1ชื่อ${findUser.nickname} จากค่าย${camp.campName} บ้าน${findBaan?.name} ฝ่าย${findPart?.partName}`
+          `น้องปี1ชื่อ${findUser.nickname} จากค่าย${camp.campName} บ้าน${findBaan?.name} ฝ่าย${findPart?.partName}`,
         );
         break;
       }
@@ -1076,7 +1076,7 @@ export async function checkTel(req: express.Request, res: express.Response) {
         const findPeeCamp = await PetoCamp.findById(campMemberCard.campModelId);
         const findPart = await Part.findById(findPeeCamp?.partId);
         relation.push(
-          `เพื่อนชื่อ${findUser.nickname} จากค่าย${camp.campName} ฝ่าย${findPart?.partName}`
+          `เพื่อนชื่อ${findUser.nickname} จากค่าย${camp.campName} ฝ่าย${findPart?.partName}`,
         );
         break;
       }
@@ -1103,7 +1103,7 @@ export async function updateSleep(req: express.Request, res: express.Response) {
   let i = 0;
   while (i < user.campMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
-      user.campMemberCardIds[i++]
+      user.campMemberCardIds[i++],
     );
     if (!campMemberCard) {
       continue;
@@ -1221,7 +1221,7 @@ export async function getUsers(req: express.Request, res: express.Response) {
 }
 export async function getCampMemberCard(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   try {
     const campMemberCard = await CampMemberCard.findById(req.params.id);
@@ -1233,7 +1233,7 @@ export async function getCampMemberCard(
 }
 export async function updateTimeOffset(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const update: UpdateTimeOffset = req.body;
   const user = await getUser(req);
@@ -1247,7 +1247,7 @@ export async function updateTimeOffset(
 }
 export async function getTimeOffset(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   try {
     const buf = await TimeOffset.findById(req.params.id);
@@ -1342,7 +1342,7 @@ export async function revalidationHealthIssues(ids: Id[]) {
       let j = 0;
       while (j < old.campMemberCardIds.length) {
         const campMemberCard = await CampMemberCard.findById(
-          old.campMemberCardIds[j++]
+          old.campMemberCardIds[j++],
         );
         if (!campMemberCard) {
           continue;
@@ -1350,7 +1350,7 @@ export async function revalidationHealthIssues(ids: Id[]) {
         switch (campMemberCard.role) {
           case "nong": {
             const nongCamp = await NongCamp.findById(
-              campMemberCard.campModelId
+              campMemberCard.campModelId,
             );
             if (!nongCamp) {
               continue;
@@ -1365,7 +1365,7 @@ export async function revalidationHealthIssues(ids: Id[]) {
               nongCampMemberCardHaveHealthIssueIds: swop(
                 campMemberCard._id,
                 null,
-                baan.nongCampMemberCardHaveHealthIssueIds
+                baan.nongCampMemberCardHaveHealthIssueIds,
               ),
             });
             await campMemberCard.updateOne({ healthIssueId: null });
@@ -1387,7 +1387,7 @@ export async function revalidationHealthIssues(ids: Id[]) {
               peeCampMemberCardHaveHealthIssueIds: swop(
                 campMemberCard._id,
                 null,
-                baan.peeCampMemberCardHaveHealthIssueIds
+                baan.peeCampMemberCardHaveHealthIssueIds,
               ),
             });
             await part.updateOne({
@@ -1395,7 +1395,7 @@ export async function revalidationHealthIssues(ids: Id[]) {
               peeCampMemberCardHaveHealthIssueIds: swop(
                 campMemberCard._id,
                 null,
-                part.peeCampMemberCardHaveHealthIssueIds
+                part.peeCampMemberCardHaveHealthIssueIds,
               ),
             });
             await campMemberCard.updateOne({ healthIssueId: null });
@@ -1403,7 +1403,7 @@ export async function revalidationHealthIssues(ids: Id[]) {
           }
           case "peto": {
             const petoCamp = await PetoCamp.findById(
-              campMemberCard.campModelId
+              campMemberCard.campModelId,
             );
             if (!petoCamp) {
               continue;
@@ -1418,7 +1418,7 @@ export async function revalidationHealthIssues(ids: Id[]) {
               petoCampMemberCardHaveHealthIssueIds: swop(
                 campMemberCard._id,
                 null,
-                part.petoCampMemberCardHaveHealthIssueIds
+                part.petoCampMemberCardHaveHealthIssueIds,
               ),
             });
             await campMemberCard.updateOne({ healthIssueId: null });
@@ -1433,7 +1433,7 @@ export async function revalidationHealthIssues(ids: Id[]) {
 }
 export async function checkPassword(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getGewertzSquareUser(req);
   if (!user) {
@@ -1568,7 +1568,7 @@ export function isFoodValid(input: HealthIssuePack): boolean {
 }
 export async function getOwnRegisterCampDatas(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await User.findById(req.params.id);
   if (!user) {
@@ -1579,7 +1579,7 @@ export async function getOwnRegisterCampDatas(
   let i = 0;
   while (i < user.campMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
-      user.campMemberCardIds[i++]
+      user.campMemberCardIds[i++],
     );
     if (!campMemberCard) {
       continue;

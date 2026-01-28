@@ -115,7 +115,7 @@ export async function addBaanRaw(
     | "R"
     | "S"
     | "T"
-    | "null"
+    | "null",
 ): Promise<Id> {
   const baan = await Baan.create({
     campId: camp._id,
@@ -200,7 +200,7 @@ export async function addPart(req: express.Request, res: express.Response) {
 async function addPartRaw(
   campId: Id,
   nameId: Id,
-  auths: AuthType[]
+  auths: AuthType[],
 ): Promise<BasicPart | null> {
   const camp = await Camp.findById(campId);
   const partNameContainer = await PartNameContainer.findById(nameId);
@@ -279,7 +279,7 @@ export async function updateBaan(req: express.Request, res: express.Response) {
   res.status(200).json(s);
 }
 export async function updateBaanRaw(
-  update: UpdateBaan
+  update: UpdateBaan,
 ): Promise<UpdateBaanOut | null> {
   try {
     const {
@@ -640,7 +640,7 @@ export async function downRole(req: express.Request, res: express.Response) {
 }
 export async function addMoreBoard(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const { campId, userIds }: { campId: string; userIds: string[] } = req.body;
   const camp = await Camp.findById(campId);
@@ -850,14 +850,14 @@ export async function updateCamp(req: express.Request, res: express.Response) {
 }
 export async function getCampNames(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const nameContainers = await NameContainer.find();
   res.status(200).json(nameContainers);
 }
 export async function createBaanByGroup(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const camp: InterCampBack | null = await Camp.findById(req.params.id);
   if (!camp) {
@@ -949,7 +949,7 @@ export async function deleteWorkingItemRaw(workItemId: Id) {
 }
 export async function getPartNames(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const partNames = await PartNameContainer.find();
   res.status(200).json(partNames);
@@ -1001,7 +1001,7 @@ export async function addAllGroup(req: express.Request, res: express.Response) {
 }
 export async function getAllRemainPartName(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const camp = await Camp.findById(req.params.id);
   if (!camp) {
@@ -1010,7 +1010,7 @@ export async function getAllRemainPartName(
   }
   const partNameContainers = await PartNameContainer.find();
   const partNameIds = partNameContainers.map(
-    (partNameContainer) => partNameContainer._id
+    (partNameContainer) => partNameContainer._id,
   );
   const buf = removeDuplicate(partNameIds, camp.partNameIds);
   let i = 0;
@@ -1036,7 +1036,7 @@ export async function peeToPeto(req: express.Request, res: express.Response) {
 }
 export async function afterVisnuToPee(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const users = await User.find({ fridayActEn: true });
   let i = 0;
@@ -1047,7 +1047,7 @@ export async function afterVisnuToPee(
 }
 export async function getCampForUpdate(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const camp = await Camp.findById(req.params.id);
   if (!camp) {
@@ -1056,7 +1056,7 @@ export async function getCampForUpdate(
   }
   const partNameContainers = await PartNameContainer.find();
   const partNameIds = partNameContainers.map(
-    (partNameContainer) => partNameContainer._id
+    (partNameContainer) => partNameContainer._id,
   );
   const buf = removeDuplicate(partNameIds, camp.partNameIds);
   let i = 0;
@@ -1098,7 +1098,7 @@ export async function getCampForUpdate(
 }
 export async function getAdminData(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const campNameContainers = await NameContainer.find();
   const partNameContainers = await PartNameContainer.find();

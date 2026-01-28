@@ -46,7 +46,7 @@ import { getAuthTypes } from "./getCampData";
 //*export async function getGroupContainerForAdmin
 export async function removeMemberFromSubGroupRaw(
   campMemberCardId: Id,
-  subGroupId: Id
+  subGroupId: Id,
 ) {
   const subGroup = await SubGroup.findById(subGroupId);
   if (!subGroup) {
@@ -63,7 +63,7 @@ export async function removeMemberFromSubGroupRaw(
           campMemberCardIds: swop(
             campMemberCardId,
             null,
-            subGroup.campMemberCardIds
+            subGroup.campMemberCardIds,
           ),
           genderType: "คละเพศ",
           roleType: "คละพี่และน้อง",
@@ -73,7 +73,7 @@ export async function removeMemberFromSubGroupRaw(
           campMemberCardIds: swop(
             campMemberCardId,
             null,
-            subGroup.campMemberCardIds
+            subGroup.campMemberCardIds,
           ),
           roleType: "คละพี่และน้อง",
         });
@@ -84,7 +84,7 @@ export async function removeMemberFromSubGroupRaw(
           campMemberCardIds: swop(
             campMemberCardId,
             null,
-            subGroup.campMemberCardIds
+            subGroup.campMemberCardIds,
           ),
           genderType: "คละเพศ",
         });
@@ -93,7 +93,7 @@ export async function removeMemberFromSubGroupRaw(
           campMemberCardIds: swop(
             campMemberCardId,
             null,
-            subGroup.campMemberCardIds
+            subGroup.campMemberCardIds,
           ),
         });
       }
@@ -103,7 +103,7 @@ export async function removeMemberFromSubGroupRaw(
       campMemberCardIds: swop(
         campMemberCardId,
         null,
-        subGroup.campMemberCardIds
+        subGroup.campMemberCardIds,
       ),
     });
   }
@@ -111,7 +111,7 @@ export async function removeMemberFromSubGroupRaw(
 
 export async function createGroupContainer(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const {
@@ -132,7 +132,7 @@ export async function createGroupContainer(
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
 
   if (!campMemberCard) {
@@ -209,7 +209,7 @@ export async function createGroupContainer(
 }
 export async function createSubGroup(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const {
     containerId,
@@ -238,7 +238,7 @@ export async function createSubGroup(
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
   if (!campMemberCard) {
     sendRes(res, false);
@@ -306,7 +306,7 @@ export async function createSubGroup(
   res.status(201).json(groups);
 }
 export async function getGroupContainerRaw(
-  containerId: Id | null
+  containerId: Id | null,
 ): Promise<GetGroupContainer | null> {
   const container = await GroupContainer.findById(containerId);
   if (!container) {
@@ -346,7 +346,7 @@ export async function getGroupContainerRaw(
     let j = 0;
     while (j < campMemberCardIds.length) {
       const campMemberCard = await CampMemberCard.findById(
-        campMemberCardIds[j++]
+        campMemberCardIds[j++],
       );
       if (!campMemberCard) {
         continue;
@@ -412,7 +412,7 @@ export async function getGroupContainerRaw(
 }
 export async function updateGroupContainer(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const {
@@ -437,7 +437,7 @@ export async function updateGroupContainer(
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
 
   if (!campMemberCard) {
@@ -505,7 +505,7 @@ export async function updateGroupContainer(
 }
 export async function updateSubGroup(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const { limit, name, _id }: UpdateSubGroup = req.body;
   const subGroup = await SubGroup.findById(_id);
@@ -531,7 +531,7 @@ export async function updateSubGroup(
       return;
     }
     const campMemberCard = await CampMemberCard.findById(
-      camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+      camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
     );
     if (!campMemberCard) {
       sendRes(res, false);
@@ -592,7 +592,7 @@ export async function updateSubGroup(
 }
 export async function deleteGroupContainer(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const user = await getUser(req);
   const container = await GroupContainer.findById(req.params.id);
@@ -611,7 +611,7 @@ export async function deleteGroupContainer(
     return;
   }
   const campMemberCard = await CampMemberCard.findById(
-    camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+    camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
   );
   if (!campMemberCard) {
     sendRes(res, false);
@@ -666,7 +666,7 @@ export async function deleteGroupContainer(
     let j = 0;
     while (j < subGroup.campMemberCardIds.length) {
       const campMemberCard = await CampMemberCard.findById(
-        subGroup.campMemberCardIds[j++]
+        subGroup.campMemberCardIds[j++],
       );
       if (!campMemberCard) {
         continue;
@@ -693,7 +693,7 @@ export async function deleteGroupContainer(
 }
 export async function deleteSubGroup(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const subGroup = await SubGroup.findById(req.params.id);
   if (!subGroup) {
@@ -718,7 +718,7 @@ export async function deleteSubGroup(
       return;
     }
     const campMemberCard = await CampMemberCard.findById(
-      camp.mapCampMemberCardIdByUserId.get(user._id.toString())
+      camp.mapCampMemberCardIdByUserId.get(user._id.toString()),
     );
     if (!campMemberCard) {
       sendRes(res, false);
@@ -769,7 +769,7 @@ export async function deleteSubGroup(
   let userIds = container.userIds;
   while (i < subGroup.campMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
-      subGroup.campMemberCardIds[i++]
+      subGroup.campMemberCardIds[i++],
     );
     if (!campMemberCard) {
       continue;
@@ -797,7 +797,7 @@ export async function deleteSubGroup(
 }
 export async function getGroupContainerForAdmin(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const baan = await Baan.findById(req.params.id);
   if (!baan) {
@@ -828,7 +828,7 @@ export async function getGroupContainerForAdmin(
 
 export async function registerGroup(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const input: RegisterGroup = req.body;
   const user = await getUser(req);
@@ -974,7 +974,7 @@ async function createSubGroupRaw(input: CreateSubGroup) {
 }
 export async function createSubGroupByAnyone(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const { containerId, limit, gender, role, name }: CreateSubGroupByAnyone =
     req.body;
@@ -1007,7 +1007,7 @@ export async function createSubGroupByAnyone(
 }
 export async function updateSubGroupByAnyone(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const { limit, name, _id }: UpdateSubGroup = req.body;
   const user = await getUser(req);
@@ -1037,7 +1037,7 @@ async function registerAddSubGroupRaw(
   campMemberCard: InterCampMemberCard,
   user: BasicUser,
   container: InterGroupContainer,
-  addId: Id
+  addId: Id,
 ) {
   const add = await SubGroup.findById(addId);
   if (campMemberCard.role == "peto" || !add) {
@@ -1079,7 +1079,7 @@ async function registerAddSubGroupRaw(
     }
   }
   let healthIssue: HealthIssueBody | null = await HealthIssue.findById(
-    campMemberCard.healthIssueId
+    campMemberCard.healthIssueId,
   );
   if (!healthIssue) {
     healthIssue = {
@@ -1109,7 +1109,7 @@ async function registerAddSubGroupRaw(
         campMemberCardIds: swop(
           null,
           campMemberCard._id,
-          add.campMemberCardIds
+          add.campMemberCardIds,
         ),
         spicy,
         isWearing,
@@ -1121,7 +1121,7 @@ async function registerAddSubGroupRaw(
         campMemberCardIds: swop(
           null,
           campMemberCard._id,
-          add.campMemberCardIds
+          add.campMemberCardIds,
         ),
         spicy,
         isWearing,
@@ -1135,7 +1135,7 @@ async function registerAddSubGroupRaw(
         campMemberCardIds: swop(
           null,
           campMemberCard._id,
-          add.campMemberCardIds
+          add.campMemberCardIds,
         ),
         spicy,
         isWearing,
@@ -1146,7 +1146,7 @@ async function registerAddSubGroupRaw(
         campMemberCardIds: swop(
           null,
           campMemberCard._id,
-          add.campMemberCardIds
+          add.campMemberCardIds,
         ),
         spicy,
         isWearing,
@@ -1159,7 +1159,7 @@ async function registerAddSubGroupRaw(
 async function registerRemoveSubGroupRaw(
   campMemberCard: InterCampMemberCard,
   container: InterGroupContainer,
-  removeId: Id
+  removeId: Id,
 ) {
   const remove = await SubGroup.findById(removeId);
   if (!remove) {
@@ -1176,7 +1176,7 @@ async function registerRemoveSubGroupRaw(
           campMemberCardIds: swop(
             campMemberCard._id,
             null,
-            remove.campMemberCardIds
+            remove.campMemberCardIds,
           ),
         });
       } else {
@@ -1185,7 +1185,7 @@ async function registerRemoveSubGroupRaw(
           campMemberCardIds: swop(
             campMemberCard._id,
             null,
-            remove.campMemberCardIds
+            remove.campMemberCardIds,
           ),
         });
       }
@@ -1196,7 +1196,7 @@ async function registerRemoveSubGroupRaw(
           campMemberCardIds: swop(
             campMemberCard._id,
             null,
-            remove.campMemberCardIds
+            remove.campMemberCardIds,
           ),
         });
       } else {
@@ -1204,7 +1204,7 @@ async function registerRemoveSubGroupRaw(
           campMemberCardIds: swop(
             campMemberCard._id,
             null,
-            remove.campMemberCardIds
+            remove.campMemberCardIds,
           ),
         });
       }
@@ -1214,7 +1214,7 @@ async function registerRemoveSubGroupRaw(
       campMemberCardIds: swop(
         campMemberCard._id,
         null,
-        remove.campMemberCardIds
+        remove.campMemberCardIds,
       ),
     });
   }
@@ -1231,13 +1231,13 @@ export async function revalidateSubGroup(subGroupId: Id) {
     return;
   }
   const firstCampMemberCard = await CampMemberCard.findById(
-    subGroup.campMemberCardIds[0]
+    subGroup.campMemberCardIds[0],
   );
   if (!firstCampMemberCard) {
     return;
   }
   const firstHealthIssue = await HealthIssue.findById(
-    firstCampMemberCard.healthIssueId
+    firstCampMemberCard.healthIssueId,
   );
   if (!firstHealthIssue) {
     const foodLimit: FoodLimit = "ไม่มีข้อจำกัดด้านความเชื่อ";
@@ -1248,12 +1248,14 @@ export async function revalidateSubGroup(subGroupId: Id) {
   let i = 1;
   while (i < subGroup.campMemberCardIds.length) {
     const campMemberCard = await CampMemberCard.findById(
-      subGroup.campMemberCardIds[i++]
+      subGroup.campMemberCardIds[i++],
     );
     if (!campMemberCard) {
       continue;
     }
-    const healthIssue = await HealthIssue.findById(campMemberCard.healthIssueId);
+    const healthIssue = await HealthIssue.findById(
+      campMemberCard.healthIssueId,
+    );
     if (!healthIssue) {
       const foodLimit: FoodLimit = "ไม่มีข้อจำกัดด้านความเชื่อ";
       await subGroup.updateOne({ isWearing: false, spicy: false, foodLimit });
@@ -1281,7 +1283,7 @@ function getSuitableSubGroups(inputs: InterSubGroup[], count: number) {
   function backtrack(
     index: number,
     current: InterSubGroup[],
-    total: number
+    total: number,
   ): boolean {
     if (total === count) {
       out.push(...current);
@@ -1293,7 +1295,7 @@ function getSuitableSubGroups(inputs: InterSubGroup[], count: number) {
       backtrack(
         index + 1,
         [...current, inputs[index]],
-        total + inputs[index].limit
+        total + inputs[index].limit,
       )
     ) {
       return true;
@@ -1322,7 +1324,7 @@ async function addAllToGroup(
   campMemberCards: InterCampMemberCard[],
   subGroups: InterSubGroup[],
   container: InterGroupContainer,
-  userIds: Id[]
+  userIds: Id[],
 ) {
   let subGroupIndex = 0;
   let campMemberCardIndex = 0;
@@ -1346,7 +1348,7 @@ async function addAllToGroup(
         campMemberCard,
         user,
         container,
-        subGroup._id
+        subGroup._id,
       );
       await CampMemberCard.findByIdAndUpdate(campMemberCard._id, {
         subGroupIds: swop(null, subGroup._id, campMemberCard.subGroupIds),
@@ -1358,7 +1360,7 @@ async function addAllToGroup(
 }
 export async function autoAddToNearestGroup(
   req: express.Request,
-  res: express.Response
+  res: express.Response,
 ) {
   const container = await GroupContainer.findById(req.params.id);
   const user = await getUser(req);
@@ -1400,31 +1402,31 @@ export async function autoAddToNearestGroup(
         ifIsTrue(
           subGroup.genderType == "ชายเท่านั้น",
           subGroup,
-          wearingBoySubGroups
+          wearingBoySubGroups,
         );
         ifIsTrue(
           subGroup.genderType == "หญิงเท่านั้น",
           subGroup,
-          wearingGirlSubGroups
+          wearingGirlSubGroups,
         );
       }
       if (!subGroup.campMemberCardIds.length) {
         ifIsTrue(
           subGroup.genderType == "ชายเท่านั้น",
           subGroup,
-          emptyBoySubGroup
+          emptyBoySubGroup,
         );
         ifIsTrue(
           subGroup.genderType == "หญิงเท่านั้น",
           subGroup,
-          emptyGirlSubGroup
+          emptyGirlSubGroup,
         );
         ifIsTrue(subGroup.genderType == "คละเพศ", subGroup, emptySubGroup);
       }
     }
     i = 0;
     const memberIds = baan.nongCampMemberCardHaveHealthIssueIds.concat(
-      baan.peeCampMemberCardHaveHealthIssueIds
+      baan.peeCampMemberCardHaveHealthIssueIds,
     );
     while (i < memberIds.length) {
       const campMemberCard = await CampMemberCard.findById(memberIds[i++]);
@@ -1435,7 +1437,7 @@ export async function autoAddToNearestGroup(
         continue;
       }
       const healthIssue = await HealthIssue.findById(
-        campMemberCard.healthIssueId
+        campMemberCard.healthIssueId,
       );
       if (!healthIssue) {
         continue;
@@ -1448,12 +1450,12 @@ export async function autoAddToNearestGroup(
         ifIsTrue(
           user.gender == "Male",
           campMemberCard,
-          wearingBoyCampMemberCards
+          wearingBoyCampMemberCards,
         );
         ifIsTrue(
           user.gender == "Female",
           campMemberCard,
-          wearingGirlCampMemberCards
+          wearingGirlCampMemberCards,
         );
       }
     }
@@ -1481,7 +1483,7 @@ export async function autoAddToNearestGroup(
           campMemberCard,
           user,
           container,
-          subGroup._id
+          subGroup._id,
         );
         if (success) {
           memberInSubGroupIndex++;
@@ -1506,7 +1508,7 @@ export async function autoAddToNearestGroup(
           campMemberCard,
           user,
           container,
-          subGroup._id
+          subGroup._id,
         );
         if (success) {
           memberInSubGroupIndex++;
@@ -1537,7 +1539,7 @@ export async function autoAddToNearestGroup(
           campMemberCard,
           user,
           container,
-          subGroup._id
+          subGroup._id,
         );
         if (success) {
           memberInSubGroupIndex++;
@@ -1562,7 +1564,7 @@ export async function autoAddToNearestGroup(
           campMemberCard,
           user,
           container,
-          subGroup._id
+          subGroup._id,
         );
         if (success) {
           memberInSubGroupIndex++;
@@ -1610,65 +1612,65 @@ export async function autoAddToNearestGroup(
             ifIsTrue(
               subGroup.roleType == "น้องเท่านั้น",
               subGroup,
-              nongBoySubGroups
+              nongBoySubGroups,
             );
             ifIsTrue(
               subGroup.roleType == "พี่เท่านั้น",
               subGroup,
-              peeBoySubGroups
+              peeBoySubGroups,
             );
           }
           for (const subGroup of emptyGirlSubGroup) {
             ifIsTrue(
               subGroup.roleType == "น้องเท่านั้น",
               subGroup,
-              nongGirlSubGroups
+              nongGirlSubGroups,
             );
             ifIsTrue(
               subGroup.roleType == "พี่เท่านั้น",
               subGroup,
-              peeGirlSubGroups
+              peeGirlSubGroups,
             );
           }
           const nongBoySuitSubGroups: InterSubGroup[] = getSuitableSubGroups(
             nongBoySubGroups,
-            nongBoys.length
+            nongBoys.length,
           );
           const nongGirlSuitSubGroups: InterSubGroup[] = getSuitableSubGroups(
             nongGirlSubGroups,
-            nongGirls.length
+            nongGirls.length,
           );
           const peeBoySuitSubGroups: InterSubGroup[] = getSuitableSubGroups(
             peeBoySubGroups,
-            peeBoys.length
+            peeBoys.length,
           );
           const peeGirlSuitSubGroups: InterSubGroup[] = getSuitableSubGroups(
             peeGirlSubGroups,
-            peeGirls.length
+            peeGirls.length,
           );
           userIds = await addAllToGroup(
             peeBoys,
             peeBoySuitSubGroups,
             container,
-            userIds
+            userIds,
           );
           userIds = await addAllToGroup(
             peeGirls,
             peeGirlSuitSubGroups,
             container,
-            userIds
+            userIds,
           );
           userIds = await addAllToGroup(
             nongBoys,
             nongBoySuitSubGroups,
             container,
-            userIds
+            userIds,
           );
           userIds = await addAllToGroup(
             nongGirls,
             nongGirlSuitSubGroups,
             container,
-            userIds
+            userIds,
           );
           break;
         }
@@ -1693,18 +1695,18 @@ export async function autoAddToNearestGroup(
           }
           const boySubGroups = getSuitableSubGroups(
             emptyBoySubGroup,
-            boys.length
+            boys.length,
           );
           const girlSubGroup = getSuitableSubGroups(
             emptyGirlSubGroup,
-            girls.length
+            girls.length,
           );
           userIds = await addAllToGroup(boys, boySubGroups, container, userIds);
           userIds = await addAllToGroup(
             girls,
             girlSubGroup,
             container,
-            userIds
+            userIds,
           );
           break;
         }
@@ -1735,51 +1737,51 @@ export async function autoAddToNearestGroup(
           }
           const nongBoySuitSubGroups = getSuitableSubGroups(
             emptyBoySubGroup,
-            nongBoys.length
+            nongBoys.length,
           );
           const nongGirlSuitSubGroups = getSuitableSubGroups(
             emptyGirlSubGroup,
-            nongGirls.length
+            nongGirls.length,
           );
           const boyRemain = recycleSubGroup(
             emptyBoySubGroup,
-            nongBoySuitSubGroups
+            nongBoySuitSubGroups,
           );
           const girlRemain = recycleSubGroup(
             emptyGirlSubGroup,
-            nongGirlSuitSubGroups
+            nongGirlSuitSubGroups,
           );
           const peeBoySuitSubGroups = getSuitableSubGroups(
             boyRemain,
-            peeBoys.length
+            peeBoys.length,
           );
           const peeGirlSuitSubGroups = getSuitableSubGroups(
             girlRemain,
-            peeGirls.length
+            peeGirls.length,
           );
           userIds = await addAllToGroup(
             peeBoys,
             peeBoySuitSubGroups,
             container,
-            userIds
+            userIds,
           );
           userIds = await addAllToGroup(
             peeGirls,
             peeGirlSuitSubGroups,
             container,
-            userIds
+            userIds,
           );
           userIds = await addAllToGroup(
             nongBoys,
             nongBoySuitSubGroups,
             container,
-            userIds
+            userIds,
           );
           userIds = await addAllToGroup(
             nongGirls,
             nongGirlSuitSubGroups,
             container,
-            userIds
+            userIds,
           );
           break;
         }
@@ -1817,58 +1819,58 @@ export async function autoAddToNearestGroup(
             ifIsTrue(
               subGroup.roleType == "น้องเท่านั้น",
               subGroup,
-              nongSubGroups
+              nongSubGroups,
             );
             ifIsTrue(
               subGroup.roleType == "พี่เท่านั้น",
               subGroup,
-              peeSubGroups
+              peeSubGroups,
             );
           }
           const nongGirlSuitSubGroups = getSuitableSubGroups(
             nongSubGroups,
-            nongGirls.length
+            nongGirls.length,
           );
           const peeGirlSuitSubGroups = getSuitableSubGroups(
             peeSubGroups,
-            peeGirls.length
+            peeGirls.length,
           );
           const nongRemain = recycleSubGroup(
             nongSubGroups,
-            nongGirlSuitSubGroups
+            nongGirlSuitSubGroups,
           );
           const peeRemain = recycleSubGroup(peeSubGroups, peeGirlSuitSubGroups);
           const nongBoySuitSubGroups = getSuitableSubGroups(
             nongRemain,
-            nongBoys.length
+            nongBoys.length,
           );
           const peeBoySuitSubGroups = getSuitableSubGroups(
             peeRemain,
-            peeBoys.length
+            peeBoys.length,
           );
           userIds = await addAllToGroup(
             peeBoys,
             peeBoySuitSubGroups,
             container,
-            userIds
+            userIds,
           );
           userIds = await addAllToGroup(
             peeGirls,
             peeGirlSuitSubGroups,
             container,
-            userIds
+            userIds,
           );
           userIds = await addAllToGroup(
             nongBoys,
             nongBoySuitSubGroups,
             container,
-            userIds
+            userIds,
           );
           userIds = await addAllToGroup(
             nongGirls,
             nongGirlSuitSubGroups,
             container,
-            userIds
+            userIds,
           );
           break;
         }
@@ -1893,7 +1895,7 @@ export async function autoAddToNearestGroup(
           }
           const girlSubGroup = getSuitableSubGroups(
             emptySubGroup,
-            girls.length
+            girls.length,
           );
           const remain = recycleSubGroup(emptySubGroup, girlSubGroup);
           const boySubGroups = getSuitableSubGroups(remain, boys.length);
@@ -1902,7 +1904,7 @@ export async function autoAddToNearestGroup(
             girls,
             girlSubGroup,
             container,
-            userIds
+            userIds,
           );
           break;
         }
@@ -1933,49 +1935,46 @@ export async function autoAddToNearestGroup(
           }
           const nongGirlSuitSubGroups = getSuitableSubGroups(
             emptySubGroup,
-            nongGirls.length
+            nongGirls.length,
           );
-          const remain1 = recycleSubGroup(
-            emptySubGroup,
-            nongGirlSuitSubGroups
-          );
+          const remain1 = recycleSubGroup(emptySubGroup, nongGirlSuitSubGroups);
           const nongBoySuitSubGroups = getSuitableSubGroups(
             remain1,
-            nongBoys.length
+            nongBoys.length,
           );
           const remain2 = recycleSubGroup(remain1, nongBoySuitSubGroups);
           const peeGirlSuitSubGroups = getSuitableSubGroups(
             remain2,
-            peeGirls.length
+            peeGirls.length,
           );
           const remain3 = recycleSubGroup(remain2, peeGirlSuitSubGroups);
           const peeBoySuitSubGroups = getSuitableSubGroups(
             remain3,
-            peeBoys.length
+            peeBoys.length,
           );
           userIds = await addAllToGroup(
             peeBoys,
             peeBoySuitSubGroups,
             container,
-            userIds
+            userIds,
           );
           userIds = await addAllToGroup(
             peeGirls,
             peeGirlSuitSubGroups,
             container,
-            userIds
+            userIds,
           );
           userIds = await addAllToGroup(
             nongBoys,
             nongBoySuitSubGroups,
             container,
-            userIds
+            userIds,
           );
           userIds = await addAllToGroup(
             nongGirls,
             nongGirlSuitSubGroups,
             container,
-            userIds
+            userIds,
           );
           break;
         }
@@ -1999,36 +1998,36 @@ export async function autoAddToNearestGroup(
           ifIsTrue(
             subGroup.spicy && subGroup.roleType == "พี่เท่านั้น",
             subGroup,
-            spicyPeeSubGroups
+            spicyPeeSubGroups,
           );
           ifIsTrue(
             subGroup.spicy && subGroup.roleType == "น้องเท่านั้น",
             subGroup,
-            spicyNongSubGroups
+            spicyNongSubGroups,
           );
           ifIsTrue(
             subGroup.campMemberCardIds.length == 0 &&
               subGroup.roleType == "พี่เท่านั้น",
             subGroup,
-            emptyPeeSubGroups
+            emptyPeeSubGroups,
           );
           ifIsTrue(
             subGroup.campMemberCardIds.length == 0 &&
               subGroup.roleType == "น้องเท่านั้น",
             subGroup,
-            emptyNongSubGroups
+            emptyNongSubGroups,
           );
         }
         i = 0;
         while (i < baan.nongCampMemberCardHaveHealthIssueIds.length) {
           const campMemberCard = await CampMemberCard.findById(
-            baan.nongCampMemberCardHaveHealthIssueIds[i++]
+            baan.nongCampMemberCardHaveHealthIssueIds[i++],
           );
           if (!campMemberCard || userIds.includes(campMemberCard.userId)) {
             continue;
           }
           const healthIssue = await HealthIssue.findById(
-            campMemberCard.healthIssueId
+            campMemberCard.healthIssueId,
           );
           if (!healthIssue) {
             continue;
@@ -2036,12 +2035,12 @@ export async function autoAddToNearestGroup(
           ifIsTrue(
             healthIssue.spicy && campMemberCard.role == "nong",
             campMemberCard,
-            spicyNongCampMemberCards
+            spicyNongCampMemberCards,
           );
           ifIsTrue(
             healthIssue.spicy && campMemberCard.role == "pee",
             campMemberCard,
-            spicyPeeCampMemberCards
+            spicyPeeCampMemberCards,
           );
         }
         let peeIndex = 0;
@@ -2063,7 +2062,7 @@ export async function autoAddToNearestGroup(
               campMemberCard,
               user,
               container,
-              subGroup._id
+              subGroup._id,
             );
             memberInSubGroupIndex++;
             await CampMemberCard.findByIdAndUpdate(campMemberCard._id, {
@@ -2089,7 +2088,7 @@ export async function autoAddToNearestGroup(
               campMemberCard,
               user,
               container,
-              subGroup._id
+              subGroup._id,
             );
             memberInSubGroupIndex++;
             await CampMemberCard.findByIdAndUpdate(campMemberCard._id, {
@@ -2108,23 +2107,23 @@ export async function autoAddToNearestGroup(
         }
         const peeSuitSubGroups = getSuitableSubGroups(
           emptyPeeSubGroups,
-          pees.length
+          pees.length,
         );
         const nongSuitSubGroups = getSuitableSubGroups(
           emptyNongSubGroups,
-          nongs.length
+          nongs.length,
         );
         userIds = await addAllToGroup(
           pees,
           peeSuitSubGroups,
           container,
-          userIds
+          userIds,
         );
         userIds = await addAllToGroup(
           nongs,
           nongSuitSubGroups,
           container,
-          userIds
+          userIds,
         );
         break;
       }
@@ -2142,12 +2141,12 @@ export async function autoAddToNearestGroup(
           ifIsTrue(
             !subGroup.campMemberCardIds.length,
             subGroup,
-            emptySubGroups
+            emptySubGroups,
           );
         }
         i = 0;
         const memberIds = baan.nongCampMemberCardHaveHealthIssueIds.concat(
-          baan.peeCampMemberCardHaveHealthIssueIds
+          baan.peeCampMemberCardHaveHealthIssueIds,
         );
         while (i < memberIds.length) {
           const campMemberCard = await CampMemberCard.findById(memberIds[i++]);
@@ -2155,7 +2154,7 @@ export async function autoAddToNearestGroup(
             continue;
           }
           const healthIssue = await HealthIssue.findById(
-            campMemberCard.healthIssueId
+            campMemberCard.healthIssueId,
           );
           if (!healthIssue) {
             continue;
@@ -2180,7 +2179,7 @@ export async function autoAddToNearestGroup(
               campMemberCard,
               user,
               container,
-              subGroup._id
+              subGroup._id,
             );
             memberInSubGroupIndex++;
             await CampMemberCard.findByIdAndUpdate(campMemberCard._id, {
@@ -2195,13 +2194,13 @@ export async function autoAddToNearestGroup(
         }
         const suitSubGroup = getSuitableSubGroups(
           emptySubGroups,
-          remainCampMemberCards.length
+          remainCampMemberCards.length,
         );
         userIds = await addAllToGroup(
           remainCampMemberCards,
           suitSubGroup,
           container,
-          userIds
+          userIds,
         );
         break;
       }
@@ -2220,30 +2219,30 @@ export async function autoAddToNearestGroup(
           ifIsTrue(
             subGroup.spicy && subGroup.roleType == "พี่เท่านั้น",
             subGroup,
-            spicyPeeSubGroups
+            spicyPeeSubGroups,
           );
           ifIsTrue(
             subGroup.spicy && subGroup.roleType == "น้องเท่านั้น",
             subGroup,
-            spicyNongSubGroups
+            spicyNongSubGroups,
           );
           ifIsTrue(
             subGroup.campMemberCardIds.length == 0 &&
               subGroup.roleType == "พี่เท่านั้น",
             subGroup,
-            emptySubGroups
+            emptySubGroups,
           );
         }
         i = 0;
         while (i < baan.nongCampMemberCardHaveHealthIssueIds.length) {
           const campMemberCard = await CampMemberCard.findById(
-            baan.nongCampMemberCardHaveHealthIssueIds[i++]
+            baan.nongCampMemberCardHaveHealthIssueIds[i++],
           );
           if (!campMemberCard || userIds.includes(campMemberCard.userId)) {
             continue;
           }
           const healthIssue = await HealthIssue.findById(
-            campMemberCard.healthIssueId
+            campMemberCard.healthIssueId,
           );
           if (!healthIssue) {
             continue;
@@ -2251,12 +2250,12 @@ export async function autoAddToNearestGroup(
           ifIsTrue(
             healthIssue.spicy && campMemberCard.role == "nong",
             campMemberCard,
-            spicyNongCampMemberCards
+            spicyNongCampMemberCards,
           );
           ifIsTrue(
             healthIssue.spicy && campMemberCard.role == "pee",
             campMemberCard,
-            spicyPeeCampMemberCards
+            spicyPeeCampMemberCards,
           );
         }
         let peeIndex = 0;
@@ -2278,7 +2277,7 @@ export async function autoAddToNearestGroup(
               campMemberCard,
               user,
               container,
-              subGroup._id
+              subGroup._id,
             );
             memberInSubGroupIndex++;
             await CampMemberCard.findByIdAndUpdate(campMemberCard._id, {
@@ -2304,7 +2303,7 @@ export async function autoAddToNearestGroup(
               campMemberCard,
               user,
               container,
-              subGroup._id
+              subGroup._id,
             );
             memberInSubGroupIndex++;
             await CampMemberCard.findByIdAndUpdate(campMemberCard._id, {
@@ -2323,7 +2322,7 @@ export async function autoAddToNearestGroup(
         }
         const nongSuitSubGroups = getSuitableSubGroups(
           emptySubGroups,
-          nongs.length
+          nongs.length,
         );
         const remain = recycleSubGroup(emptySubGroups, nongSuitSubGroups);
         const peeSuitSubGroups = getSuitableSubGroups(remain, pees.length);
@@ -2332,13 +2331,13 @@ export async function autoAddToNearestGroup(
           pees,
           peeSuitSubGroups,
           container,
-          userIds
+          userIds,
         );
         userIds = await addAllToGroup(
           nongs,
           nongSuitSubGroups,
           container,
-          userIds
+          userIds,
         );
         break;
       }

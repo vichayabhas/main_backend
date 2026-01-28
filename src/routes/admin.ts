@@ -35,7 +35,7 @@ router.get(
   "/getAllRemainPartName/params/:id",
   protect,
   pee,
-  getAllRemainPartName
+  getAllRemainPartName,
 ); //
 router.post("/addPart/", protect, addPart); //
 router.post("/createBaanByGroup/params/:id", protect, createBaanByGroup); //

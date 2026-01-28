@@ -59,7 +59,7 @@ export async function changeBaanRaw(userIds: Id[], baanId: Id) {
       continue;
     }
     const campMemberCard = await CampMemberCard.findById(
-      camp.mapCampMemberCardIdByUserId.get(user.id)
+      camp.mapCampMemberCardIdByUserId.get(user.id),
     );
     if (!campMemberCard) {
       continue;
@@ -81,18 +81,18 @@ export async function changeBaanRaw(userIds: Id[], baanId: Id) {
           campMemberCard.size as "S" | "M" | "L" | "XL" | "XXL" | "3XL",
           calculate(
             oldBaan.nongShirtSize.get(
-              campMemberCard.size as "S" | "M" | "L" | "XL" | "XXL" | "3XL"
+              campMemberCard.size as "S" | "M" | "L" | "XL" | "XXL" | "3XL",
             ),
             0,
-            1
-          )
+            1,
+          ),
         );
         oldBaan.mapCampMemberCardIdByUserId.delete(user.id);
         await oldBaan.updateOne({
           nongCampMemberCardIds: swop(
             campMemberCard._id,
             null,
-            oldBaan.nongCampMemberCardIds
+            oldBaan.nongCampMemberCardIds,
           ),
           nongIds: swop(user._id, null, oldBaan.nongIds),
           mapCampMemberCardIdByUserId: oldBaan.mapCampMemberCardIdByUserId,
@@ -100,7 +100,7 @@ export async function changeBaanRaw(userIds: Id[], baanId: Id) {
         });
         baan.nongShirtSize.set(
           campMemberCard.size,
-          calculate(baan.nongShirtSize.get(campMemberCard.size), 1, 0)
+          calculate(baan.nongShirtSize.get(campMemberCard.size), 1, 0),
         );
         baan.nongIds.push(user._id);
         baan.nongCampMemberCardIds.push(campMemberCard._id);
@@ -117,7 +117,7 @@ export async function changeBaanRaw(userIds: Id[], baanId: Id) {
           nongCampMemberCardIds: swop(
             campMemberCard._id,
             null,
-            oldNongCamp.nongCampMemberCardIds
+            oldNongCamp.nongCampMemberCardIds,
           ),
         });
         if (campMemberCard.healthIssueId) {
@@ -125,12 +125,12 @@ export async function changeBaanRaw(userIds: Id[], baanId: Id) {
             nongHealthIssueIds: swop(
               campMemberCard.healthIssueId,
               null,
-              oldBaan.nongHealthIssueIds
+              oldBaan.nongHealthIssueIds,
             ),
             nongCampMemberCardHaveHealthIssueIds: swop(
               campMemberCard._id,
               null,
-              oldBaan.nongCampMemberCardHaveHealthIssueIds
+              oldBaan.nongCampMemberCardHaveHealthIssueIds,
             ),
           });
           baan.nongCampMemberCardHaveHealthIssueIds.push(campMemberCard._id);
@@ -147,7 +147,7 @@ export async function changeBaanRaw(userIds: Id[], baanId: Id) {
         while (j < campMemberCard.subGroupIds.length) {
           await removeMemberFromSubGroupRaw(
             campMemberCard._id,
-            campMemberCard.subGroupIds[j++]
+            campMemberCard.subGroupIds[j++],
           );
         }
         await campMemberCard.updateOne({
@@ -166,7 +166,9 @@ export async function changeBaanRaw(userIds: Id[], baanId: Id) {
           continue;
         }
         const newPeeCamp = await PeeCamp.findById(
-          baan.mapPeeCampIdByPartId.get(oldPeeCamp.partId?.toString() as string)
+          baan.mapPeeCampIdByPartId.get(
+            oldPeeCamp.partId?.toString() as string,
+          ),
         );
         if (!newPeeCamp) {
           continue;
@@ -176,20 +178,20 @@ export async function changeBaanRaw(userIds: Id[], baanId: Id) {
         });
         oldBaan.peeShirtSize.set(
           campMemberCard.size,
-          calculate(oldBaan.peeShirtSize.get(campMemberCard.size), 0, 1)
+          calculate(oldBaan.peeShirtSize.get(campMemberCard.size), 0, 1),
         );
         await oldBaan.updateOne({
           peeCampMemberCardIds: swop(
             campMemberCard._id,
             null,
-            oldBaan.peeCampMemberCardIds
+            oldBaan.peeCampMemberCardIds,
           ),
           peeIds: swop(user._id, null, oldBaan.peeIds),
           peeShirtSize: oldBaan.peeShirtSize,
         });
         baan.peeShirtSize.set(
           campMemberCard.size,
-          calculate(baan.peeShirtSize.get(campMemberCard.size), 1, 0)
+          calculate(baan.peeShirtSize.get(campMemberCard.size), 1, 0),
         );
         baan.peeIds.push(user._id);
         baan.peeCampMemberCardIds.push(campMemberCard._id);
@@ -207,12 +209,12 @@ export async function changeBaanRaw(userIds: Id[], baanId: Id) {
             peeHealthIssueIds: swop(
               campMemberCard.healthIssueId,
               null,
-              oldBaan.peeHealthIssueIds
+              oldBaan.peeHealthIssueIds,
             ),
             peeCampMemberCardHaveHealthIssueIds: swop(
               campMemberCard._id,
               null,
-              oldBaan.peeCampMemberCardHaveHealthIssueIds
+              oldBaan.peeCampMemberCardHaveHealthIssueIds,
             ),
           });
           baan.peeHealthIssueIds.push(campMemberCard.healthIssueId);
@@ -228,7 +230,7 @@ export async function changeBaanRaw(userIds: Id[], baanId: Id) {
           peeCampMemberCardIds: swop(
             null,
             campMemberCard._id,
-            newPeeCamp.peeCampMemberCardIds
+            newPeeCamp.peeCampMemberCardIds,
           ),
           peeIds: swop(null, user._id, newPeeCamp.peeIds),
         });
@@ -236,14 +238,14 @@ export async function changeBaanRaw(userIds: Id[], baanId: Id) {
           peeCampMemberCardIds: swop(
             campMemberCard._id,
             null,
-            oldPeeCamp.peeCampMemberCardIds
+            oldPeeCamp.peeCampMemberCardIds,
           ),
           peeIds: swop(user._id, null, oldPeeCamp.peeIds),
         });
         let j = 0;
         while (j < campMemberCard.baanJobIds.length) {
           const timeRegister = await TimeRegister.findById(
-            campMemberCard.baanJobIds[j++]
+            campMemberCard.baanJobIds[j++],
           );
           if (!timeRegister) {
             continue;
@@ -262,7 +264,7 @@ export async function changeBaanRaw(userIds: Id[], baanId: Id) {
         while (j < campMemberCard.subGroupIds.length) {
           await removeMemberFromSubGroupRaw(
             campMemberCard._id,
-            campMemberCard.subGroupIds[j++]
+            campMemberCard.subGroupIds[j++],
           );
         }
         await campMemberCard.updateOne({
@@ -292,7 +294,8 @@ export async function changeBaanRaw(userIds: Id[], baanId: Id) {
     peeIds: baan.peeIds,
     peeCampMemberCardIds: baan.peeCampMemberCardIds,
     peeShirtSize: baan.peeShirtSize,
-    peeCampMemberCardHaveHealthIssueIds: baan.peeCampMemberCardHaveHealthIssueIds,
+    peeCampMemberCardHaveHealthIssueIds:
+      baan.peeCampMemberCardHaveHealthIssueIds,
     peeHaveBottleIds: baan.peeHaveBottleIds,
     peeSleepIds: baan.peeSleepIds,
   });
@@ -343,7 +346,7 @@ export async function changePartRaw(userIds: Id[], partId: Id) {
       continue;
     }
     const campMemberCard = await CampMemberCard.findById(
-      camp.mapCampMemberCardIdByUserId.get(user.id)
+      camp.mapCampMemberCardIdByUserId.get(user.id),
     );
     if (!campMemberCard) {
       continue;
@@ -351,7 +354,7 @@ export async function changePartRaw(userIds: Id[], partId: Id) {
     let j = 0;
     while (j < campMemberCard.partJobIds.length) {
       const timeRegister = await TimeRegister.findById(
-        campMemberCard.partJobIds[j++]
+        campMemberCard.partJobIds[j++],
       );
       if (!timeRegister) {
         continue;
@@ -381,14 +384,14 @@ export async function changePartRaw(userIds: Id[], partId: Id) {
         });
         oldPart.petoShirtSize.set(
           campMemberCard.size,
-          calculate(oldPart.peeShirtSize.get(campMemberCard.size), 0, 1)
+          calculate(oldPart.peeShirtSize.get(campMemberCard.size), 0, 1),
         );
         oldPart.mapCampMemberCardIdByUserId.delete(user?.id);
         await oldPart.updateOne({
           petoCampMemberCardIds: swop(
             campMemberCard._id,
             null,
-            oldPart.petoCampMemberCardIds
+            oldPart.petoCampMemberCardIds,
           ), /////////////
           petoIds: swop(user._id, null, oldPart.petoIds),
           mapCampMemberCardIdByUserId: oldPart.mapCampMemberCardIdByUserId,
@@ -397,7 +400,7 @@ export async function changePartRaw(userIds: Id[], partId: Id) {
         part.petoIds.push(user._id);
         part.petoShirtSize.set(
           campMemberCard.size,
-          calculate(part.petoShirtSize.get(campMemberCard.size), 1, 0)
+          calculate(part.petoShirtSize.get(campMemberCard.size), 1, 0),
         );
         part.petoCampMemberCardIds.push(campMemberCard._id);
         await campMemberCard.updateOne({ campModelId: newPetoCamp._id });
@@ -413,7 +416,7 @@ export async function changePartRaw(userIds: Id[], partId: Id) {
           petoCampMemberCardIds: swop(
             campMemberCard._id,
             null,
-            oldPetoCamp.petoCampMemberCardIds
+            oldPetoCamp.petoCampMemberCardIds,
           ),
         });
         if (campMemberCard.healthIssueId) {
@@ -421,12 +424,12 @@ export async function changePartRaw(userIds: Id[], partId: Id) {
             petoHealthIssueIds: swop(
               campMemberCard.healthIssueId,
               null,
-              oldPart.petoHealthIssueIds
+              oldPart.petoHealthIssueIds,
             ),
             petoCampMemberCardHaveHealthIssueIds: swop(
               campMemberCard._id,
               null,
-              oldPart.petoCampMemberCardHaveHealthIssueIds
+              oldPart.petoCampMemberCardHaveHealthIssueIds,
             ),
           });
           part.petoCampMemberCardHaveHealthIssueIds.push(campMemberCard._id);
@@ -469,7 +472,9 @@ export async function changePartRaw(userIds: Id[], partId: Id) {
           continue;
         }
         const newPeeCamp = await PeeCamp.findById(
-          part.mapPeeCampIdByBaanId.get(oldPeeCamp.baanId?.toString() as string)
+          part.mapPeeCampIdByBaanId.get(
+            oldPeeCamp.baanId?.toString() as string,
+          ),
         );
         if (!newPeeCamp) {
           continue;
@@ -479,13 +484,13 @@ export async function changePartRaw(userIds: Id[], partId: Id) {
         });
         oldPart.peeShirtSize.set(
           campMemberCard.size,
-          calculate(oldPart.peeShirtSize.get(campMemberCard.size), 0, 1)
+          calculate(oldPart.peeShirtSize.get(campMemberCard.size), 0, 1),
         );
         await oldPart.updateOne({
           peeCampMemberCardIds: swop(
             campMemberCard._id,
             null,
-            oldPart.peeCampMemberCardIds
+            oldPart.peeCampMemberCardIds,
           ),
           peeIds: swop(user._id, null, oldPart.peeIds),
           peeShirtSize: oldPart.peeShirtSize,
@@ -493,7 +498,7 @@ export async function changePartRaw(userIds: Id[], partId: Id) {
         part.peeIds.push(user._id);
         part.peeShirtSize.set(
           campMemberCard.size,
-          calculate(part.peeShirtSize.get(campMemberCard.size), 1, 0)
+          calculate(part.peeShirtSize.get(campMemberCard.size), 1, 0),
         );
         part.peeCampMemberCardIds.push(campMemberCard._id);
         await campMemberCard.updateOne({ campModelId: newPeeCamp._id });
@@ -510,12 +515,12 @@ export async function changePartRaw(userIds: Id[], partId: Id) {
             peeHealthIssueIds: swop(
               campMemberCard.healthIssueId,
               null,
-              oldPart.peeHealthIssueIds
+              oldPart.peeHealthIssueIds,
             ),
             peeCampMemberCardHaveHealthIssueIds: swop(
               campMemberCard._id,
               null,
-              oldPart.peeCampMemberCardHaveHealthIssueIds
+              oldPart.peeCampMemberCardHaveHealthIssueIds,
             ),
           });
           part.peeHealthIssueIds.push(campMemberCard.healthIssueId);
@@ -541,7 +546,7 @@ export async function changePartRaw(userIds: Id[], partId: Id) {
           peeCampMemberCardIds: swop(
             null,
             campMemberCard._id,
-            newPeeCamp.peeCampMemberCardIds
+            newPeeCamp.peeCampMemberCardIds,
           ),
           peeIds: swop(null, user._id, newPeeCamp.peeIds),
         });
@@ -549,7 +554,7 @@ export async function changePartRaw(userIds: Id[], partId: Id) {
           peeCampMemberCardIds: swop(
             campMemberCard._id,
             null,
-            oldPeeCamp.peeCampMemberCardIds
+            oldPeeCamp.peeCampMemberCardIds,
           ),
           peeIds: swop(user._id, null, oldPeeCamp.peeIds),
         });
@@ -574,7 +579,8 @@ export async function changePartRaw(userIds: Id[], partId: Id) {
     peeIds: part.peeIds,
     peeCampMemberCardIds: part.peeCampMemberCardIds,
     peeShirtSize: part.peeShirtSize,
-    peeCampMemberCardHaveHealthIssueIds: part.peeCampMemberCardHaveHealthIssueIds,
+    peeCampMemberCardHaveHealthIssueIds:
+      part.peeCampMemberCardHaveHealthIssueIds,
     peeHaveBottleIds: part.peeHaveBottleIds,
     peeSleepIds: part.peeSleepIds,
   });
